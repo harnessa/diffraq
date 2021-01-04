@@ -48,7 +48,7 @@ def test_grid():
     xq, yq, wq, bx, by = fresnaq.polarareaquad(g,n,m)
     tol = 1e-9
 
-    if [False,True][0]:
+    if [False,True][1]:
         #small grid for math test
         ximax, ngrid = 1.5, 100
     else:
@@ -63,7 +63,8 @@ def test_grid():
     eta = xi.copy().T
 
     #check one target (grid SW corner)
-    i=(10,50)
+    # i=(10,50)
+    i=(0,0)
     kirchfac = 1/(1j*lambdaz)
     ud = np.empty_like(uu)
     for j in range(uu.shape[0]):
@@ -73,14 +74,17 @@ def test_grid():
     # ud = kirchfac * np.sum(np.exp((1j*np.pi/lambdaz)*((xq - xi[i])**2 + (yq - eta[i])**2))*wq)
     uu0 = uu[i]
     print(f'\nabs error vs direct Fresnel quadr at' + \
-        f' ({xi[i]:.3f},{eta[i]:.3f}) = {abs(uu0 - ud):.3e}\n')
+        f' ({xi[i]:.3f},{eta[i]:.3f}) = {abs(uu0 - ud0):.3e}\n')
 
     upts = diffraq_pts(xq[:,0], yq[:,0], wq[:,0], lambdaz, xi, eta, tol)
     up0 = diffraq_pts(xq[:,0], yq[:,0], wq[:,0], lambdaz, xi[i], eta[i], tol)[0]
-    fig, axes = plt.subplots(1,3)
-    axes[0].imshow(np.angle(ud),vmin=-np.pi,vmax=np.pi)
-    axes[1].imshow(np.angle(uu),vmin=-np.pi,vmax=np.pi)
-    axes[2].imshow(np.angle(upts),vmin=-np.pi,vmax=np.pi)
+    fig, axes = plt.subplots(2,3)
+    axes[0,0].imshow(np.abs(ud))
+    axes[0,1].imshow(np.abs(uu))
+    axes[0,2].imshow(np.abs(upts))
+    axes[1,0].imshow(np.angle(ud))
+    axes[1,1].imshow(np.angle(uu))
+    axes[1,2].imshow(np.angle(upts))
     print(f'max abs err fresnaq_pts vs grid: {np.abs(upts-uu).max():.3e}\n')
 
     breakpoint()

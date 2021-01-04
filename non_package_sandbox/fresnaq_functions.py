@@ -52,6 +52,7 @@ class fresnaq_functions(object):
 
             #line of nodes
             xq[jj] = np.cos(t[i-1]) * r * xr
+            breakpoint()
             yq[jj] = np.sin(t[i-1]) * r * xr
             #theta weight times rule for r.dr on (0,r)
             wq[jj] = wt * r**2 * xr * wr
@@ -122,6 +123,107 @@ class fresnaq_functions(object):
 
 ############################################
 ############################################
+
+    def starshadequad(self,Np, Afunc, r0, r1, n, m, Aquad='g',verb=False):
+        """
+        % STARSHADEQUAD  quadrature for area integral over apodized petal 0-1 occulter.
+        %
+        % [xj yj wj bx by] = starshadequad(Np,Afunc,r0,r1,n,m,verb,Aquad)
+        %
+        %  Uses Theta(r) formula of (1)-(2) in Cady '12 to build area quadrature scheme
+        %  over starshade, given apodization function and other geometric parameters.
+        %
+        % Inputs:
+        %  Np = # petals
+        %  Afunc = apodization from roughly 1 down to roughly 0, over domain [r0,r1].
+        %  r0,r1 = apodization domain of radii (note differs from Cash'11 defn a,b)
+        %   radial apodization is 1 for r<r0, A((r-r0)/(r1-r0)) for r0<r<r1, 0 for r>r1.
+        %  n = nodes per petal width
+        %  m = nodes over disc and over radial apodization [r0,r1]. (exact may vary)
+        %  verb = (optional) 0,1, etc, verbosity.
+        %  Aquad = (optional) apodization quadrature type: 'a' Alpert (default),
+        %          'g' Gauss, 'u' Uniform grid (including end points).
+        %
+        % Outputs:
+        % xj,yj - (areal) nodes
+        % wj    - corresp (areal) weights
+        % bx,by - boundary nodes (those lying along profile, not petal tips or gaps)
+        %
+        % Design is perfectly symmetric; no perturbations for now.
+
+        % Barnett 8/24/20; changed to Afunc(r), swapped r0,r1, 9/5/20.
+        """
+        #Setup [0,1] quadr scheme
+        if Aquad == 'g':
+            #radial petal quadrature, descending z
+            z, w = self.lgwt(m, 0, 1)
+            z = z[:,0]
+            w = w[:,0]
+        elif Aquad == 'a':
+            #Alpert
+            z, w = self.QuadNodesInterval(0,1,m,[],1,1,32)
+            #flip to descending order
+            z = z[::-1]
+            w = w[::-1]
+            z = z[:,0]
+            w = w[:,0]
+        elif Aquad == 'u':
+            #Uniform grid including endpoints, composite trap rule
+            z = np.linspace(0,1,m)
+            h = z[1]-z[0]
+            z = z[::-1]
+            w = np.concatenate(([0.5], np.ones(m-2), [0.5])) * h
+
+        #Central disc
+        N = int(np.ceil(0.3*n*Np))    #PTR in theta, rough guess so dx about same
+        t = 2.*np.pi * np.arange(1,N+1)/N   #theta nodes, const weights
+        wt = 2.*np.pi/N
+        xj = np.ones(N*m)*np.nan
+        yj = xj.copy()
+        wj = xj.copy()
+        for i in range(1,N+1):
+            jj = np.arange(m) + (i-1)*m
+            xj[jj] = np.cos(t[i-1]) * r0*z
+            yj[jj] = np.sin(t[i-1]) * r0*z
+            wj[jj] = wt*r0**2*z*w
+
+        if verb:
+            aerr = wj.sum() - np.pi*r0**2
+            print(f'disc area err: {aerr:.2e}\n')
+
+        #Petals radial outer loop (using z,w scheme from above)
+        zn, wn = self.lgwt(n, -1, 1)     #[-1,1] becomes width in theta. col vecs
+        zn = zn[:,0]
+        wn = wn[:,0]
+        r = r0 + (r1-r0)*z              #radius quadrature nodes
+        A = Afunc(r)
+        for i in range(1,m+1):
+            wi = (r1-r0) * w[i-1] * r[i-1]
+            if A[i-1] > 1 or A[i-1] < 0:
+                print('0<A<1!')
+                breakpoint()
+
+            t = np.kron(np.ones(Np), (np.pi/Np)*A[i-1]*zn) + \
+                np.kron(2.*np.pi*np.arange(1,Np+1)/Np, np.ones(n)) #thetas
+            ww = np.kron(np.ones(Np), wi*np.pi/Np*A[i-1]*wn)
+            xj = np.concatenate((xj, r[i-1]*np.cos(t))) #Append new nodes + weights
+            yj = np.concatenate((yj, r[i-1]*np.sin(t)))
+            wj = np.concatenate((wj, ww))
+
+        #Boundary points
+        bx = np.ones((m,2*Np)) * np.nan
+        by = bx.copy()
+        r = r[::-1]
+        A = A[::-1]
+        for p in range(1,Np+1):
+            t = 2.*np.pi/Np*p - np.pi/Np*A
+            bx[:,2*p-1-1] = r*np.cos(t)
+            by[:,2*p-1-1] = r*np.sin(t)
+            t = 2.*np.pi/Np*p + np.pi/Np*A[::-1]
+            bx[:,2*p-1] = r[::-1]*np.cos(t)
+            by[:,2*p-1] = r[::-1]*np.sin(t)
+
+        return xj, yj, wj, bx, by
 
 ############################################
 ############################################
