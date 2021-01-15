@@ -8,7 +8,7 @@ Getting started
 ---------------------
 To clone a copy and install: ::
 
-    git clone https://github.com/harnessa/diffraq.git
+    git clone https://github.com/harnessa/diffraq
     cd diffraq
     python setup.py install
 

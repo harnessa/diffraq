@@ -12,7 +12,7 @@ ximax = 14; ngrid = 1000
 tol = 1e-9
 verb = [False,True][1]
 Aquad = ['g','u','a'][0]
-design = ['disc', 'HG', 'erf', 'NI2'][1]
+design = ['disc', 'HG', 'erf', 'NI2'][0]
 
 if design == 'disc':
     Np = 1; r0=5; r1=10

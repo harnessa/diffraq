@@ -52,7 +52,6 @@ class fresnaq_functions(object):
 
             #line of nodes
             xq[jj] = np.cos(t[i-1]) * r * xr
-            breakpoint()
             yq[jj] = np.sin(t[i-1]) * r * xr
             #theta weight times rule for r.dr on (0,r)
             wq[jj] = wt * r**2 * xr * wr
@@ -191,24 +190,27 @@ class fresnaq_functions(object):
             aerr = wj.sum() - np.pi*r0**2
             print(f'disc area err: {aerr:.2e}\n')
 
-        #Petals radial outer loop (using z,w scheme from above)
-        zn, wn = self.lgwt(n, -1, 1)     #[-1,1] becomes width in theta. col vecs
-        zn = zn[:,0]
-        wn = wn[:,0]
-        r = r0 + (r1-r0)*z              #radius quadrature nodes
-        A = Afunc(r)
-        for i in range(1,m+1):
-            wi = (r1-r0) * w[i-1] * r[i-1]
-            if A[i-1] > 1 or A[i-1] < 0:
-                print('0<A<1!')
-                breakpoint()
+        #
+        # #Petals radial outer loop (using z,w scheme from above)
+        # zn, wn = self.lgwt(n, -1, 1)     #[-1,1] becomes width in theta. col vecs
+        # zn = zn[:,0]
+        # wn = wn[:,0]
+        # r = r0 + (r1-r0)*z              #radius quadrature nodes
+        # A = Afunc(r)
+        # for i in range(1,m+1):
+        #     wi = (r1-r0) * w[i-1] * r[i-1]
+        #     if A[i-1] > 1 or A[i-1] < 0:
+        #         print('0<A<1!')
+        #         breakpoint()
+        #
+        #     t = np.kron(np.ones(Np), (np.pi/Np)*A[i-1]*zn) + \
+        #         np.kron(2.*np.pi*np.arange(1,Np+1)/Np, np.ones(n)) #thetas
+        #     ww = np.kron(np.ones(Np), wi*np.pi/Np*A[i-1]*wn)
+        #     xj = np.concatenate((xj, r[i-1]*np.cos(t))) #Append new nodes + weights
+        #     yj = np.concatenate((yj, r[i-1]*np.sin(t)))
+        #     wj = np.concatenate((wj, ww))
 
-            t = np.kron(np.ones(Np), (np.pi/Np)*A[i-1]*zn) + \
-                np.kron(2.*np.pi*np.arange(1,Np+1)/Np, np.ones(n)) #thetas
-            ww = np.kron(np.ones(Np), wi*np.pi/Np*A[i-1]*wn)
-            xj = np.concatenate((xj, r[i-1]*np.cos(t))) #Append new nodes + weights
-            yj = np.concatenate((yj, r[i-1]*np.sin(t)))
-            wj = np.concatenate((wj, ww))
+        breakpoint()
 
         #Boundary points
         bx = np.ones((m,2*Np)) * np.nan

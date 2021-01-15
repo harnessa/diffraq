@@ -1,3 +1,8 @@
+#DIFFRAQ
+External_Data/*
+Internal_Data/*
+Results/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
