@@ -16,7 +16,8 @@ setup(
     url='https://github.com/harnessa/diffraq',
     license='',
     package_data={},
-    requires=['numpy', 'scipy', 'h5py', 'matplotlib', 'mpi4py', 'pytest'],
+    requires=['numpy', 'finufft', 'h5py', 'mpi4py', 'pytest'],
+	extras_require={'with_mpi':['mpi4py'], 'with_plot':['matplotlib']},
     )
 
 ##

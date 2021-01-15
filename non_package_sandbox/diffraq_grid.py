@@ -70,6 +70,8 @@ def test_grid():
     for j in range(uu.shape[0]):
         for k in range(uu.shape[1]):
             ud[j,k] =  kirchfac * np.sum(np.exp((1j*np.pi/lambdaz)*((xq - xi[j,k])**2 + (yq - eta[j,k])**2))*wq)
+    breakpoint()
+
     ud0 = ud[i]
     # ud = kirchfac * np.sum(np.exp((1j*np.pi/lambdaz)*((xq - xi[i])**2 + (yq - eta[i])**2))*wq)
     uu0 = uu[i]

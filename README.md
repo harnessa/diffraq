@@ -2,7 +2,8 @@
 ------------
 Diffraction with Areal Quadrature, or _diffraq_, is a fast nonuniform Fourier
 method to calculate Fresnel diffraction via areal quadrature. This is a translation
-of the code _fresnaq_ (https://github.com/ahbarnett/fresnaq) into Python.
+of the code _fresnaq_ (https://github.com/ahbarnett/fresnaq) into Python. It
+shamelessly takes many algorithms from there.
 
 Getting started
 ---------------------
@@ -21,10 +22,13 @@ Dependencies
 You will need:
 
 - `numpy <http://www.numpy.org/>`
+- `finufft <https://github.com/flatironinstitute/finufft>`
 - `h5py <http://www.h5py.org>`
+- `pytest <https://pypi.org/project/pytest/>`
+
+And optionally:
 - `matplotlib <https://pypi.org/project/matplotlib/>`
 - `mpi4py <http://mpi4py.scipy.org/>`
-- `pytest <https://pypi.org/project/pytest/>`
 
 Documentation
 --------------

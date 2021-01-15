@@ -1,22 +1,22 @@
 """
-test_diffraction_grid.py
+test_diffraction_points.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
-Created on: 01-08-2021
+Created on: 01-15-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Test of diffraction to grid target.
+Description: Test of diffraction to arbitrary points.
 
 """
 
 import diffraq
 import numpy as np
 
-class Test_diffraction_grid(object):
+class Test_diffraction_points(object):
 
-    def test_grid(self):
+    def test_points(self):
 
         #Numerics
         n=350; m=120            #Number of quadrature points
@@ -29,6 +29,10 @@ class Test_diffraction_grid(object):
         #Build grid
         grid_pts = diffraq.diff.build_grid(ngrid, grid_rad)
         grid_2D = np.tile(grid_pts, (ngrid,1)).T
+
+        #Flatten grid
+        xi = grid_2D.flatten()
+        eta = grid_2D.T.flatten()
 
         #Loop over Fresnel number
         for fresnum in [10,100,1000]:
@@ -43,7 +47,10 @@ class Test_diffraction_grid(object):
             xq, yq, wq = diffraq.quad.polar_quad(gfunc, m, n)
 
             #Calculate diffraction
-            uu = diffraq.diff.diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol)
+            uu = diffraq.diff.diffract_points(xq, yq, wq, lambdaz, xi, eta, tol)
+
+            #Reshape to match grid
+            uu = uu.reshape(grid_2D.shape)
 
             #Calculate theoretical value
             utru = np.empty_like(uu)
@@ -58,5 +65,5 @@ class Test_diffraction_grid(object):
 
 if __name__ == '__main__':
 
-    tst = Test_diffraction_grid()
-    tst.test_grid()
+    tst = Test_diffraction_points()
+    tst.test_points()

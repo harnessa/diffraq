@@ -56,3 +56,4 @@ import diffraq.utils
 util = diffraq.utils.Utilities()
 from diffraq.simulator import Simulator
 import diffraq.quadrature as quad
+import diffraq.diffraction as diff
