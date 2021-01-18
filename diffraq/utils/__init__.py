@@ -12,4 +12,5 @@ Description: __init__ package for the UTILS module.
 """
 
 from diffraq.utils.default_parameters import def_params
-from diffraq.utils.utilities import Utilities
+from diffraq.utils.logger import Logger
+from diffraq.utils.utility_functions import *

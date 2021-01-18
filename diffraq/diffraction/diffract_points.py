@@ -20,13 +20,13 @@ def diffract_points(xq, yq, wq, lambdaz, xi, eta, tol):
     uu = diffract_points(xq, yq, wq, lambdaz, xi, eta, tol)
 
     calculates diffraction propagation from input quadrature to arbitrary
-    points (xi, eta). (Barnet 2021)
+    points (xi, eta). (Barnett 2021)
 
     Inputs:
-        xq, yq = x,y coordinates of area quadrature nodes
+        xq, yq = x,y coordinates of area quadrature nodes [meters]
         wq = area quadrature weights
-        lambdaz = wavelength * z [m^2]
-        xi, eta = target points (each must be 1D numpy array)
+        lambdaz = wavelength * z [meter^2]
+        xi, eta = target points (each must be 1D numpy array) [meters]
         tol = tolerance to which to calculate FFT (via finufft)
 
     Outputs:

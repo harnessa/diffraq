@@ -12,7 +12,7 @@ Description: quadrature for integrals over area with polar function.
 
 """
 
-import diffraq
+from diffraq.quadrature import lgwt
 import numpy as np
 
 def polar_quad(g, m, n):
@@ -32,7 +32,7 @@ def polar_quad(g, m, n):
         n = # theta nodes
 
     Outputs:
-        xq, yq = numpy array of x,y coordinates of nodes
+        xq, yq = numpy array of x,y coordinates of nodes [meters]
         wq = numpy array of weights
     """
 
@@ -41,7 +41,7 @@ def polar_quad(g, m, n):
     wt = 2.*np.pi/n
 
     #Radial quadrature nodes, weights
-    pr, wr = diffraq.quad.lgwt(m, 0, 1)
+    pr, wr = lgwt(m, 0, 1)
 
     #Get function values at all theta nodes
     gt = g(pt)

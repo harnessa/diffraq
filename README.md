@@ -7,7 +7,7 @@ shamelessly takes many algorithms from there.
 
 Getting started
 ---------------------
-To clone a copy and install: ::
+To clone a copy and install:
 
     git clone https://github.com/harnessa/diffraq
     cd diffraq
@@ -24,11 +24,16 @@ You will need:
 - `numpy <http://www.numpy.org/>`
 - `finufft <https://github.com/flatironinstitute/finufft>`
 - `h5py <http://www.h5py.org>`
-- `pytest <https://pypi.org/project/pytest/>`
 
 And optionally:
 - `matplotlib <https://pypi.org/project/matplotlib/>`
-- `mpi4py <http://mpi4py.scipy.org/>`
+- `pytest <https://pypi.org/project/pytest/>`
+
+Testing
+---------------------
+If _pytest_ is installed, testing can be done through:
+
+    sh $DIFFRAQ/tests/run_all_tests.sh
 
 Documentation
 --------------

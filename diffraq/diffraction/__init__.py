@@ -11,5 +11,5 @@ Description: __init__ package for the DIFFRACTION module.
 
 """
 
-from diffraq.diffraction.diffract_grid import diffract_grid, build_grid
+from diffraq.diffraction.diffract_grid import diffract_grid
 from diffraq.diffraction.diffract_points import diffract_points

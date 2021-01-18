@@ -91,8 +91,6 @@ class Test_Quadrature(object):
                 #TODO: need better starshade assertion
                 assert(np.isclose(wq.sum(), hg_area))
 
-        # breakpoint()
-
 ############################################
 
 if __name__ == '__main__':

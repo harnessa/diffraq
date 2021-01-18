@@ -15,7 +15,17 @@ import diffraq
 
 #User-input parameters
 params = {
+    ### Saving ###
+    'do_save':          True,
+    'session':          'test',
 
+    ### World ###
+    'waves':            0.641e-6,
+    'tel_diameter':     3,
+    'num_pts':          256,
+
+    ### Occulter ###
+    # ''
 }
 
 #Load simulation class and run sim
