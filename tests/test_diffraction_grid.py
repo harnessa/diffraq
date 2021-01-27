@@ -40,17 +40,17 @@ class Test_diffraction_grid(object):
             gfunc = lambda t: 1 + 0.3*np.cos(3*t)
 
             #Get quadratures
-            xq, yq, wq = diffraq.quad.polar_quad(gfunc, m, n)
+            xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, m, n)
 
             #Calculate diffraction
-            uu = diffraq.diff.diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol)
+            uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol)
 
             #Calculate theoretical value
             utru = np.empty_like(uu)
             for j in range(uu.shape[0]):
                 for k in range(uu.shape[1]):
                     utru[j,k] = 1/(1j*lambdaz) * np.sum(np.exp((1j*np.pi/lambdaz)* \
-                        ((xq - grid_2D[j,k])**2 + (yq - grid_2D.T[j,k])**2))*wq)
+                        ((xq - grid_2D[j,k])**2 + (yq - grid_2D[k,j])**2))*wq)
 
             #Assert max difference is close to specified tolerance
             max_diff = tol * fresnum

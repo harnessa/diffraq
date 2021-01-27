@@ -37,6 +37,6 @@ int_data_dir = f"{pkg_home_dir}/Internal_Data"
 
 import diffraq.utils
 from diffraq.simulator import Simulator
-import diffraq.quadrature as quad
-import diffraq.diffraction as diff
+import diffraq.quadrature
+import diffraq.diffraction
 import diffraq.world

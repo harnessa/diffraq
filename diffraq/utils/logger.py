@@ -13,10 +13,10 @@ Description: Class to log and record results of DIFFRAQ calculations.
 
 import diffraq.utils as utils
 import numpy as np
-import atexit
 from datetime import datetime
 import h5py
 import time
+import sys
 
 class Logger(object):
 
@@ -74,7 +74,6 @@ class Logger(object):
 
         #Open file and register it to close at exit
         self.log_file = open(self.filename('logfile','txt'), 'w')
-        atexit.register(self.close_log_file)
 
     def close_log_file(self):
         #Return immediately if not saving
@@ -109,6 +108,13 @@ class Logger(object):
 
         if self.verbose:
             print(new_str)
+
+    def error(self, txt, do_exit=True):
+        self.write(txt=txt, is_err=True)
+        if do_exit:
+            sys.exit(0)
+        else:
+            breakpoint()
 
 ############################################
 ############################################

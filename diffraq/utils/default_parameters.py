@@ -31,18 +31,20 @@ def_params = {
     'verbose':              True,       #Print to STD?
 
     ### Occulter ###
-    'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, hypergaussian]
+    'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, analytic_starshade, numeric_starshade]
     'circle_rad':           12,         #Circle occulter radius
-    'apod_func':            None,       #String defining apodization lambda function
+    'apod_func':            None,       #Lambda function (accepts radius as argument) defining apodization function
 
     ### World ###
     'waves':                0.6e-6,     #Wavelengths
     'z0':                   1e19,       #Source - Occulter distance
-    'z1':                   20e6,       #Occulter - Telescope distance
+    'zz':                   20e6,       #Occulter - Telescope distance
     'tel_diameter':         2.4,        #Telescope diameter
     'num_pts':              256,        #Number of points across telescope
 
     ### Numerics ###
+    'radial_nodes':         20,
+    'theta_nodes':          20,
     'fft_tol':              1e-9,       #Tolerance to feed to NUFFT
 
 }

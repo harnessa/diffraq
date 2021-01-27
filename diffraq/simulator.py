@@ -38,16 +38,16 @@ class Simulator(object):
         self.params = diffraq.utils.deepcopy(params)
 
         ### Derived ###
+
         if self.save_dir_base is None:
             self.save_dir_base = f"{diffraq.pkg_home_dir}/Results"
         self.waves = np.atleast_1d(self.waves)
         #Effective separation for diverging beam
-        self.zeff = self.z0 * self.z1 / (self.z0 + self.z1)
+        self.zeff = self.z0 * self.zz / (self.z0 + self.zz)
 
     def load_children(self):
-        self.children = ['logger']#, 'occulter']
         self.logger = diffraq.utils.Logger(self)
-        # self.occulter = diffraq.occulter.Occulter(self)
+        self.occulter = diffraq.world.Occulter(self)
         self.shop_is_open = False
 
 ############################################
@@ -63,8 +63,7 @@ class Simulator(object):
             self.load_children()
 
         #Run start ups
-        for child in self.children:
-            getattr(self, child).start_up()
+        self.logger.start_up()
 
         #Open flag
         self.shop_is_open = True
@@ -77,8 +76,7 @@ class Simulator(object):
             return
 
         #Run close ups
-        for child in self.children:
-            getattr(self, child).close_up()
+        self.logger.close_up()
 
         #Close flag
         self.shop_is_open = False
@@ -109,31 +107,30 @@ class Simulator(object):
 
     def run_pupil_field(self):
         #TODO: add loading pupil field
-        self.calc_pupil_field()
+        pupil = self.calc_pupil_field()
 
     def calc_pupil_field(self):
         #Build target
         grid_pts = diffraq.world.get_grid_points(self.num_pts, self.tel_diameter)
 
-        #Build AQ
-        self.occulter.build_AQ()
-        # #TODO: load from occulter
-        # gfunc = lambda t: 1 + 0.3*np.cos(3*t)
-        # xq, yq, wq = diffraq.quad.polar_quad(gfunc, 120, 350)
-        
+        #Build Area Quadrature
+        self.occulter.build_quadrature()
+
+        #Create empty pupil field array
+        pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
 
         #Run diffraction calculation over wavelength
-        pupil = np.empty((0, self.num_pts, self.num_pts)) + 0j
-        for wav in self.waves:
+        for iw in range(len(self.waves)):
+
             #lambda * z
-            lamz = wav * self.zeff
+            lamz = self.waves[iw] * self.zeff
 
             #Calculate diffraction
-            uu = diffraq.diff.diffract_grid(self.occulter.xq, self.occulter.yq, \
-                self.occulter.wq, lamz, grid_pts, self.fft_tol)
+            uu = diffraq.diffraction.diffract_grid(self.occulter.xq, \
+                self.occulter.yq, self.occulter.wq, lamz, grid_pts, self.fft_tol)
 
-            #Concatenate
-            pupil = np.concatenate((pupil, [uu]))
+            #Store
+            pupil[iw] = uu
 
         return pupil
 

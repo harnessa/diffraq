@@ -11,29 +11,16 @@ Description: Class to propagate the diffracted field to the focal plane of the
     target imaging system.
 """
 
-import diffraq
 import numpy as np
 
 class Focuser(object):
 
     def __init__(self, sim):
         self.sim = sim
-        self.copy_params()
 
 ############################################
-#####  Start/Finish #####
+#####  Main Functions #####
 ############################################
-
-    def copy_params(self):
-        pms = []
-        for k in pms:
-            setattr(self, k, getattr(self.sim, k))
-
-    def start_up(self):
-        pass
-
-    def close_up(self):
-        pass
 
 ############################################
 ############################################

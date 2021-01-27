@@ -63,9 +63,57 @@ def starshade_quad(num_pet, Afunc, r0, r1, m, n):
     tt = np.kron(np.ones(num_pet), (np.pi/num_pet) * Aval * pw) + \
          np.kron(2.*np.pi*(np.arange(num_pet) + 1), np.ones(n))
 
+    #Angle between petals
+    pet_ang = 2.*np.pi/num_pet
+
     #Add Petal nodes + weights
-    xq = np.concatenate(( xq, (pr * np.cos(tt)).flatten() ))
-    yq = np.concatenate(( yq, (pr * np.sin(tt)).flatten() ))
-    wq = np.concatenate(( wq, (np.pi/num_pet) * (wi * Aval * ww).flatten() ))
+    for ip in range(num_pet):
+        xq = np.concatenate(( xq, (pr * np.cos(tt + ip*pet_ang)).flatten() ))
+        yq = np.concatenate(( yq, (pr * np.sin(tt + ip*pet_ang)).flatten() ))
+        wq = np.concatenate(( wq, (np.pi/num_pet) * (wi * Aval * ww).flatten() ))
 
     return xq, yq, wq
+
+def starshade_edge(num_pet, Afunc, r0, r1, m, n):
+    """
+    xe, ye = starshade_edge(num_pet, Afunc, r0, r1, m, n)
+
+    Build loci demarking the starshade edge.
+
+    Inputs:
+        num_pet = # petals
+        Afunc = apodization profile over domain [r0, r1]
+        r0, r1 = apodization domain of radii [meters]. r<r0: A=1; r>r1: A=0
+        m = # nodes over disc and over radial apodization [r0, r1]
+        n = # nodes over petal width
+
+    Outputs:
+        xe, ye = numpy array of x,y coordinates of starshade edge [meters]
+    """
+
+    #Petals radius nodes and weights over [0,1]
+    pr, wr = lgwt(m, 0, 1)
+
+    #Scale radius quadrature nodes to physical size
+    pr = r0 + (r1 - r0) * pr
+
+    #Apodization value at nodes
+    Aval = Afunc(pr)
+
+    #r*dr
+    wi = (r1 - r0) * wr * pr
+
+    #Angle between petals
+    pet_ang = 2.*np.pi/num_pet
+
+    #Build Petal edges
+    bx, by = [], []
+    for ip in range(num_pet):
+        #Trailing/leading edges
+        for tl in [-1, 1]:
+            ti = pet_ang*(ip + tl*Aval[::tl]/2)
+            bx.extend(pr[::tl] * np.cos(ti))
+            by.extend(pr[::tl] * np.sin(ti))
+    bx, by = np.array(bx), np.array(by)
+
+    return bx, by

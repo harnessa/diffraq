@@ -40,7 +40,7 @@ class Test_Quadrature(object):
                 w2 *= (b-a)/2                   #Normalize the weights
 
                 #Diffraq answer
-                pq, wq = diffraq.quad.lgwt(N, a, b)
+                pq, wq = diffraq.quadrature.lgwt(N, a, b)
 
                 assert((np.isclose(pq, p2).all()) & (np.isclose(wq, w2).all()))
 
@@ -54,7 +54,7 @@ class Test_Quadrature(object):
                     gfunc = lambda t: 1 + a*np.cos(3*t)
 
                     #Get quad
-                    xq, yq, wq = diffraq.quad.polar_quad(gfunc, m, n)
+                    xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, m, n)
 
                     #Assert with analytic area formula
                     assert(np.isclose(wq.sum(), np.pi*(1. + a**2/2)))
@@ -67,25 +67,25 @@ class Test_Quadrature(object):
         num_pet = 16
         ss_r0 = 7; ss_r1 = 14
         ss_Afunc = lambda r: np.exp(-((r-ss_r0)/(ss_r1-ss_r0)/0.6)**6)
-        hg_area = 167.74245316719933         #Calculated once, not sure if correct
+        hg_area = 374.7984608053253       #Calculated once, not sure if correct
 
         #Disk
         disk_r0 = 0.7; disk_r1 = 1.3
         disk_Afunc = lambda t: 1 + 0*t
 
-        for m in range(10,100,10):
-            for n in range(10,1000,100):
+        for m in range(20,100,10):
+            for n in range(20,1000,100):
 
                 ### Test DISK ###
                 #Get quad
-                xq, yq, wq = diffraq.quad.starshade_quad(1, disk_Afunc, \
+                xq, yq, wq = diffraq.quadrature.starshade_quad(1, disk_Afunc, \
                     disk_r0, disk_r1, m, n)
 
                 #Assert with analytic area formula
                 assert(np.isclose(wq.sum(), np.pi*disk_r1**2))
 
-                ### Test STARSHADE ###
-                xq, yq, wq = diffraq.quad.starshade_quad(num_pet, ss_Afunc, \
+                ## Test STARSHADE ###
+                xq, yq, wq = diffraq.quadrature.starshade_quad(num_pet, ss_Afunc, \
                     ss_r0, ss_r1, m, n)
 
                 #TODO: need better starshade assertion
