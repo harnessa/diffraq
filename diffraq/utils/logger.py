@@ -11,7 +11,7 @@ Description: Class to log and record results of DIFFRAQ calculations.
 
 """
 
-import diffraq.utils as utils
+from diffraq.utils import misc_utils, def_params
 import numpy as np
 from datetime import datetime
 import h5py
@@ -38,7 +38,7 @@ class Logger(object):
         #Create save directory
         if self.do_save:
             self.save_dir = f"{self.sim.save_dir_base}/{self.sim.session}"
-            utils.create_directory(self.save_dir)
+            misc_utils.create_directory(self.save_dir)
 
         #Start
         self.start_time = time.perf_counter()
@@ -65,7 +65,7 @@ class Logger(object):
     def filename(self,base_name,file_type,ext=None):
         if ext is None:
             ext = self.save_ext
-        return utils.get_filename(self.save_dir, base_name, ext, file_type)
+        return misc_utils.get_filename(self.save_dir, base_name, ext, file_type)
 
     def open_log_file(self):
         #Return immediately if not saving
@@ -91,7 +91,7 @@ class Logger(object):
 #####  Writing Functions #####
 ############################################
 
-    def write(self, txt='',is_brk=False,n_strs=2,is_time=True,is_err=False):
+    def write(self, txt='',is_brk=False,n_strs=2,is_time=True,is_err=False, is_warn=False):
         #Build message
         if is_brk:
             new_str = '*'*20 + '\n'
@@ -99,7 +99,9 @@ class Logger(object):
             if is_time:
                 txt += f' ({datetime.utcnow()})'
             if is_err:
-                txt = utils.color_string(f'Error! {txt}', utils.bad_color)
+                txt = misc_utils.color_string(f'Error! {txt}', misc_utils.bad_color)
+            elif is_warn:
+                txt = misc_utils.color_string(f'Warning! {txt}', misc_utils.neutral_color)
             str_str = '*'*int(n_strs)
             new_str = f'{str_str} {txt} {str_str}\n'
 
@@ -109,9 +111,9 @@ class Logger(object):
         if self.verbose:
             print(new_str)
 
-    def error(self, txt, do_exit=True):
-        self.write(txt=txt, is_err=True)
-        if do_exit:
+    def error(self, txt, is_warning=False):
+        self.write(txt=txt, is_err=not is_warning, is_warn=is_warning)
+        if not is_warning:
             sys.exit(0)
         else:
             breakpoint()
@@ -128,9 +130,9 @@ class Logger(object):
         if not self.do_save:
             return
         #Dump parameters into a json file
-        utils.json_dump(self.sim.params, self.filename('parameters','json'))
+        misc_utils.json_dump(self.sim.params, self.filename('parameters','json'))
         #Save default parameters as well (in case these get changed)
-        utils.json_dump(utils.def_params, self.filename('def_params','json'))
+        misc_utils.json_dump(def_params, self.filename('def_params','json'))
 
 ############################################
 ############################################

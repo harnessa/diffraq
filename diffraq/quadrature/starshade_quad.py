@@ -15,16 +15,16 @@ Description: quadrature for integrals over area with starshade.
 from diffraq.quadrature import lgwt, polar_quad
 import numpy as np
 
-def starshade_quad(num_pet, Afunc, r0, r1, m, n):
+def starshade_quad(Afunc, num_pet, r0, r1, m, n):
     """
-    xq, yq, wq = starshade_quad(num_pet, Afunc, r0, r1, m, n)
+    xq, yq, wq = starshade_quad(Afunc, num_pet, r0, r1, m, n)
 
     Uses Theta(r) formula of (1)-(2) in Cady '12 to build area quadrature scheme
     over starshade, given apodization function and other geometric parameters. (Barnett 2021)
 
     Inputs:
-        num_pet = # petals
         Afunc = apodization profile over domain [r0, r1]
+        num_pet = # petals
         r0, r1 = apodization domain of radii [meters]. r<r0: A=1; r>r1: A=0
         m = # nodes over disc and over radial apodization [r0, r1]
         n = # nodes over petal width
@@ -74,18 +74,20 @@ def starshade_quad(num_pet, Afunc, r0, r1, m, n):
 
     return xq, yq, wq
 
-def starshade_edge(num_pet, Afunc, r0, r1, m, n):
+############################################
+############################################
+
+def starshade_edge(Afunc, num_pet, r0, r1, m):
     """
-    xe, ye = starshade_edge(num_pet, Afunc, r0, r1, m, n)
+    xe, ye = starshade_edge(Afunc, num_pet, r0, r1, m)
 
     Build loci demarking the starshade edge.
 
     Inputs:
-        num_pet = # petals
         Afunc = apodization profile over domain [r0, r1]
+        num_pet = # petals
         r0, r1 = apodization domain of radii [meters]. r<r0: A=1; r>r1: A=0
         m = # nodes over disc and over radial apodization [r0, r1]
-        n = # nodes over petal width
 
     Outputs:
         xe, ye = numpy array of x,y coordinates of starshade edge [meters]

@@ -17,16 +17,16 @@ import numpy as np
 class Test_Occulter(object):
 
     def run_all_tests(self):
-        tsts = ['polar', 'circle', 'analytic_starshade', 'numeric_starshade']
+        tsts = ['polar', 'circle', 'starshades']
         for t in tsts:
             getattr(self, f'test_{t}')()
 
 ############################################
 
     def test_polar(self):
-        #Build occulter with dummy class
-        sim = Dummy_Sim()
-        occulter = diffraq.world.Occulter(sim)
+        #Build simulator
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+            'occulter_shape':'polar'})
 
         #Real polar function
         a = 0.3
@@ -36,21 +36,21 @@ class Test_Occulter(object):
         sim.apod_func = gfunc
 
         #Build polar occulter
-        occulter.build_quad_polar()
+        sim.occulter.build_quadrature()
 
         #Build directly
         xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, sim.radial_nodes, sim.theta_nodes)
 
         #Check they are all the ame
-        assert(np.isclose(xq, occulter.xq).all() and np.isclose(yq, occulter.yq).all() and \
-               np.isclose(wq, occulter.wq).all())
+        assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
+               np.isclose(wq, sim.occulter.wq).all())
 
 ############################################
 
     def test_circle(self):
-        #Build occulter with dummy class
-        sim = Dummy_Sim()
-        occulter = diffraq.world.Occulter(sim)
+        #Build simulator
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+            'occulter_shape':'circle'})
 
         #Real circle function
         r0 = 0.3
@@ -60,23 +60,47 @@ class Test_Occulter(object):
         sim.circle_rad = r0
 
         #Build circle occulter
-        occulter.build_quad_circle()
+        sim.occulter.build_quadrature()
 
         #Build directly
         xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, sim.radial_nodes, sim.theta_nodes)
 
         #Check they are all the ame
-        assert(np.isclose(xq, occulter.xq).all() and np.isclose(yq, occulter.yq).all() and \
-               np.isclose(wq, occulter.wq).all())
+        assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
+               np.isclose(wq, sim.occulter.wq).all())
 
 ############################################
-############################################
 
-class Dummy_Sim(object):
+    def test_starshades(self):
+        #Build simulator
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+            'occulter_shape':'starshade'})
 
-    def __init__(self):
-        self.radial_nodes = 100
-        self.theta_nodes = 100
+        #HG function and file
+        ss_Afunc = lambda r: np.exp(-((r-sim.ss_rmin)/(sim.ss_rmax-sim.ss_rmin)/0.6)**6)
+        ss_Afile = f'{diffraq.int_data_dir}/Test_Data/test_apod_file.txt'
+
+        #Analytic vs numeric
+        afunc_dict = {'analytic':ss_Afunc, 'numeric':None}
+        afile_dict = {'analytic':None,     'numeric':ss_Afile}
+
+        #Test analytic and numeric
+        for ss in ['analytic', 'numeric']:
+
+            #Set apod values
+            sim.apod_func = afunc_dict[ss]
+            sim.apod_file = afile_dict[ss]
+
+            #Build occulter
+            sim.occulter.build_quadrature()
+
+            #Get quadrature for comparison
+            xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, sim.num_petals, \
+                sim.ss_rmin, sim.ss_rmax, sim.radial_nodes, sim.theta_nodes)
+
+            #Check they are all the ame
+            assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
+                   np.isclose(wq, sim.occulter.wq).all())
 
 ############################################
 ############################################

@@ -18,8 +18,7 @@ class Occulter(object):
 
     def __init__(self, sim):
         self.sim = sim
-        self.approved_shapes = ['polar', 'circle', 'analytic_starshade', \
-            'numeric_starshade']
+        self.approved_shapes = ['polar', 'circle', 'starshade']
 
 ############################################
 #####  Main Functions #####
@@ -65,13 +64,13 @@ class Occulter(object):
             npts = self.sim.theta_nodes
 
         #Get polar edge
-        bx, by = polar_edge(apod_func, -1, npts)
+        xe, ye = polar_edge(apod_func, -1, npts)
 
         #Stack together
-        edge = np.dstack((bx, by)).squeeze()
+        edge = np.dstack((xe, ye)).squeeze()
 
         #Cleanup
-        del bx, by
+        del xe, ye
 
         return edge
 
@@ -89,7 +88,7 @@ class Occulter(object):
         apod_func = lambda t: self.sim.circle_rad*np.ones_like(t)
 
         #Build polar shape
-        self.build_edge_polar(apod_func=apod_func, npts=npts)
+        return self.build_edge_polar(apod_func=apod_func, npts=npts)
 
 ############################################
 ############################################
@@ -98,18 +97,68 @@ class Occulter(object):
 #####  Starshade Occulters #####
 ############################################
 
-    def build_quad_analytic_starshade(self):
-        #Normalize radius
+    def build_quad_starshade(self):
+        #Get apodization function
+        apod_func = self.get_starshade_apod()
 
-        breakpoint()
+        #Calculate starshade quadrature
+        self.xq, self.yq, self.wq = starshade_quad(apod_func, self.sim.num_petals, \
+            self.sim.ss_rmin, self.sim.ss_rmax, self.sim.radial_nodes, self.sim.theta_nodes)
 
-    def build_quad_numeric_starshade(self):
+    def build_edge_starshade(self, npts=None):
+        #Get apodization function
+        apod_func = self.get_starshade_apod()
 
-        breakpoint()
+        #Radial nodes
+        if npts is None:
+            npts = self.sim.radial_nodes
 
-    def build_edge_starshade(self, apod):
+        #Calculate starshade edge
+        xe, ye = starshade_edge(apod_func, self.sim.num_petals, \
+            self.sim.ss_rmin, self.sim.ss_rmax, npts)
 
-        breakpoint()
+        #Stack together
+        edge = np.dstack((xe, ye)).squeeze()
+
+        #Cleanup
+        del xe, ye
+
+    def get_starshade_apod(self):
+        #Get starshade apodization function
+        if self.sim.apod_file is not None:
+            #Load data from file and get interpolation function
+            apod_func = self.interp_apod_file(self.sim.apod_file)
+            #TODO: allow full set of points to be loaded
+
+        elif self.sim.apod_func is not None:
+            #Use user-supplied apodization function
+            apod_func = self.sim.apod_func
+
+        else:
+            #Raise error
+            self.sim.logger.error('Starshade apodization not supplied')
+
+        return apod_func
+
+############################################
+############################################
+
+############################################
+#####  Helper Functions #####
+############################################
+
+    def interp_apod_file(self, apod_file):
+        #Load file
+        data = np.genfromtxt(apod_file, delimiter=',')
+
+        #Build interpolation function
+        apod_func = lambda r: np.interp(r, data[:,0], data[:,1], left=1., right=0.)
+
+        #Replace min/max radius
+        self.sim.ss_rmin = data[:,0].min()
+        self.sim.ss_rmax = data[:,0].max()
+
+        return apod_func
 
 ############################################
 ############################################

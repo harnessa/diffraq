@@ -78,14 +78,14 @@ class Test_Quadrature(object):
 
                 ### Test DISK ###
                 #Get quad
-                xq, yq, wq = diffraq.quadrature.starshade_quad(1, disk_Afunc, \
+                xq, yq, wq = diffraq.quadrature.starshade_quad(disk_Afunc, 1, \
                     disk_r0, disk_r1, m, n)
 
                 #Assert with analytic area formula
                 assert(np.isclose(wq.sum(), np.pi*disk_r1**2))
 
                 ## Test STARSHADE ###
-                xq, yq, wq = diffraq.quadrature.starshade_quad(num_pet, ss_Afunc, \
+                xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, num_pet, \
                     ss_r0, ss_r1, m, n)
 
                 #TODO: need better starshade assertion

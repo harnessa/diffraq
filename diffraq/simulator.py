@@ -34,8 +34,8 @@ class Simulator(object):
 
     def set_parameters(self, params):
         #Set parameters
-        diffraq.utils.set_default_params(self, params, diffraq.utils.def_params)
-        self.params = diffraq.utils.deepcopy(params)
+        diffraq.utils.misc_utils.set_default_params(self, params, diffraq.utils.def_params)
+        self.params = diffraq.utils.misc_utils.deepcopy(params)
 
         ### Derived ###
 
@@ -48,6 +48,7 @@ class Simulator(object):
     def load_children(self):
         self.logger = diffraq.utils.Logger(self)
         self.occulter = diffraq.world.Occulter(self)
+        self.focuser = diffraq.world.Focuser(self)
         self.shop_is_open = False
 
 ############################################
@@ -78,6 +79,9 @@ class Simulator(object):
         #Run close ups
         self.logger.close_up()
 
+        #Empty trash
+
+
         #Close flag
         self.shop_is_open = False
 
@@ -96,7 +100,11 @@ class Simulator(object):
         #Calculate pupil field
         self.run_pupil_field()
 
-        breakpoint()
+        #Calculate image field
+        self.run_image_field()
+
+        #Close shop
+        self.close_up_shop()
 
 ############################################
 ############################################
@@ -108,6 +116,10 @@ class Simulator(object):
     def run_pupil_field(self):
         #TODO: add loading pupil field
         pupil = self.calc_pupil_field()
+
+        #Save + store
+        #FIXME: add save
+        self.pupil = pupil
 
     def calc_pupil_field(self):
         #Build target
@@ -133,6 +145,21 @@ class Simulator(object):
             pupil[iw] = uu
 
         return pupil
+
+############################################
+############################################
+
+############################################
+####	Image Field  ####
+############################################
+
+    def run_image_field(self):
+        #Return immediately if running pupil only
+        if self.skip_image:
+            return
+
+        #Calculate image
+        focal = self.focuser.calculate_image(self.pupil)
 
 ############################################
 ############################################

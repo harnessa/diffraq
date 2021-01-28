@@ -56,6 +56,9 @@ def polar_quad(g, m, n):
 
     return xq, yq, wq
 
+############################################
+############################################
+
 def polar_edge(g, m, n):
     """
     xe, ye = polar_edge(g, m, n)

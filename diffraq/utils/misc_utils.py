@@ -1,5 +1,5 @@
 """
-utilities.py
+misc_utils.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -7,7 +7,7 @@ Created on: 01-18-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Utility functions to be used by DIFFRAQ.
+Description: Miscellaneous utility functions to be used by DIFFRAQ.
 
 """
 
@@ -60,13 +60,6 @@ def get_filename(dir_name,base_name,ext,file_type):
 ############################################
 #####   Parameter Functions    #####
 ############################################
-
-def mix_usr_def_params(usr_pms, def_pms):
-    usr_keys = usr_pms.keys()
-    for k,v in def_pms.items():
-        if k not in usr_keys:
-            usr_pms[k] = v
-    return usr_pms
 
 def set_default_params(parent, params, in_def_pms):
     bad_str = color_string('!*!', bad_color)
