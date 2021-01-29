@@ -50,7 +50,7 @@ def_params = {
     'num_pts':              256,        #Number of points across telescope
 
     ### Focuser ###
-    'focal_length':         120,        #Focal length of optics
+    'focal_length':         240,        #Focal length of optics
     'focus_point':          'source',   #Which plane to focus on. Options: [source, occulter] #TODO: add pupil
     'pixel_size':           13e-6,      #Width of square pixels
     'defocus':              0.,         #Amount of defocus (can be + or -)

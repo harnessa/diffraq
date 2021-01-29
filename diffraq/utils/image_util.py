@@ -1,5 +1,5 @@
 """
-image_utils.py
+image_util.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -35,7 +35,7 @@ def pad_array(inarr, num_pad):
 
 def round_aperture(img):
     #Build radius values
-    rhoi = get_image_radii(img)
+    rhoi = get_image_radii(img.shape[-2:])
     rtest = rhoi >= (min(img.shape[-2:]) - 1.)/2.
 
     #Get zero value depending if complex
@@ -51,11 +51,12 @@ def round_aperture(img):
 
     return img
 
-def get_image_radii(img, cen=None):
-    yind, xind = np.indices(img.shape[-2:])
+def get_image_radii(img_shp, cen=None):
+    yind, xind = np.indices(img_shp)
     if cen is None:
         #TODO: is -1 correct?
-        cen = [(img.shape[-2] - 1)/2, (img.shape[-1] - 1)/2]
+        # cen = [(img_shp[-2] - 1)/2, (img_shp[-1] - 1)/2]
+        cen = [(img_shp[-2] - 0)/2, (img_shp[-1] - 0)/2]
     return np.hypot(xind - cen[0], yind - cen[1])
 
 ##############################################

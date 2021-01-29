@@ -34,8 +34,8 @@ class Simulator(object):
 
     def set_parameters(self, params):
         #Set parameters
-        diffraq.utils.misc_utils.set_default_params(self, params, diffraq.utils.def_params)
-        self.params = diffraq.utils.misc_utils.deepcopy(params)
+        diffraq.utils.misc_util.set_default_params(self, params, diffraq.utils.def_params)
+        self.params = diffraq.utils.misc_util.deepcopy(params)
 
         ### Derived ###
 

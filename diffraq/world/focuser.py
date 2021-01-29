@@ -12,7 +12,8 @@ Description: Class to propagate the diffracted field to the focal plane of the
 """
 
 import numpy as np
-from diffraq.utils import image_utils
+from diffraq.utils import image_util
+from scipy.ndimage import affine_transform
 
 class Focuser(object):
 
@@ -86,10 +87,10 @@ class Focuser(object):
 
     def get_image(self, pupil, wave, true_pad):
         #Round aperture
-        pupil = image_utils.round_aperture(pupil)
+        pupil = image_util.round_aperture(pupil)
 
         #Pad array
-        pupil = image_utils.pad_array(pupil, true_pad)
+        pupil = image_util.pad_array(pupil, true_pad)
 
         #Propagate to focal plane
         image, dx = self.propagate_lens_diffraction(pupil, wave)
@@ -120,9 +121,9 @@ class Focuser(object):
         FF = self.do_FFT(pupil)
 
         #Trim far outer reaches
-        max_img = 512       #TODO: what is max extent from nyquist?
-        FF = image_utils.crop_image(FF, None, max_img//2)
-        et = image_utils.crop_image(et, None, max_img//2)
+        max_img = self.sim.num_pts * 2       #TODO: what is max extent from nyquist?
+        FF = image_util.crop_image(FF, None, max_img//2)
+        et = image_util.crop_image(et, None, max_img//2)
 
         #Multiply by Fresnel diffraction phase prefactor
         FF *= np.exp(1j * 2.*np.pi/wave * dx**2. * (et.T**2 + et**2) / (2.*zz))
@@ -130,12 +131,11 @@ class Focuser(object):
         #Multiply by constant phase term
         FF *= np.exp(1j * 2.*np.pi/wave * zz)
 
-        #Add normalizations to match Fresnel diffraction
-        FF *= self.dx0**2./(wave*zz)
+        #Normalize by FFT + normalizations to match Fresnel diffraction (not used)
+        # FF *= self.dx0**2./(wave*zz) / np.count_nonzero(np.abs(pupil) != 0)
 
-        #Normalize by FFT
-        # FF /= np.count_nonzero(np.abs(pupil) != 0)
-        #TODO:  double check normalization
+        #Normalize such that peak is 1. Needs to scale for wavelength
+        FF /= np.count_nonzero(np.abs(pupil) != 0)
 
         #Cleanup
         del et
@@ -156,17 +156,23 @@ class Focuser(object):
         return np.fft.ifftshift(np.fft.fft2(np.fft.fftshift(MM)))
 
     def finalize_image(self, img, num_img, targ_pad, true_pad):
-        #Current size
-        img_len = len(img)
+        #Resample onto theoretical resolution through affine transform
+        scaling = true_pad / targ_pad
 
-        #Resample onto theoretical resolution (xold is shifted by 0.5 pixel to recenter)
-        xold = (np.arange(img_len) - img_len/2.)/true_pad
-        xnew = (np.arange(img_len) - (img_len - 1.)/2.)/targ_pad
-        # img = RectBivariateSpline(xold,xold,img,kx=self.diffractor.spline,ky=self.diffractor.spline)(xnew,xnew)
-        #FIXME: actually do proper resampling? would like to not require scipy....
+        #Make sure scaling leads to even number (will lead to small difference in sampling)
+        NN = len(img)
+        N2 = NN / scaling
+        scaling = NN / (N2 - (N2%2))
+
+        #Affine matrix + offset
+        affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
+        out_shape = (np.array(img.shape) / scaling).astype(int)
+
+        #Do affine transform
+        img = affine_transform(img, affmat, output_shape=out_shape, order=5)
 
         #Crop to match image size
-        img = image_utils.crop_image(img, None, num_img//2)
+        img = image_util.crop_image(img, None, num_img//2)
 
         return img
 

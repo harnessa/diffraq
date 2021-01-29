@@ -13,8 +13,10 @@ Description: Test propagation of field to image plane.
 
 import diffraq
 import numpy as np
+from scipy.special import j1
 
 class Test_Focuser(object):
+    prop_tol = 1e-4
 
     def run_all_tests(self):
         tsts = ['sampling', 'propagation']
@@ -25,8 +27,8 @@ class Test_Focuser(object):
 
     def test_sampling(self):
         waves = [0.3e-6, 0.6e-6, 1.2e-6]
-        true_pad = [2, 4, 8]
-        targ_pad = [1.15384615, 2.30769231, 4.61538462]     #D=2.4, f=120
+        true_pad = [4, 8, 16]
+        targ_pad = [2.30769231, 4.61538462, 9.23076923]     #D=2.4, f=240
 
         #Build simulator
         sim = diffraq.Simulator({'waves':waves})
@@ -39,7 +41,7 @@ class Test_Focuser(object):
 ############################################
 
     def test_propagation(self):
-        waves = [0.6e-6, 1.2e-6]
+        waves = np.array([0.6e-6, 1.2e-6])
 
         #Build simulator
         sim = diffraq.Simulator({'waves':waves})
@@ -50,9 +52,16 @@ class Test_Focuser(object):
         #Get images
         image = sim.focuser.calculate_image(pupil)
 
-        import matplotlib.pyplot as plt;plt.ion()
-        plt.imshow(image[0])
-        breakpoint()
+        #Get Airy disk
+        rr = diffraq.utils.image_util.get_image_radii(image.shape[-2:]) * \
+            sim.focuser.image_res
+        rr[rr == 0] = 1e-12         #j1 blows up at r=0
+        xx = 2*np.pi/waves[:,None,None] * sim.tel_diameter/2 * np.sin(rr)
+        airy = (2.*j1(xx)/xx)**2
+
+        #Check
+        for i in range(len(waves)):
+            assert(np.abs(airy[i] - image[i]).mean() < self.prop_tol)
 
 if __name__ == '__main__':
 

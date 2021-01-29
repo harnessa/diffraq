@@ -22,6 +22,7 @@ Dependencies
 You will need:
 
 - `numpy <http://www.numpy.org/>`
+- `scipy <https://www.scipy.org>`
 - `finufft <https://github.com/flatironinstitute/finufft>`
 - `h5py <http://www.h5py.org>`
 

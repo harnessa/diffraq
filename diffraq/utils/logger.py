@@ -11,7 +11,7 @@ Description: Class to log and record results of DIFFRAQ calculations.
 
 """
 
-from diffraq.utils import misc_utils, def_params
+from diffraq.utils import misc_util, def_params
 import numpy as np
 from datetime import datetime
 import h5py
@@ -38,7 +38,7 @@ class Logger(object):
         #Create save directory
         if self.do_save:
             self.save_dir = f"{self.sim.save_dir_base}/{self.sim.session}"
-            misc_utils.create_directory(self.save_dir)
+            misc_util.create_directory(self.save_dir)
 
         #Start
         self.start_time = time.perf_counter()
@@ -65,7 +65,7 @@ class Logger(object):
     def filename(self,base_name,file_type,ext=None):
         if ext is None:
             ext = self.save_ext
-        return misc_utils.get_filename(self.save_dir, base_name, ext, file_type)
+        return misc_util.get_filename(self.save_dir, base_name, ext, file_type)
 
     def open_log_file(self):
         #Return immediately if not saving
@@ -99,9 +99,9 @@ class Logger(object):
             if is_time:
                 txt += f' ({datetime.utcnow()})'
             if is_err:
-                txt = misc_utils.color_string(f'Error! {txt}', misc_utils.bad_color)
+                txt = misc_util.color_string(f'Error! {txt}', misc_util.bad_color)
             elif is_warn:
-                txt = misc_utils.color_string(f'Warning! {txt}', misc_utils.neutral_color)
+                txt = misc_util.color_string(f'Warning! {txt}', misc_util.neutral_color)
             str_str = '*'*int(n_strs)
             new_str = f'{str_str} {txt} {str_str}\n'
 
@@ -130,9 +130,9 @@ class Logger(object):
         if not self.do_save:
             return
         #Dump parameters into a json file
-        misc_utils.json_dump(self.sim.params, self.filename('parameters','json'))
+        misc_util.json_dump(self.sim.params, self.filename('parameters','json'))
         #Save default parameters as well (in case these get changed)
-        misc_utils.json_dump(def_params, self.filename('def_params','json'))
+        misc_util.json_dump(def_params, self.filename('def_params','json'))
 
 ############################################
 ############################################
