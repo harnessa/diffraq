@@ -23,7 +23,7 @@ class Test_diffraction_points(object):
         tol = 1e-9              #tolerance
 
         #Specify target grid
-        ngrid = 100
+        ngrid = 20
         grid_width = 3
 
         #Build grid

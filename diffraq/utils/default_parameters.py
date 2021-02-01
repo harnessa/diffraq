@@ -30,6 +30,7 @@ def_params = {
     'session':              '',         #Session name (next level folder)
     'save_ext':             '',         #Save extension
     'verbose':              True,       #Print to STD?
+    'free_on_end':          True,       #Delete results after simulation run?
 
     ### Occulter ###
     'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, starshade]

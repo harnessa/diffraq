@@ -60,17 +60,14 @@ def starshade_quad(Afunc, num_pet, r0, r1, m, n):
     wi = (r1 - r0) * wr * pr
 
     #thetas
-    tt = np.kron(np.ones(num_pet), (np.pi/num_pet) * Aval * pw) + \
-         np.kron(2.*np.pi*(np.arange(num_pet) + 1), np.ones(n))
-
-    #Angle between petals
-    pet_ang = 2.*np.pi/num_pet
+    tt = np.tile((np.pi/num_pet) * Aval * pw, (1, num_pet)) + \
+         np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), n)
 
     #Add Petal nodes + weights
-    for ip in range(num_pet):
-        xq = np.concatenate(( xq, (pr * np.cos(tt + ip*pet_ang)).flatten() ))
-        yq = np.concatenate(( yq, (pr * np.sin(tt + ip*pet_ang)).flatten() ))
-        wq = np.concatenate(( wq, (np.pi/num_pet) * (wi * Aval * ww).flatten() ))
+    xq = np.concatenate(( xq, (pr * np.cos(tt)).flatten() ))
+    yq = np.concatenate(( yq, (pr * np.sin(tt)).flatten() ))
+    wq = np.concatenate(( wq, (np.pi/num_pet) * \
+        np.tile(wi * Aval * ww, (1, num_pet)).flatten() ))
 
     return xq, yq, wq
 

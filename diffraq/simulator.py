@@ -15,6 +15,7 @@ Description: Main class to control simulations for the DIFFRAQ python package.
 import diffraq
 import numpy as np
 import atexit
+import gc
 
 class Simulator(object):
 
@@ -80,10 +81,28 @@ class Simulator(object):
         self.logger.close_up()
 
         #Empty trash
-
+        self.clean_up()
 
         #Close flag
         self.shop_is_open = False
+
+    def clean_up(self):
+        #Return if not freeing
+        if not self.free_on_end:
+            return
+
+        #Names
+        trash_dict = {self:['pupil', 'focal'], 'occulter':['xq', 'yq', 'wq']}
+
+        #Loop through objects and attributes and delete
+        for obj, att_list in trash_dict.items():
+            for att in att_list:
+                if hasattr(obj, att):
+                    delattr(obj, att)
+
+        #Collect
+        n = gc.collect()
+        breakpoint()
 
 ############################################
 ############################################

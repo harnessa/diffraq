@@ -123,9 +123,9 @@ class Focuser(object):
         dx = wave*self.image_distance/(self.dx0*NN)
 
         #Store propagation distance
-        zz = self.image_distance
+        zz = self.image_distance + self.sim.defocus
 
-        #Multiply by propagation kernels (lens and the Fresnel)
+        #Multiply by propagation kernels (lens and Fresnel)
         pupil *= self.propagation_kernel(et, self.dx0, wave, -self.sim.focal_length)
         pupil *= self.propagation_kernel(et, self.dx0, wave, zz)
 

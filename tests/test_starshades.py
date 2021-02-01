@@ -16,13 +16,6 @@ import numpy as np
 
 class Test_Starshades(object):
 
-    def run_all_tests(self):
-        tsts = ['starshades']
-        for t in tsts:
-            getattr(self, f'test_{t}')()
-
-############################################
-
     def test_starshades(self):
 
         #Build simulator
@@ -63,4 +56,4 @@ class Test_Starshades(object):
 if __name__ == '__main__':
 
     ts = Test_Starshades()
-    ts.run_all_tests()
+    ts.test_starshades()

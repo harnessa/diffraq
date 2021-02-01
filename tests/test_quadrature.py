@@ -81,12 +81,21 @@ class Test_Quadrature(object):
                 xq, yq, wq = diffraq.quadrature.starshade_quad(disk_Afunc, 1, \
                     disk_r0, disk_r1, m, n)
 
+                #Assert all are the same shape
+                nd = int(np.ceil(0.3*n*1)) #number in disk
+                assert(xq.shape == yq.shape == wq.shape == (m*n + m*nd,))
+
                 #Assert with analytic area formula
                 assert(np.isclose(wq.sum(), np.pi*disk_r1**2))
 
                 ## Test STARSHADE ###
+                #Get quad
                 xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, num_pet, \
                     ss_r0, ss_r1, m, n)
+
+                #Assert all are the same shape
+                nd = int(np.ceil(0.3*n*num_pet)) #number in disk
+                assert(xq.shape == yq.shape == wq.shape == (m*n*num_pet + m*nd,))
 
                 #TODO: need better starshade assertion
                 assert(np.isclose(wq.sum(), hg_area))

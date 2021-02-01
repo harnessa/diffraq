@@ -18,7 +18,7 @@ class Test_calc_pupil_field(object):
 
     def test_pupil_field(self):
 
-        ngrid = 100
+        ngrid = 20
         grid_width = 3
         fresnums = [10,100,1000]
         shapes = ['circle', 'polar']
