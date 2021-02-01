@@ -46,10 +46,13 @@ def round_aperture(img):
     #Set electric field outside of aperture to zero (make aperture circular through rtest)
     img[...,rtest] = zero_val
 
+    #Get number of unmasked points
+    NN_full = np.count_nonzero(~rtest)
+
     #cleanup
     del rhoi, rtest
 
-    return img
+    return img, NN_full
 
 def get_image_radii(img_shp, cen=None):
     yind, xind = np.indices(img_shp)

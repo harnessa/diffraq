@@ -36,12 +36,12 @@ class Test_Focuser(object):
         #Check
         for i in range(len(waves)):
             assert(np.isclose(true_pad[i], sim.focuser.true_pad[i]) and \
-                np.isclose(targ_pad[i], sim.focuser.target_pad[i]))
+                np.isclose(targ_pad[i], sim.focuser.targ_pad[i]))
 
 ############################################
 
     def test_propagation(self):
-        waves = np.array([0.6e-6, 1.2e-6])
+        waves = np.array([0.3e-6, 0.6e-6, 1.2e-6])
 
         #Build simulator
         sim = diffraq.Simulator({'waves':waves})
