@@ -40,3 +40,4 @@ from diffraq.simulator import Simulator
 import diffraq.quadrature
 import diffraq.diffraction
 import diffraq.world
+from diffraq.analysis import Analyzer

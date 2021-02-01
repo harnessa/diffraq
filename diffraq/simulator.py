@@ -14,20 +14,15 @@ Description: Main class to control simulations for the DIFFRAQ python package.
 
 import diffraq
 import numpy as np
-import atexit
-import gc
 
 class Simulator(object):
 
-    def __init__(self, params={}, do_start_up=False, is_analysis=False):
-        # self.is_analysis = is_analysis
+    def __init__(self, params={}):
         #Set parameters
         self.set_parameters(params)
+
         #Load children
         self.load_children()
-        # #Start up?
-        if do_start_up:
-            self.open_up_shop()
 
 ############################################
 ####	Initialize  ####
@@ -35,14 +30,14 @@ class Simulator(object):
 
     def set_parameters(self, params):
         #Set parameters
-        diffraq.utils.misc_util.set_default_params(self, params, diffraq.utils.def_params)
+        diffraq.utils.misc_util.set_default_params(self, params, diffraq.utils.def_sim_params)
         self.params = diffraq.utils.misc_util.deepcopy(params)
 
         ### Derived ###
-
         if self.save_dir_base is None:
             self.save_dir_base = f"{diffraq.pkg_home_dir}/Results"
         self.waves = np.atleast_1d(self.waves)
+
         #Effective separation for diverging beam
         self.zeff = self.z0 * self.zz / (self.z0 + self.zz)
 
@@ -60,18 +55,11 @@ class Simulator(object):
 ############################################
 
     def open_up_shop(self):
-        #Reset if already started up
-        if self.shop_is_open:
-            self.load_children()
-
         #Run start ups
         self.logger.start_up()
 
         #Open flag
         self.shop_is_open = True
-
-        #Don't forget to close up
-        atexit.register(self.close_up_shop)
 
     def close_up_shop(self):
         if not self.shop_is_open:
@@ -92,17 +80,14 @@ class Simulator(object):
             return
 
         #Names
-        trash_dict = {self:['pupil', 'focal'], 'occulter':['xq', 'yq', 'wq']}
+        trash_dict = {self:['pupil', 'image'], self.occulter:['xq', 'yq', 'wq']}
 
         #Loop through objects and attributes and delete
         for obj, att_list in trash_dict.items():
             for att in att_list:
+                #Delete if object has attribute
                 if hasattr(obj, att):
                     delattr(obj, att)
-
-        #Collect
-        n = gc.collect()
-        breakpoint()
 
 ############################################
 ############################################
@@ -133,16 +118,41 @@ class Simulator(object):
 ############################################
 
     def run_pupil_field(self):
-        #TODO: add loading pupil field
-        pupil = self.calc_pupil_field()
+        #Load pupil instead of calculating?
+        pupil_loaded = self.load_pupil_field()
 
-        #Save + store
-        #FIXME: add save
-        self.pupil = pupil
+        #If pupil loaded, return
+        if pupil_loaded:
+            return
+
+        #Calculate pupil field
+        self.pupil, grid_pts = self.calc_pupil_field()
+
+        #Save pupil field
+        self.logger.save_pupil_field(self.pupil, grid_pts)
+
+    ###########################
+
+    def load_pupil_field(self):
+        #Return immediately if not loading
+        if not self.do_load_pupil:
+            return False
+
+        #Check if pupil file exists
+        if not self.logger.pupil_file_exists():
+            return False
+
+        #Load pupil
+        self.pupil, grid_pts = self.logger.load_pupil_field()
+
+        #Return True
+        return True
+
+    ###########################
 
     def calc_pupil_field(self):
         #Build target
-        grid_pts = diffraq.world.get_grid_points(self.num_pts, self.tel_diameter)
+        grid_pts = diffraq.utils.image_util.get_grid_points(self.num_pts, self.tel_diameter)
 
         #Build Area Quadrature
         self.occulter.build_quadrature()
@@ -158,12 +168,13 @@ class Simulator(object):
 
             #Calculate diffraction
             uu = diffraq.diffraction.diffract_grid(self.occulter.xq, \
-                self.occulter.yq, self.occulter.wq, lamz, grid_pts, self.fft_tol)
+                self.occulter.yq, self.occulter.wq, lamz, grid_pts, self.fft_tol,
+                is_babinet=self.is_babinet)
 
             #Store
             pupil[iw] = uu
 
-        return pupil
+        return pupil, grid_pts
 
 ############################################
 ############################################
@@ -178,7 +189,10 @@ class Simulator(object):
             return
 
         #Calculate image
-        focal = self.focuser.calculate_image(self.pupil)
+        self.image, grid_pts = self.focuser.calculate_image(self.pupil)
+
+        #Save image
+        self.logger.save_image_field(self.image, grid_pts)
 
 ############################################
 ############################################

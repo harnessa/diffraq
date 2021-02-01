@@ -27,7 +27,7 @@ class Test_diffraction_grid(object):
         grid_width = 3
 
         #Build grid
-        grid_pts = diffraq.world.get_grid_points(ngrid, grid_width)
+        grid_pts = diffraq.utils.image_util.get_grid_points(ngrid, grid_width)
         grid_2D = np.tile(grid_pts, (ngrid,1)).T
 
         #Loop over Fresnel number
@@ -55,6 +55,9 @@ class Test_diffraction_grid(object):
             #Assert max difference is close to specified tolerance
             max_diff = tol * fresnum
             assert(np.abs(utru - uu).max() < max_diff)
+
+        #Cleanup
+        del grid_pts, grid_2D, uu, utru
 
 if __name__ == '__main__':
 

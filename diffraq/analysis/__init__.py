@@ -10,3 +10,5 @@ License: Refer to $pkg_home_dir/LICENSE
 Description: __init__ package for the ANALYSIS module.
 
 """
+
+from diffraq.analysis.analyzer import Analyzer

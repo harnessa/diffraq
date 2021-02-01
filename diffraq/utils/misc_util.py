@@ -82,6 +82,14 @@ def set_default_params(parent, params, in_def_pms):
 
         setattr(parent, k, v)
 
+def mix_usr_def_params(usr_pms, def_pms):
+    """Overwrite default parameters with user-input parameters. Assumes all
+        user keys are present in default."""
+    for k, v in usr_pms.items():
+        def_pms[k] = v
+
+    return def_pms
+
 ############################################
 ############################################
 

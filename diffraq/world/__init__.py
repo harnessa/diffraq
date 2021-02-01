@@ -11,6 +11,5 @@ Description: __init__ package for the WORLD module.
 
 """
 
-from diffraq.world.get_grid_points import get_grid_points
 from diffraq.world.focuser import Focuser
 from diffraq.world.occulter import Occulter

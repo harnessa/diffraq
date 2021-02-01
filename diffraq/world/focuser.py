@@ -27,10 +27,15 @@ class Focuser(object):
 ############################################
 
     def set_derived_parameters(self):
-        ### Image distances ###
+        #Get image distance depending on focus point
         object_distance = {'source':self.sim.zz + self.sim.z0, \
             'occulter':self.sim.zz}[self.sim.focus_point]
         self.image_distance = 1./(1./self.sim.focal_length - 1./object_distance)
+
+        #Add defocus to image distance
+        self.image_distance += self.sim.defocus
+
+        #Resolution
         self.image_res = self.sim.pixel_size / self.sim.focal_length
 
         #Input Spacing
@@ -43,9 +48,9 @@ class Focuser(object):
         #Target padding required to properly sample (image distance drops out of top and bottom)
         self.targ_pad = self.sim.waves / (self.sim.tel_diameter * self.image_res)
 
-        #Round padding to get to 2**n
-        self.true_pad = (2**np.ceil( np.log10(self.sim.num_pts*self.targ_pad) / \
-            np.log10(2)) / self.sim.num_pts).astype(int)
+        #Find next fastest size for FFT (not necessarily 2**n)
+        self.true_pad = np.array([fft.next_fast_len(int(tp * self.sim.num_pts)) \
+            //self.sim.num_pts for tp in self.targ_pad])
 
         #Make sure not too large
         if np.any(self.true_pad * self.sim.num_pts) > 2**12:
@@ -68,6 +73,7 @@ class Focuser(object):
 
         #Create image container
         image = np.empty((len(self.sim.waves), num_img, num_img))
+        sampling = np.empty(len(self.sim.waves))
 
         #Create copy
         pupil = in_pupil.copy()
@@ -93,22 +99,29 @@ class Focuser(object):
             for iw in cur_inds:
 
                 #Propagate to image plane
-                img = self.propagate_lens_diffraction(pupil[iw], \
+                img, dx = self.propagate_lens_diffraction(pupil[iw], \
                     self.sim.waves[iw], et, pad, NN, NN_full)
 
                 #Turn into intensity
                 img = np.real(img.conj()*img)
 
                 #Finalize image
-                img = self.finalize_image(img, num_img, self.targ_pad[iw], pad)
+                img, dx = self.finalize_image(img, num_img, self.targ_pad[iw], pad, dx)
 
                 #Store
                 image[iw] = img
+                sampling[iw] = dx
+
+        #Use mean sampling to calculate grid pts (this grid matches fft.fftshift(fft.fftfreq(NN, d=1/NN)))
+        grid_pts = image_util.get_grid_points(image.shape[-1], dx=sampling.mean())
+
+        #Convert to angular resolution
+        grid_pts /= self.image_distance
 
         #Cleanup
         del et, pupil, img
 
-        return image
+        return image, grid_pts
 
 ############################################
 ############################################
@@ -122,12 +135,9 @@ class Focuser(object):
         #Get output plane sampling
         dx = wave*self.image_distance/(self.dx0*NN)
 
-        #Store propagation distance
-        zz = self.image_distance + self.sim.defocus
-
         #Multiply by propagation kernels (lens and Fresnel)
         pupil *= self.propagation_kernel(et, self.dx0, wave, -self.sim.focal_length)
-        pupil *= self.propagation_kernel(et, self.dx0, wave, zz)
+        pupil *= self.propagation_kernel(et, self.dx0, wave, self.image_distance)
 
         #Pad pupil
         pupil = image_util.pad_array(pupil, pad)
@@ -139,18 +149,18 @@ class Focuser(object):
         FF = image_util.crop_image(FF, None, NN//pad//2)
 
         #Multiply by Fresnel diffraction phase prefactor
-        FF *= self.propagation_kernel(et, dx, wave, zz)
+        FF *= self.propagation_kernel(et, dx, wave, self.image_distance)
 
         #Multiply by constant phase term
-        FF *= np.exp(1j * 2.*np.pi/wave * zz)
+        FF *= np.exp(1j * 2.*np.pi/wave * self.image_distance)
 
         #Normalize by FFT + normalizations to match Fresnel diffraction (not used)
-        # FF *= self.dx0**2./(wave*zz) / NN_full
+        # FF *= self.dx0**2./(wave*self.image_distance) / NN_full
 
         #Normalize such that peak is 1. Needs to scale for wavelength
         FF /= NN_full
 
-        return FF
+        return FF, dx
 
 ############################################
 ############################################
@@ -165,7 +175,7 @@ class Focuser(object):
     def do_FFT(self, MM):
         return fft.ifftshift(fft.fft2(fft.fftshift(MM), workers=-1))
 
-    def finalize_image(self, img, num_img, targ_pad, true_pad):
+    def finalize_image(self, img, num_img, targ_pad, true_pad, dx):
         #Resample onto theoretical resolution through affine transform
         scaling = true_pad / targ_pad
 
@@ -177,6 +187,9 @@ class Focuser(object):
         N2 = NN / scaling
         scaling = NN / (N2 - (N2%2))
 
+        #Scale sampling
+        dx *= scaling
+
         #Affine matrix
         affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
         out_shape = (np.ones(2) * NN / scaling).astype(int)
@@ -187,7 +200,7 @@ class Focuser(object):
         #Crop to match image size
         img = image_util.crop_image(img, None, num_img//2)
 
-        return img
+        return img, dx
 
 ############################################
 ############################################

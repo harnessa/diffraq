@@ -15,9 +15,9 @@ Description: diffraction calculation of input quadrature to target grid.
 import numpy as np
 import finufft
 
-def diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol):
+def diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol, is_babinet=False):
     """
-    uu = diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol)
+    uu = diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol, is_babinet)
 
     calculates diffraction propagation from input quadrature to target grid (Barnet 2021).
 
@@ -27,6 +27,7 @@ def diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol):
         lambdaz = wavelength * z [meters^2]
         grid_pts = target grid points (1D) [meters]
         tol = tolerance to which to calculate FFT (via finufft)
+        is_babinet = calculation implies Babinet's Principle and need to subtract 1?
 
     Outputs:
         uu = complex field over target grid
@@ -55,5 +56,9 @@ def diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol):
     #post multiply by quadratic phase of target and Kirchoff prefactor
     tarq = np.exp((1j*np.pi/lambdaz)*grid_pts**2)
     uu *= 1./(1j*lambdaz) * (tarq * tarq[:,None])
+
+    #Subtract from Babinet field
+    if is_babinet:
+        uu = 1.+0j - uu
 
     return uu

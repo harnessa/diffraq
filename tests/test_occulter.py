@@ -45,6 +45,9 @@ class Test_Occulter(object):
         assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
                np.isclose(wq, sim.occulter.wq).all())
 
+        #Cleanup
+        del xq, yq, wq
+
 ############################################
 
     def test_circle(self):
@@ -68,6 +71,9 @@ class Test_Occulter(object):
         #Check they are all the ame
         assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
                np.isclose(wq, sim.occulter.wq).all())
+
+        #Cleanup
+        del xq, yq, wq
 
 ############################################
 
@@ -101,6 +107,9 @@ class Test_Occulter(object):
             #Check they are all the ame
             assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
                    np.isclose(wq, sim.occulter.wq).all())
+
+        #Cleanup
+        del xq, yq, wq
 
 ############################################
 ############################################

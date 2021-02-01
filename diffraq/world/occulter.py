@@ -105,8 +105,6 @@ class Occulter(object):
         self.xq, self.yq, self.wq = starshade_quad(apod_func, self.sim.num_petals, \
             self.sim.ss_rmin, self.sim.ss_rmax, self.sim.radial_nodes, self.sim.theta_nodes)
 
-        breakpoint()
-        
     def build_edge_starshade(self, npts=None):
         #Get apodization function
         apod_func = self.get_starshade_apod()

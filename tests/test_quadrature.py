@@ -44,6 +44,9 @@ class Test_Quadrature(object):
 
                 assert((np.isclose(pq, p2).all()) & (np.isclose(wq, w2).all()))
 
+        #Cleanup
+        del pq, wq, p2, w2
+
 ############################################
 
     def test_polar(self):
@@ -58,6 +61,9 @@ class Test_Quadrature(object):
 
                     #Assert with analytic area formula
                     assert(np.isclose(wq.sum(), np.pi*(1. + a**2/2)))
+
+        #Cleanup
+        del xq, yq, wq
 
 ############################################
 
@@ -99,6 +105,9 @@ class Test_Quadrature(object):
 
                 #TODO: need better starshade assertion
                 assert(np.isclose(wq.sum(), hg_area))
+
+        #Cleanup
+        del xq, yq, wq
 
 ############################################
 

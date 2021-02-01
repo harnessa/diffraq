@@ -11,12 +11,13 @@ Description: Class to log and record results of DIFFRAQ calculations.
 
 """
 
-from diffraq.utils import misc_util, def_params
+from diffraq.utils import misc_util, def_sim_params
 import numpy as np
 from datetime import datetime
 import h5py
 import time
 import sys
+import os
 
 class Logger(object):
 
@@ -30,14 +31,15 @@ class Logger(object):
 ############################################
 
     def copy_params(self):
-        pms = ['do_save', 'verbose', 'save_ext']
+        pms = ['do_save', 'verbose', 'save_ext', 'with_log']
         for k in pms:
             setattr(self, k, getattr(self.sim, k))
+
+        self.save_dir = f"{self.sim.save_dir_base}/{self.sim.session}"
 
     def start_up(self):
         #Create save directory
         if self.do_save:
-            self.save_dir = f"{self.sim.save_dir_base}/{self.sim.session}"
             misc_util.create_directory(self.save_dir)
 
         #Start
@@ -62,14 +64,14 @@ class Logger(object):
 #####  File Functions #####
 ############################################
 
-    def filename(self,base_name,file_type,ext=None):
+    def filename(self, base_name, file_type, ext=None):
         if ext is None:
             ext = self.save_ext
         return misc_util.get_filename(self.save_dir, base_name, ext, file_type)
 
     def open_log_file(self):
         #Return immediately if not saving
-        if not self.do_save:
+        if not self.do_save or not self.with_log:
             return
 
         #Open file and register it to close at exit
@@ -77,7 +79,7 @@ class Logger(object):
 
     def close_log_file(self):
         #Return immediately if not saving
-        if not self.do_save:
+        if not self.do_save or not self.with_log:
             return
 
         #Close file if still open
@@ -105,7 +107,7 @@ class Logger(object):
             str_str = '*'*int(n_strs)
             new_str = f'{str_str} {txt} {str_str}\n'
 
-        if self.do_save and self.log_is_open:
+        if self.do_save and self.log_is_open and self.with_log:
             self.log_file.write(new_str)
 
         if self.verbose:
@@ -132,7 +134,78 @@ class Logger(object):
         #Dump parameters into a json file
         misc_util.json_dump(self.sim.params, self.filename('parameters','json'))
         #Save default parameters as well (in case these get changed)
-        misc_util.json_dump(def_params, self.filename('def_params','json'))
+        misc_util.json_dump(def_sim_params, self.filename('def_params','json'))
+
+    ###########################
+
+    def save_pupil_field(self, pupil, grid_pts):
+        #Return immediately if not saving
+        if not self.do_save:
+            return
+
+        #Save to HDF5
+        with h5py.File(self.filename('pupil','h5'), 'w') as f:
+            f.create_dataset('field', data=pupil)
+            f.create_dataset('grid_pts', data=grid_pts)
+
+    ###########################
+
+    def save_image_field(self, image, grid_pts):
+        #Return immediately if not saving
+        if not self.do_save:
+            return
+
+        #Save to HDF5
+        with h5py.File(self.filename('image','h5'), 'w') as f:
+            f.create_dataset('intensity', data=image)
+            f.create_dataset('grid_pts', data=grid_pts)
+
+############################################
+############################################
+
+############################################
+#####   Loading functions #####
+############################################
+
+    def load_parameters(self, load_dir, load_ext):
+        #Get filenames
+        usr_file = misc_util.get_filename(load_dir, 'parameters', load_ext, 'json')
+        def_file = misc_util.get_filename(load_dir, 'def_params', load_ext, 'json')
+
+        #Load json files
+        usr_pms = misc_util.json_load(usr_file)
+        def_pms = misc_util.json_load(def_file)
+
+        #Mix parameters
+        params = misc_util.mix_usr_def_params(usr_pms, def_pms)
+
+        return params
+
+    ###########################
+
+    def pupil_file_exists(self):
+        return os.path.exists(self.filename('pupil','h5', ext=self.sim.pupil_load_ext))
+
+    def load_pupil_field(self):
+        #Filename with pupil load extension
+        filename = self.filename('pupil','h5', ext=self.sim.pupil_load_ext)
+
+        #Load from HDF5
+        with h5py.File(filename, 'r') as f:
+            pupil = f['field'][()]
+            grid_pts = f['grid_pts'][()]
+
+        return pupil, grid_pts
+
+    ###########################
+
+    def load_image_field(self):
+        #Load from HDF5
+        with h5py.File(self.filename('image','h5'), 'r') as f:
+            image = f['intensity'][()]
+            grid_pts = f['grid_pts'][()]
+
+        return image, grid_pts
 
 ############################################
 ############################################

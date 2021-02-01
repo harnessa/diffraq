@@ -64,3 +64,27 @@ def get_image_radii(img_shp, cen=None):
 
 ##############################################
 ##############################################
+
+##############################################
+###		Grid Points		###
+##############################################
+
+def get_grid_points(ngrid, width=None, dx=None):
+    #Handle case for width supplied
+    if width is not None:
+        grid_pts = width*(np.arange(ngrid)/ngrid - 0.5)
+        dx = width/ngrid
+
+    #Handle case for spacing supplied
+    elif dx is not None:
+        grid_pts = dx*(np.arange(ngrid) - 0.5*ngrid)
+
+    #Handle the odd case
+    if ngrid % 2 == 1:
+        #Shift for odd points
+        grid_pts += dx/2
+
+    return grid_pts
+
+##############################################
+##############################################

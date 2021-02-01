@@ -15,7 +15,7 @@ Description: diffraction calculation of input quadrature to arbitrary points.
 import numpy as np
 import finufft
 
-def diffract_points(xq, yq, wq, lambdaz, xi, eta, tol):
+def diffract_points(xq, yq, wq, lambdaz, xi, eta, tol, is_babinet=False):
     """
     uu = diffract_points(xq, yq, wq, lambdaz, xi, eta, tol)
 
@@ -28,6 +28,7 @@ def diffract_points(xq, yq, wq, lambdaz, xi, eta, tol):
         lambdaz = wavelength * z [meter^2]
         xi, eta = target points (each must be 1D numpy array) [meters]
         tol = tolerance to which to calculate FFT (via finufft)
+        is_babinet = calculation implies Babinet's Principle and need to subtract 1?
 
     Outputs:
         uu = complex field at target points
@@ -43,5 +44,9 @@ def diffract_points(xq, yq, wq, lambdaz, xi, eta, tol):
 
     #post multiply bit
     uu *= 1./(1j*lambdaz) * np.exp((1j*np.pi/lambdaz)*(xi**2 + eta**2))
+
+    #Subtract from Babinet field
+    if is_babinet:
+        uu = 1.+0j - uu
 
     return uu

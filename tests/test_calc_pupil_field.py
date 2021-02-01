@@ -24,10 +24,6 @@ class Test_calc_pupil_field(object):
         shapes = ['circle', 'polar']
         tol = 1e-9              #tolerance
 
-        #Get 2D grid for theoretical calculation
-        grid_pts = diffraq.world.get_grid_points(ngrid, grid_width)
-        grid_2D = np.tile(grid_pts, (ngrid,1)).T
-
         for shape in shapes:
 
             #Load simulator
@@ -44,10 +40,13 @@ class Test_calc_pupil_field(object):
                 'num_pts':          ngrid,
             }
 
-            sim = diffraq.Simulator(params, do_start_up=True)
+            sim = diffraq.Simulator(params)
 
             #Get pupil field
-            pupil = sim.calc_pupil_field()
+            pupil, grid_pts = sim.calc_pupil_field()
+
+            #Get 2D grid for theoretical calculation
+            grid_2D = np.tile(grid_pts, (ngrid,1)).T
 
             #Compare to theoretical value for each Fresnel number
             for i in range(len(fresnums)):
@@ -59,6 +58,10 @@ class Test_calc_pupil_field(object):
                 #Assert max difference is close to specified tolerance
                 max_diff = tol * fresnums[i]
                 assert(np.abs(utru - pupil[i]).max() < max_diff)
+
+        #Cleanup
+        sim.clean_up()
+        del grid_pts, grid_2D, pupil, utru
 
     def get_theoretical_value(self, fresnum, u_shp, xq, yq, wq, grid_2D):
         lambdaz = 1./fresnum
