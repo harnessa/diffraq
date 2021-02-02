@@ -38,13 +38,11 @@ class Simulator(object):
             self.save_dir_base = f"{diffraq.pkg_home_dir}/Results"
         self.waves = np.atleast_1d(self.waves)
 
-        #Effective separation for diverging beam
-        self.zeff = self.z0 * self.zz / (self.z0 + self.zz)
-
     def load_children(self):
         self.logger = diffraq.utils.Logger(self)
         self.occulter = diffraq.world.Occulter(self)
-        self.focuser = diffraq.world.Focuser(self)
+        if not self.skip_image:
+            self.focuser = diffraq.world.Focuser(self)
         self.shop_is_open = False
 
 ############################################
@@ -170,12 +168,13 @@ class Simulator(object):
         for iw in range(len(self.waves)):
 
             #lambda * z
-            lamz = self.waves[iw] * self.zeff
+            lamzz = self.waves[iw] * self.zz
+            lamz0 = self.waves[iw] * self.z0
 
             #Calculate diffraction
             uu = diffraq.diffraction.diffract_grid(self.occulter.xq, \
-                self.occulter.yq, self.occulter.wq, lamz, grid_pts, self.fft_tol,
-                is_babinet=self.is_babinet)
+                self.occulter.yq, self.occulter.wq, lamzz, grid_pts, self.fft_tol,
+                is_babinet=self.is_babinet, lamz0=lamz0)
 
             #Store
             pupil[iw] = uu

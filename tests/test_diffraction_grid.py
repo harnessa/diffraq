@@ -46,11 +46,8 @@ class Test_diffraction_grid(object):
             uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lambdaz, grid_pts, tol)
 
             #Calculate theoretical value
-            utru = np.empty_like(uu)
-            for j in range(uu.shape[0]):
-                for k in range(uu.shape[1]):
-                    utru[j,k] = 1/(1j*lambdaz) * np.sum(np.exp((1j*np.pi/lambdaz)* \
-                        ((xq - grid_2D[j,k])**2 + (yq - grid_2D[k,j])**2))*wq)
+            utru = diffraq.utils.solution_util.direct_integration(fresnum, \
+                uu.shape, xq, yq, wq, grid_2D)
 
             #Assert max difference is close to specified tolerance
             max_diff = tol * fresnum

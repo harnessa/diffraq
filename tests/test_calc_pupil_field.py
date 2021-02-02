@@ -28,7 +28,6 @@ class Test_calc_pupil_field(object):
 
             #Load simulator
             params = {
-                'do_save':          False,
                 'zz':               1,
                 'waves':            1/np.array(fresnums),
                 'occulter_shape':   shape,
@@ -38,6 +37,7 @@ class Test_calc_pupil_field(object):
                 'theta_nodes':      350,
                 'tel_diameter':     grid_width,
                 'num_pts':          ngrid,
+                'skip_image':       True,
             }
 
             sim = diffraq.Simulator(params)
@@ -52,8 +52,9 @@ class Test_calc_pupil_field(object):
             for i in range(len(fresnums)):
 
                 #Theoretical value
-                utru = self.get_theoretical_value(fresnums[i], pupil[i].shape, \
-                    sim.occulter.xq, sim.occulter.yq, sim.occulter.wq, grid_2D)
+                utru = diffraq.utils.solution_util.direct_integration( \
+                    fresnums[i], pupil[i].shape, sim.occulter.xq, sim.occulter.yq, \
+                    sim.occulter.wq, grid_2D)
 
                 #Assert max difference is close to specified tolerance
                 max_diff = tol * fresnums[i]
@@ -62,16 +63,6 @@ class Test_calc_pupil_field(object):
         #Cleanup
         sim.clean_up()
         del grid_pts, grid_2D, pupil, utru
-
-    def get_theoretical_value(self, fresnum, u_shp, xq, yq, wq, grid_2D):
-        lambdaz = 1./fresnum
-        utru = np.empty(u_shp) + 0j
-        for j in range(u_shp[0]):
-            for k in range(u_shp[1]):
-                utru[j,k] = 1/(1j*lambdaz) * np.sum(np.exp((1j*np.pi/lambdaz)* \
-                    ((xq - grid_2D[j,k])**2 + (yq - grid_2D[k,j])**2))*wq)
-
-        return utru
 
 if __name__ == '__main__':
 

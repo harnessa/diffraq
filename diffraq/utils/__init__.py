@@ -15,3 +15,4 @@ from diffraq.utils.default_parameters import def_sim_params, def_alz_params
 from diffraq.utils.logger import Logger
 import diffraq.utils.image_util
 import diffraq.utils.misc_util
+import diffraq.utils.solution_util

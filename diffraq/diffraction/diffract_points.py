@@ -15,7 +15,7 @@ Description: diffraction calculation of input quadrature to arbitrary points.
 import numpy as np
 import finufft
 
-def diffract_points(xq, yq, wq, lambdaz, xi, eta, tol, is_babinet=False):
+def diffract_points(xq, yq, wq, lamzz, xi, eta, tol, is_babinet=False, lamz0=1e13):
     """
     uu = diffract_points(xq, yq, wq, lambdaz, xi, eta, tol)
 
@@ -25,28 +25,34 @@ def diffract_points(xq, yq, wq, lambdaz, xi, eta, tol, is_babinet=False):
     Inputs:
         xq, yq = x,y coordinates of area quadrature nodes [meters]
         wq = area quadrature weights
-        lambdaz = wavelength * z [meter^2]
+        lamzz = wavelength * zz [meters^2] (diffractor - target distance)
         xi, eta = target points (each must be 1D numpy array) [meters]
         tol = tolerance to which to calculate FFT (via finufft)
         is_babinet = calculation implies Babinet's Principle and need to subtract 1?
+        lamz0 = wavelength * z0 [meters^2] (source - diffractor distance)
 
     Outputs:
         uu = complex field at target points
     """
 
     #Premultiply by quadratric kernel (cq are input strengths to NUFFT)
-    cq = np.exp(1j*np.pi/lambdaz*(xq**2 + yq**2)) * wq
+    lamzeff = 1/(1/lamzz + 1/lamz0)
+    cq = np.exp(1j*np.pi/lamzeff*(xq**2 + yq**2)) * wq
     #Scale factor to become FT
-    sc = 2.*np.pi/lambdaz
+    sc = 2.*np.pi/lamzz
 
     #Do FINUFFT
     uu = finufft.nufft2d3(xq, yq, cq, sc*xi, sc*eta, isign=-1, eps=tol)
 
     #post multiply bit
-    uu *= 1./(1j*lambdaz) * np.exp((1j*np.pi/lambdaz)*(xi**2 + eta**2))
+    uu *= 1./(1j*lamzz) * np.exp((1j*np.pi/lamzz)*(xi**2 + eta**2))
 
     #Subtract from Babinet field
     if is_babinet:
-        uu = 1.+0j - uu
+        #Incident field (distance in denominator of quadratic phase = z0 + zz)
+        u0 = lamz0/(lamzz + lamz0) * np.exp((1j*np.pi/(lamzz + lamz0))*(xi**2 + eta**2))
+
+        #Subtract from incident field
+        uu = u0 - uu
 
     return uu

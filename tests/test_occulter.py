@@ -26,7 +26,7 @@ class Test_Occulter(object):
     def test_polar(self):
         #Build simulator
         sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
-            'occulter_shape':'polar'})
+            'occulter_shape':'polar', 'skip_image': True})
 
         #Real polar function
         a = 0.3
@@ -53,7 +53,7 @@ class Test_Occulter(object):
     def test_circle(self):
         #Build simulator
         sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
-            'occulter_shape':'circle'})
+            'occulter_shape':'circle', 'skip_image': True})
 
         #Real circle function
         r0 = 0.3
@@ -80,7 +80,7 @@ class Test_Occulter(object):
     def test_starshades(self):
         #Build simulator
         sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
-            'occulter_shape':'starshade'})
+            'occulter_shape':'starshade', 'skip_image': True})
 
         #HG function and file
         ss_Afunc = lambda r: np.exp(-((r-sim.ss_rmin)/(sim.ss_rmax-sim.ss_rmin)/0.6)**6)

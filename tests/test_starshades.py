@@ -22,7 +22,7 @@ class Test_Starshades(object):
 
         #Build simulator
         sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
-            'occulter_shape':'starshade'})
+            'occulter_shape':'starshade', 'skip_image': True})
 
         #Build target
         grid_pts = diffraq.utils.image_util.get_grid_points(128, sim.tel_diameter)
@@ -36,7 +36,7 @@ class Test_Starshades(object):
         afile_dict = {'analytic':None,     'numeric':ss_Afile}
 
         #Lambdaz
-        lamz = sim.waves[0] * sim.zeff
+        lamz = sim.waves[0] * sim.zz
 
         #Test analytic and numeric
         UUs = []
