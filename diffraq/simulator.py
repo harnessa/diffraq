@@ -58,12 +58,18 @@ class Simulator(object):
         #Run start ups
         self.logger.start_up()
 
+        #Print
+        self.logger.print_start_message()
+
         #Open flag
         self.shop_is_open = True
 
     def close_up_shop(self):
         if not self.shop_is_open:
             return
+
+        #Print
+        self.logger.print_end_message()
 
         #Run close ups
         self.logger.close_up()

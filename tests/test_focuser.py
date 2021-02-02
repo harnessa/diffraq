@@ -27,21 +27,21 @@ class Test_Focuser(object):
 
     def test_sampling(self):
         waves = [0.3e-6, 0.6e-6, 1.2e-6]
-        true_pad = [2, 4, 9]
-        targ_pad = [2.30769231, 4.61538462, 9.23076923]     #D=2.4, f=240
+        true_NN = [594, 1188, 2376]
+        targ_NN = [590.76923077, 1181.53846154, 2363.07692308]  #D=2.4, f=240
 
         #Build simulator
         sim = diffraq.Simulator({'waves':waves})
 
         #Check
         for i in range(len(waves)):
-            assert(np.isclose(true_pad[i], sim.focuser.true_pad[i]) and \
-                np.isclose(targ_pad[i], sim.focuser.targ_pad[i]))
+            assert(np.isclose(true_NN[i], sim.focuser.true_NN[i]) and \
+                np.isclose(targ_NN[i], sim.focuser.targ_NN[i]))
 
 ############################################
 
     def test_propagation(self):
-        waves = np.array([0.3e-6, 0.6e-6, 0.65e-6, 1.2e-6])
+        waves = np.array([0.3e-6, 0.6e-6, 1.2e-6])
 
         #Build simulator
         sim = diffraq.Simulator({'waves':waves})

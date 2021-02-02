@@ -97,7 +97,7 @@ class Analyzer(object):
 
         #Get coordinates
 
-        breakpoint()
+        # breakpoint()
 
     def load_image_data(self):
         #Return if skipping or sim didn't run image

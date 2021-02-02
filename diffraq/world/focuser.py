@@ -45,20 +45,26 @@ class Focuser(object):
         self.get_padding()
 
     def get_padding(self):
-        #Target padding required to properly sample (image distance drops out of top and bottom)
-        self.targ_pad = self.sim.waves / (self.sim.tel_diameter * self.image_res)
+        #Target number of FFT array (with padding) required to properly sample
+        self.targ_NN = self.sim.num_pts * self.sim.waves / \
+            (self.sim.tel_diameter * self.image_res)
 
         #Find next fastest size for FFT (not necessarily 2**n)
-        self.true_pad = np.array([fft.next_fast_len(int(tp * self.sim.num_pts)) \
-            //self.sim.num_pts for tp in self.targ_pad])
+        self.true_NN = np.array([fft.next_fast_len(int(np.ceil(tn))) for tn in self.targ_NN])
 
         #Make sure not too large
-        if np.any(self.true_pad * self.sim.num_pts) > 2**12:
-            self.sim.logger.error(f'Large Image size: {self.true_pad * self.sim.num_pts}', is_warning=True)
+        if np.any(self.true_NN > 2**12):
+            bad = self.true_NN[self.true_NN > 2**12]
+            self.sim.logger.error(f'Large Image size: {bad}', is_warning=True)
+
+        #Make sure we are always oversampling
+        if np.any(self.true_NN < self.targ_NN):
+            bad = self.true_NN[self.true_NN < self.targ_NN]
+            self.sim.logger.error(f'Undersampling: {bad}')
 
         #Get unique padding groups
-        self.unq_true_pad = np.unique(self.true_pad)
-        self.true_pad_group = [np.where(tp == self.unq_true_pad)[0][0] for tp in self.true_pad]
+        self.unq_true_NN = np.unique(self.true_NN)
+        self.true_NN_group = [np.where(tn == self.unq_true_NN)[0][0] for tn in self.true_NN]
 
 ############################################
 ############################################
@@ -69,7 +75,7 @@ class Focuser(object):
 
     def calculate_image(self, in_pupil):
         #Get image size
-        num_img = min(self.true_pad.max()*self.sim.num_pts, self.sim.image_size)
+        num_img = min(self.true_NN.max(), self.sim.image_size)
 
         #Create image container
         image = np.empty((len(self.sim.waves), num_img, num_img))
@@ -87,26 +93,23 @@ class Focuser(object):
         et = np.tile(np.arange(NN0) - (NN0 - 1.)/2., (NN0,1))
 
         #Loop through pad groups and calculate images that are the same size
-        for pad in self.unq_true_pad:
-
-            #This [padded] image size
-            NN = NN0 * pad
+        for NN in self.unq_true_NN:
 
             #Fine wavelengths in this pad group
-            cur_inds = np.where(self.true_pad == pad)[0]
+            cur_inds = np.where(self.true_NN == NN)[0]
 
             #Loop through wavelengths in this pad group and calculate image
             for iw in cur_inds:
 
                 #Propagate to image plane
                 img, dx = self.propagate_lens_diffraction(pupil[iw], \
-                    self.sim.waves[iw], et, pad, NN, NN_full)
+                    self.sim.waves[iw], et, NN, NN_full)
 
                 #Turn into intensity
                 img = np.real(img.conj()*img)
 
                 #Finalize image
-                img, dx = self.finalize_image(img, num_img, self.targ_pad[iw], pad, dx)
+                img, dx = self.finalize_image(img, num_img, self.targ_NN[iw], NN, dx)
 
                 #Store
                 image[iw] = img
@@ -130,7 +133,7 @@ class Focuser(object):
 ####	Image Propagation ####
 ############################################
 
-    def propagate_lens_diffraction(self, pupil, wave, et, pad, NN, NN_full):
+    def propagate_lens_diffraction(self, pupil, wave, et, NN, NN_full):
 
         #Get output plane sampling
         dx = wave*self.image_distance/(self.dx0*NN)
@@ -140,13 +143,13 @@ class Focuser(object):
         pupil *= self.propagation_kernel(et, self.dx0, wave, self.image_distance)
 
         #Pad pupil
-        pupil = image_util.pad_array(pupil, pad)
+        pupil = image_util.pad_array(pupil, NN)
 
         #Run FFT
         FF = self.do_FFT(pupil)
 
         #Trim back to normal size   #TODO: what is max extent from nyquist?
-        FF = image_util.crop_image(FF, None, NN//pad//2)
+        FF = image_util.crop_image(FF, None, self.sim.num_pts//2)
 
         #Multiply by Fresnel diffraction phase prefactor
         FF *= self.propagation_kernel(et, dx, wave, self.image_distance)
@@ -175,12 +178,9 @@ class Focuser(object):
     def do_FFT(self, MM):
         return fft.ifftshift(fft.fft2(fft.fftshift(MM), workers=-1))
 
-    def finalize_image(self, img, num_img, targ_pad, true_pad, dx):
+    def finalize_image(self, img, num_img, targ_NN, true_NN, dx):
         #Resample onto theoretical resolution through affine transform
-        scaling = true_pad / targ_pad
-
-        #Pad image to help with resampling
-        img = image_util.pad_array(img, 2)
+        scaling = true_NN / targ_NN
 
         #Make sure scaling leads to even number (will lead to small difference in sampling)
         NN = len(img)

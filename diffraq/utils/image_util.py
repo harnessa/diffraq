@@ -26,9 +26,8 @@ def crop_image(img, cen, wid):
 
     return sub_img
 
-def pad_array(inarr, num_pad):
+def pad_array(inarr, NN):
     N0 = len(inarr)
-    NN = int(N0*num_pad)
     outarr = np.zeros((NN,NN)).astype(inarr.dtype)
     outarr[NN//2-N0//2:NN//2+N0//2+(N0%2),NN//2-N0//2:NN//2+N0//2+(N0%2)] = inarr
     return outarr
