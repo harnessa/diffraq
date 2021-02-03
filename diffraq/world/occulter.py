@@ -103,7 +103,8 @@ class Occulter(object):
 
         #Calculate starshade quadrature
         self.xq, self.yq, self.wq = starshade_quad(apod_func, self.sim.num_petals, \
-            self.sim.ss_rmin, self.sim.ss_rmax, self.sim.radial_nodes, self.sim.theta_nodes)
+            self.sim.ss_rmin, self.sim.ss_rmax, self.sim.radial_nodes, self.sim.theta_nodes, \
+            is_babinet=self.sim.is_babinet)
 
     def build_edge_starshade(self, npts=None):
         #Get apodization function

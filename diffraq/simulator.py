@@ -160,7 +160,7 @@ class Simulator(object):
 
         #Build Area Quadrature
         self.occulter.build_quadrature()
-
+        print(self.occulter.xq.size)
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
 

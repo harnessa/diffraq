@@ -52,9 +52,13 @@ class Test_Circles(object):
 
         sim = diffraq.Simulator(params)
 
-        #Get pupil field
+        #Get pupil field from sim
         pupil, grid_pts = sim.calc_pupil_field()
         pupil = pupil[0][len(pupil[0])//2]
+
+        #Get pupil field from diffraction_points directly
+        pupil_pts = self.calc_diff_points(sim, grid_pts)
+        pupil_pts = pupil_pts[0][len(pupil_pts[0])//2]
 
         #Calculate analytic solution
         utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
@@ -62,6 +66,7 @@ class Test_Circles(object):
 
         #Compare
         assert(np.abs(pupil - utru).max() < self.tol)
+        assert(np.abs(pupil_pts - utru).max() < self.tol)
 
 ############################################
 
@@ -76,6 +81,38 @@ class Test_Circles(object):
 
     def test_aperture_spherical(self):
         self.run_calculation(False, self.zz)
+
+############################################
+
+    def calc_diff_points(self, sim, grid_pts):
+
+        #Create empty pupil field array
+        pupil = np.empty((len(sim.waves), sim.num_pts, sim.num_pts)) + 0j
+
+        #Flatten grid
+        grid_2D = np.tile(grid_pts, (len(grid_pts),1)).T
+        xi = grid_2D.flatten()
+        eta = grid_2D.T.flatten()
+
+        #Run diffraction calculation over wavelength
+        for iw in range(len(sim.waves)):
+
+            #lambda * z
+            lamzz = sim.waves[iw] * sim.zz
+            lamz0 = sim.waves[iw] * sim.z0
+
+            #Calculate diffraction
+            uu = diffraq.diffraction.diffract_points(sim.occulter.xq, \
+                sim.occulter.yq, sim.occulter.wq, lamzz, xi, eta, sim.fft_tol,
+                is_babinet=sim.is_babinet, lamz0=lamz0)
+
+            #Store
+            pupil[iw] = uu.reshape(grid_2D.shape)
+
+        #Cleanup
+        del grid_2D, xi, eta
+
+        return pupil
 
 ############################################
 

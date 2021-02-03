@@ -84,4 +84,7 @@ def lgwt(N, a, b):
     #Compute the weights
     wq = (b-a) / ((1-y**2)*LGP**2) * ((N+1)/N)**2
 
+    #Cleanup
+    del pu, LGV, LGP, ks, pq, wq
+
     return pq, wq

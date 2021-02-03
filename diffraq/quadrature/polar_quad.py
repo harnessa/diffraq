@@ -54,6 +54,9 @@ def polar_quad(g, m, n):
     #Theta weight times rule for r*dr on (0,r)
     wq = wt * (gt**2 * pr * wr).flatten()
 
+    #Cleanup
+    del pt, wt, pr, wr, gt, gtpr
+
     return xq, yq, wq
 
 ############################################
