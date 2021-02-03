@@ -40,7 +40,7 @@ def diffract_grid(xq, yq, wq, lamzz, grid_pts, tol, is_babinet=False, lamz0=1e13
     dk = sc * (grid_pts[1] - grid_pts[0])
     ngrid = len(grid_pts)
     #Max NU coord
-    maxNU = max(abs(dk*xq).max(), abs(dk*yq).max())
+    maxNU = dk * max(np.abs(xq).max(), np.abs(yq).max())
 
     #Premultiply by quadratric kernel
     lamzeff = 1/(1/lamzz + 1/lamz0)
@@ -54,6 +54,9 @@ def diffract_grid(xq, yq, wq, lamzz, grid_pts, tol, is_babinet=False, lamz0=1e13
 
     #Do FINUFFT
     uu = finufft.nufft2d1(dk*xq, dk*yq, cq, (ngrid, ngrid), isign=-1, eps=tol)
+
+    #Cleanup
+    del cq
 
     #post multiply by quadratic phase of target and Kirchoff prefactor
     tarq = np.exp((1j*np.pi/lamzz)*grid_pts**2)

@@ -22,7 +22,7 @@ class Test_Starshades(object):
 
         #Build simulator
         sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
-            'occulter_shape':'starshade', 'skip_image': True})
+            'occulter_shape':'starshade', 'skip_image':True, 'is_babinet':True})
 
         #Build target
         grid_pts = diffraq.utils.image_util.get_grid_points(128, sim.tel_diameter)

@@ -40,7 +40,7 @@ def starshade_quad(Afunc, num_pet, r0, r1, m, n, is_babinet=True):
         nd = int(np.ceil(0.3*n*num_pet))    #Less in theta, rough guess so dx about same
         xq, yq, wq = polar_quad(lambda t: r0*np.ones_like(t), m, nd)
     else:
-        xq, yq, wq = np.array([]), np.array([]), np.array([])    
+        xq, yq, wq = np.array([]), np.array([]), np.array([])
 
     ### Build over petals ###
 
@@ -67,14 +67,19 @@ def starshade_quad(Afunc, num_pet, r0, r1, m, n, is_babinet=True):
     tt = np.tile((np.pi/num_pet) * Aval * pw, (1, num_pet)) + \
          np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), n)
 
-    #Add Petal nodes + weights
-    xq = np.concatenate(( xq, (pr * np.cos(tt)).flatten() ))
-    yq = np.concatenate(( yq, (pr * np.sin(tt)).flatten() ))
-    wq = np.concatenate(( wq, (np.pi/num_pet) * \
-        np.tile(wi * Aval * ww, (1, num_pet)).flatten() ))
+    #Add Petal nodes
+    xq = np.concatenate(( xq, (pr * np.cos(tt)).ravel() ))
+    yq = np.concatenate(( yq, (pr * np.sin(tt)).ravel() ))
 
     #Cleanup
-    del pw, ww, pr, wr, Aval, wi, tt
+    del pr, wr, tt
+
+    #Add Petal weights
+    wq = np.concatenate(( wq, (np.pi/num_pet) * \
+        np.tile(wi * Aval * ww, (1, num_pet)).ravel() ))
+
+    #Cleanup
+    del pw, ww, Aval, wi
 
     return xq, yq, wq
 

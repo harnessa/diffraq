@@ -48,11 +48,11 @@ def polar_quad(g, m, n):
 
     #line of nodes
     gtpr = gt * pr
-    xq = (np.cos(pt) * gtpr).flatten()
-    yq = (np.sin(pt) * gtpr).flatten()
+    xq = (np.cos(pt) * gtpr).ravel()
+    yq = (np.sin(pt) * gtpr).ravel()
 
     #Theta weight times rule for r*dr on (0,r)
-    wq = wt * (gt**2 * pr * wr).flatten()
+    wq = wt * (gt**2 * pr * wr).ravel()
 
     #Cleanup
     del pt, wt, pr, wr, gt, gtpr

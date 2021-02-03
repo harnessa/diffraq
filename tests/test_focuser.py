@@ -32,6 +32,7 @@ class Test_Focuser(object):
 
         #Build simulator
         sim = diffraq.Simulator({'waves':waves})
+        sim.load_focuser()
 
         #Check
         for i in range(len(waves)):
@@ -45,6 +46,7 @@ class Test_Focuser(object):
 
         #Build simulator
         sim = diffraq.Simulator({'waves':waves})
+        sim.load_focuser()
 
         #Build uniform pupil image
         pupil = np.ones((len(waves), sim.num_pts, sim.num_pts)) + 0j

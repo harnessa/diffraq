@@ -55,4 +55,7 @@ def diffract_points(xq, yq, wq, lamzz, xi, eta, tol, is_babinet=False, lamz0=1e1
         #Subtract from incident field
         uu = u0 - uu
 
+    #Cleanup
+    del cq    
+
     return uu

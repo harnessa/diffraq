@@ -41,9 +41,11 @@ class Simulator(object):
     def load_children(self):
         self.logger = diffraq.utils.Logger(self)
         self.occulter = diffraq.world.Occulter(self)
-        if not self.skip_image:
-            self.focuser = diffraq.world.Focuser(self)
         self.shop_is_open = False
+
+    def load_focuser(self):
+        #Load focuser child
+        self.focuser = diffraq.world.Focuser(self)
 
 ############################################
 ############################################
@@ -160,7 +162,7 @@ class Simulator(object):
 
         #Build Area Quadrature
         self.occulter.build_quadrature()
-        print(self.occulter.xq.size)
+
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
 
@@ -192,6 +194,9 @@ class Simulator(object):
         #Return immediately if running pupil only
         if self.skip_image:
             return
+
+        #Load focuser child
+        self.load_focuser()
 
         #Calculate image
         self.image, grid_pts = self.focuser.calculate_image(self.pupil)

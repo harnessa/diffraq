@@ -45,7 +45,6 @@ def lgwt(N, a, b):
 
         return pq, wq
 
-
     #Uniform grid of nodes on [-1,1]
     pu = np.linspace(-1, 1, N)
 
