@@ -38,7 +38,7 @@ apod_dir = f"{ext_data_dir}/Apodization_Profiles"
 
 import diffraq.utils
 from diffraq.simulator import Simulator
+from diffraq.analysis import Analyzer
 import diffraq.quadrature
 import diffraq.diffraction
-import diffraq.world
-from diffraq.analysis import Analyzer
+import diffraq.occulter

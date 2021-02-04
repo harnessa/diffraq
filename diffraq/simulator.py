@@ -40,12 +40,12 @@ class Simulator(object):
 
     def load_children(self):
         self.logger = diffraq.utils.Logger(self)
-        self.occulter = diffraq.world.Occulter(self)
+        self.occulter = diffraq.occulter.Occulter(self)
         self.shop_is_open = False
 
     def load_focuser(self):
         #Load focuser child
-        self.focuser = diffraq.world.Focuser(self)
+        self.focuser = diffraq.diffraction.Focuser(self)
 
 ############################################
 ############################################

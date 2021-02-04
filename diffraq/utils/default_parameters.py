@@ -60,8 +60,8 @@ def_sim_params = {
     'image_size':           128,        #Width (# pixels) of square image
 
     ### Numerics ###
-    'radial_nodes':         50,
-    'theta_nodes':          50,
+    'radial_nodes':         50,         #Number of radial quadrature nodes
+    'theta_nodes':          50,         #Number of azimuthal quadrature nodes
     'fft_tol':              1e-9,       #Tolerance to feed to NUFFT
 
 }

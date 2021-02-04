@@ -7,9 +7,8 @@ Created on: 01-15-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: __init__ package for the WORLD module.
+Description: __init__ package for the OCCULTER module.
 
 """
 
-from diffraq.world.focuser import Focuser
-from diffraq.world.occulter import Occulter
+from diffraq.occulter.occulter import Occulter
