@@ -18,6 +18,7 @@ import numpy as np
 class Test_Circles(object):
 
     tol = 1e-8
+    loci_tol = 1e-5
 
     num_pts = 256
     radial_nodes = 400
@@ -27,15 +28,14 @@ class Test_Circles(object):
     circle_rad = 12
 
     def run_all_tests(self):
-        tsts = ['occulter_plane', 'occulter_spherical', 'aperture_plane',\
-            'aperture_spherical'][:]
-        for t in tsts:
-            getattr(self, f'test_{t}')()
+        for oa in ['occulter', 'aperture']:
+            for op in ['plane', 'spherical']:
+                getattr(self, f'test_{oa}_{op}')()
 
 ############################################
 
     def run_calculation(self, is_babinet, z0):
-        """Test opaque circular occulter with plane wave"""
+        """Test opaque circular occulter and compare to analytic solution"""
         #Load simulator
         params = {
             'occulter_shape':   'circle',
@@ -48,25 +48,46 @@ class Test_Circles(object):
             'zz':               self.zz,
             'z0':               z0,
             'skip_image':       True,
+            'apod_func':        (lambda t: self.circle_rad*np.cos(t), lambda t: self.circle_rad*np.sin(t)),
+            'apod_deriv':        (lambda t: -self.circle_rad*np.sin(t), lambda t: self.circle_rad*np.cos(t)),
+            'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 
-        sim = diffraq.Simulator(params)
+        #Loop over occulter types
+        for occ_shape in ['circle', 'cartesian', 'loci']:
 
-        #Get pupil field from sim
-        pupil, grid_pts = sim.calc_pupil_field()
-        pupil = pupil[0][len(pupil[0])//2]
+            #Set parameters
+            params['occulter_shape'] = occ_shape
 
-        #Get pupil field from diffraction_points directly
-        pupil_pts = self.calc_diff_points(sim, grid_pts)
-        pupil_pts = pupil_pts[0][len(pupil_pts[0])//2]
+            #Load simulator
+            sim = diffraq.Simulator(params)
 
-        #Calculate analytic solution
-        utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
-            sim.waves[0], sim.zz, sim.z0, sim.circle_rad, is_babinet)
+            #Get pupil field from sim
+            pupil, grid_pts = sim.calc_pupil_field()
+            pupil = pupil[0][len(pupil[0])//2]
 
-        #Compare
-        assert(np.abs(pupil - utru).max() < self.tol)
-        assert(np.abs(pupil_pts - utru).max() < self.tol)
+            #Calculate analytic solution (once)
+            if occ_shape == 'circle':
+                utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
+                    sim.waves[0], sim.zz, sim.z0, sim.circle_rad, is_babinet)
+
+            #Get tolerance
+            if occ_shape == 'loci':
+                tol = self.loci_tol
+            else:
+                tol = self.tol
+
+            #Compare
+            assert(np.abs(pupil - utru).max() < tol)
+
+            #Only run this for one (for time)
+            if occ_shape == 'circle':
+                #Get pupil field from diffraction_points directly
+                pupil_pts = self.calc_diff_points(sim, grid_pts)
+                pupil_pts = pupil_pts[0][len(pupil_pts[0])//2]
+
+                #Compare
+                assert(np.abs(pupil_pts - utru).max() < tol)
 
 ############################################
 

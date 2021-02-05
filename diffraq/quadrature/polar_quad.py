@@ -55,7 +55,7 @@ def polar_quad(g, m, n):
     wq = wt * (gt**2 * pr * wr).ravel()
 
     #Cleanup
-    del pt, wt, pr, wr, gt, gtpr
+    del pt, pr, wr, gt, gtpr
 
     return xq, yq, wq
 

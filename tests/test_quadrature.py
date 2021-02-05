@@ -17,7 +17,7 @@ import numpy as np
 class Test_Quadrature(object):
 
     def run_all_tests(self):
-        tsts = ['lgwt', 'polar', 'cartesian', 'starshade']
+        tsts = ['lgwt', 'polar', 'cartesian', 'starshade', 'loci']
         for t in tsts:
             getattr(self, f'test_{t}')()
 
@@ -132,8 +132,28 @@ class Test_Quadrature(object):
 
 ############################################
 
+    def test_loci(self):
+        #Build simulator
+        sim = diffraq.Simulator({'radial_nodes':100, 'occulter_shape':'loci'})
+
+        #Load loci
+        loci = np.genfromtxt(f'{diffraq.int_data_dir}/Test_Data/test_loci_file.txt', delimiter=',')
+
+        for m in range(100,200,20):
+            for dn in [2, 5, 10]:
+
+                #Get quad
+                xq, yq, wq = diffraq.quadrature.loci_quad(*loci[::dn].T, m)
+
+                #Assert with analytic area formula
+                assert(np.isclose(wq.sum(), np.pi/2))
+
+        #Cleanup
+        del xq, yq, wq, loci
+
+############################################
+
 if __name__ == '__main__':
 
     tq = Test_Quadrature()
-    # tq.run_all_tests()
-    tq.test_cartesian()
+    tq.run_all_tests()

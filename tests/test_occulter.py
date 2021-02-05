@@ -17,7 +17,7 @@ import numpy as np
 class Test_Occulter(object):
 
     def run_all_tests(self):
-        tsts = ['polar', 'circle', 'cartesian', 'starshades']
+        tsts = ['polar', 'circle', 'cartesian', 'starshades', 'loci']
         for t in tsts:
             getattr(self, f'test_{t}')()
 
@@ -25,7 +25,7 @@ class Test_Occulter(object):
 
     def test_polar(self):
         #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
             'occulter_shape':'polar'})
 
         #Real polar function
@@ -41,7 +41,7 @@ class Test_Occulter(object):
         #Build directly
         xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, sim.radial_nodes, sim.theta_nodes)
 
-        #Check they are all the ame
+        #Check they are all the same
         assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
                np.isclose(wq, sim.occulter.wq).all())
 
@@ -52,7 +52,7 @@ class Test_Occulter(object):
 
     def test_circle(self):
         #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
             'occulter_shape':'circle'})
 
         #Real circle function
@@ -68,7 +68,7 @@ class Test_Occulter(object):
         #Build directly
         xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, sim.radial_nodes, sim.theta_nodes)
 
-        #Check they are all the ame
+        #Check they are all the same
         assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
                np.isclose(wq, sim.occulter.wq).all())
 
@@ -79,7 +79,7 @@ class Test_Occulter(object):
 
     def test_cartesian(self):
         #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
             'occulter_shape':'cartesian'})
 
         #Kite occulter
@@ -99,7 +99,7 @@ class Test_Occulter(object):
         xq, yq, wq = diffraq.quadrature.cartesian_quad( \
             xfunc, yfunc, dxfunc, dyfunc, sim.radial_nodes, sim.theta_nodes)
 
-        #Check they are all the ame
+        #Check they are all the same
         assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
                np.isclose(wq, sim.occulter.wq).all())
 
@@ -110,7 +110,7 @@ class Test_Occulter(object):
 
     def test_starshades(self):
         #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
             'occulter_shape':'starshade', 'is_babinet':True})
 
         #HG function and file
@@ -135,7 +135,7 @@ class Test_Occulter(object):
             xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, sim.num_petals, \
                 sim.ss_rmin, sim.ss_rmax, sim.radial_nodes, sim.theta_nodes)
 
-            #Check they are all the ame
+            #Check they are all the same
             assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
                    np.isclose(wq, sim.occulter.wq).all())
 
@@ -143,9 +143,50 @@ class Test_Occulter(object):
         del xq, yq, wq
 
 ############################################
+
+    def test_loci(self):
+        tol = 1e-3
+
+        #Build simulator
+        sim = diffraq.Simulator({'radial_nodes':100, 'occulter_shape':'loci'})
+
+        #Point to loci file
+        sim.loci_file = f'{diffraq.int_data_dir}/Test_Data/test_loci_file.txt'
+
+        #Build loci occulter
+        sim.occulter.build_quadrature()
+
+        #Get number of points in loci file
+        edge = sim.occulter.get_edge_points()
+        theta_nodes = len(edge)
+
+        #Kite occulter
+        xfunc = lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t)
+        yfunc = lambda t: np.sin(t)
+        dxfunc = lambda t: -0.5*np.sin(t) - np.sin(2*t)
+        dyfunc = lambda t: np.cos(t)
+
+        #Add functions
+        sim.apod_func = (xfunc, yfunc)
+        sim.apod_deriv = (dxfunc, dyfunc)
+
+        #Build directly
+        xq, yq, wq = diffraq.quadrature.cartesian_quad( \
+            xfunc, yfunc, dxfunc, dyfunc, sim.radial_nodes, theta_nodes)
+
+        #Check they are all close
+        assert((np.abs(sim.occulter.xq - xq).max() < tol) and \
+               (np.abs(sim.occulter.yq - yq).max() < tol) and \
+               (np.abs(sim.occulter.wq - wq).max() < tol))
+
+        #Cleanup
+        del xq, yq, wq, edge
+
+############################################
 ############################################
 
 if __name__ == '__main__':
 
     tt = Test_Occulter()
-    tt.run_all_tests()
+    # tt.run_all_tests()
+    tt.test_loci()

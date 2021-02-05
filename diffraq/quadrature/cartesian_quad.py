@@ -8,7 +8,7 @@ Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
 Description: quadrature for integrals over area with cartesian parametric functions.
-    See Barnett (2021) Eq. 14.
+    See Barnett (2021) Eq. 11, 12, 14.
 
 """
 
@@ -60,7 +60,7 @@ def cartesian_quad(f, g, df, dg, m, n):
     wq = wt * (pr * wr * (ft * dgt - gt * dft)).ravel()
 
     #Cleanup
-    del pt, wt, pr, wr, ft, gt, dft, dgt
+    del pt, pr, wr, ft, gt, dft, dgt
 
     return xq, yq, wq
 

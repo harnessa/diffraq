@@ -34,11 +34,12 @@ def_sim_params = {
     'free_on_end':          True,       #Delete results after simulation run?
 
     ### Occulter ###
-    'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, cartesian, starshade]
+    'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, cartesian, starshade, loci]
     'circle_rad':           12,         #Circle occulter radius
     'apod_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes apod_func
     'apod_func':            None,       #Lambda function defining apodization function. Is single function for polar and starshade, tuple of functions for cartesian
     'apod_deriv':           None,       #Lambda function defining derivative of apodization function. Is single function for polar and starshade, tuple of functions for cartesian
+    'loci_file':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
     'is_babinet':           False,      #Using Babinet principle to calculate?
 
     ### Starshades ###
