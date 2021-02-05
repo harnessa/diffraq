@@ -83,21 +83,19 @@ class Test_Occulter(object):
             'occulter_shape':'cartesian'})
 
         #Kite occulter
-        xfunc = lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t)
-        yfunc = lambda t: np.sin(t)
-        dxfunc = lambda t: -0.5*np.sin(t) - np.sin(2*t)
-        dyfunc = lambda t: np.cos(t)
+        func  = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
+        deriv = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
 
         #Add functions
-        sim.apod_func = (xfunc, yfunc)
-        sim.apod_deriv = (dxfunc, dyfunc)
+        sim.apod_func = func
+        sim.apod_deriv = deriv
 
         #Build polar occulter
         sim.occulter.build_quadrature()
 
         #Build directly
-        xq, yq, wq = diffraq.quadrature.cartesian_quad( \
-            xfunc, yfunc, dxfunc, dyfunc, sim.radial_nodes, sim.theta_nodes)
+        xq, yq, wq = diffraq.quadrature.cartesian_quad(func, deriv, \
+            sim.radial_nodes, sim.theta_nodes)
 
         #Check they are all the same
         assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
@@ -161,18 +159,16 @@ class Test_Occulter(object):
         theta_nodes = len(edge)
 
         #Kite occulter
-        xfunc = lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t)
-        yfunc = lambda t: np.sin(t)
-        dxfunc = lambda t: -0.5*np.sin(t) - np.sin(2*t)
-        dyfunc = lambda t: np.cos(t)
+        func  = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
+        deriv = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
 
         #Add functions
-        sim.apod_func = (xfunc, yfunc)
-        sim.apod_deriv = (dxfunc, dyfunc)
+        sim.apod_func = func
+        sim.apod_deriv = deriv
 
         #Build directly
-        xq, yq, wq = diffraq.quadrature.cartesian_quad( \
-            xfunc, yfunc, dxfunc, dyfunc, sim.radial_nodes, theta_nodes)
+        xq, yq, wq = diffraq.quadrature.cartesian_quad(func, deriv, \
+            sim.radial_nodes, theta_nodes)
 
         #Check they are all close
         assert((np.abs(sim.occulter.xq - xq).max() < tol) and \
@@ -188,5 +184,4 @@ class Test_Occulter(object):
 if __name__ == '__main__':
 
     tt = Test_Occulter()
-    # tt.run_all_tests()
-    tt.test_loci()
+    tt.run_all_tests()

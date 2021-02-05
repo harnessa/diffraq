@@ -15,22 +15,20 @@ Description: quadrature for integrals over area with cartesian parametric functi
 from diffraq.quadrature import lgwt
 import numpy as np
 
-def cartesian_quad(f, g, df, dg, m, n):
+def cartesian_quad(fxy, dxy, m, n):
     """
-    xq, yq, wq = cartesian_quad(f, g, df, dg, m, n)
+    xq, yq, wq = cartesian_quad(fxy, dxy, m, n)
 
     returns list of nodes and their weights for 2D quadrature, over a cartesian domain,
 
         sum_{j=1}^N f(xq(j),yq(j)) wq(j)   \approx   int_Omega f(x,y) dx dy
 
     for all smooth functions f, where Omega is the cartesian domain defined by
-    functions x=f(theta), y=g(theta). (Barnett 2021)
+    function (x,y) = fxy(theta). (Barnett 2021)
 
     Inputs:
-        f = function handle for x=f(theta), theta in [0,2pi)
-        g = function handle for y=g(theta), theta in [0,2pi)
-        df = function handle for df/dtheta, theta in [0,2pi)
-        dg = function handle for dg/dtheta, theta in [0,2pi)
+        fxy = function handle for (x,y) = fxy(theta), theta in [0,2pi)
+        dxy = function handle for derivative of fxy, theta in [0,2pi)
         m = # radial nodes
         n = # theta nodes
 
@@ -47,35 +45,32 @@ def cartesian_quad(f, g, df, dg, m, n):
     pr, wr = lgwt(m, 0, 1)
 
     #Get function values at all theta nodes
-    ft = f(pt)
-    gt = g(pt)
-    dft = df(pt)
-    dgt = dg(pt)
+    ft = fxy(pt)[:,:,None]
+    dt = dxy(pt)[:,:,None]
 
     #Nodes (Eq. 11 Barnett 2021)
-    xq = (ft * pr).ravel()
-    yq = (gt * pr).ravel()
+    xq = (ft[:,0] * pr).ravel()
+    yq = (ft[:,1] * pr).ravel()
 
     #Weights (Eq. 12 Barnett 2021)
-    wq = wt * (pr * wr * (ft * dgt - gt * dft)).ravel()
+    wq = wt * (pr * wr * (ft[:,0] * dt[:,1] - ft[:,1] * dt[:,0])).ravel()
 
     #Cleanup
-    del pt, pr, wr, ft, gt, dft, dgt
+    del pt, pr, wr, ft, dt
 
     return xq, yq, wq
 
 ############################################
 ############################################
 
-def cartesian_edge(f, g, n):
+def cartesian_edge(fxy, n):
     """
-    xy = cartesian_edge(f, g, n)
+    xy = cartesian_edge(fxy, n)
 
-    Build loci demarking the polar occulter edge.
+    Build loci demarking the cartesian occulter edge.
 
     Inputs:
-        f = function handle for x=f(theta), theta in [0,2pi)
-        g = function handle for y=g(theta), theta in [0,2pi)
+        fxy = function handle for (x,y) = fxy(theta), theta in [0,2pi)
         n = # theta nodes
 
     Outputs:
@@ -86,6 +81,4 @@ def cartesian_edge(f, g, n):
     pt = 2.*np.pi/n * (np.arange(n) + 1)
 
     #Boundary points
-    xy = np.hstack((f(pt), g(pt)))
-
-    return xy
+    return fxy(pt)

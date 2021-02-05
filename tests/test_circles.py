@@ -48,8 +48,8 @@ class Test_Circles(object):
             'zz':               self.zz,
             'z0':               z0,
             'skip_image':       True,
-            'apod_func':        (lambda t: self.circle_rad*np.cos(t), lambda t: self.circle_rad*np.sin(t)),
-            'apod_deriv':        (lambda t: -self.circle_rad*np.sin(t), lambda t: self.circle_rad*np.cos(t)),
+            'apod_func':        lambda t: self.circle_rad*np.hstack(( np.cos(t), np.sin(t))),
+            'apod_deriv':       lambda t: self.circle_rad*np.hstack((-np.sin(t), np.cos(t))),
             'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 
@@ -88,6 +88,9 @@ class Test_Circles(object):
 
                 #Compare
                 assert(np.abs(pupil_pts - utru).max() < tol)
+
+        #Clean up
+        del pupil, grid_pts, sim, utru
 
 ############################################
 

@@ -20,9 +20,16 @@ class Occulter(object):
     def __init__(self, sim):
         self.sim = sim
         self.approved_shapes = ['polar', 'circle', 'cartesian', 'starshade', 'loci']
+        self.initialize()
+
+    def initialize(self):
         #Check shape name is in approved lost
         if self.sim.occulter_shape not in self.approved_shapes:
             self.sim.logger.error('Invalid Occulter Shape')
+
+        #Flip etching error sign in Babinet
+        if self.sim.is_babinet:
+            self.sim.etching_error *= -1
 
 ############################################
 #####  Main Wrappers #####
@@ -102,11 +109,11 @@ class Occulter(object):
 
         #Add etching error if applicable
         if self.sim.etching_error != 0:
-            apod_func = defects.add_cartesian_etching(*apod_func, *apod_deriv, \
+            apod_func, apod_deriv = defects.add_cartesian_etching(apod_func, apod_deriv, \
                 self.sim.etching_error)
 
         #Calculate cartesian quadrature
-        self.xq, self.yq, self.wq = quad.cartesian_quad(*apod_func, *apod_deriv, \
+        self.xq, self.yq, self.wq = quad.cartesian_quad(apod_func, apod_deriv, \
             self.sim.radial_nodes, self.sim.theta_nodes)
 
     def build_edge_cartesian(self, apod_func=None, npts=None):
@@ -119,7 +126,7 @@ class Occulter(object):
             npts = self.sim.theta_nodes
 
         #Get cartesian edge
-        edge = quad.cartesian_edge(*apod_func, npts)
+        edge = quad.cartesian_edge(apod_func, npts)
 
         return edge
 

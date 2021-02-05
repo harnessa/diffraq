@@ -77,14 +77,11 @@ class Test_diffraction_points(object):
 
     def get_quad_cartesian(self, m, n):
         #Kite occulter
-        xfunc = lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t)
-        yfunc = lambda t: np.sin(t)
-        dxfunc = lambda t: -0.5*np.sin(t) - np.sin(2*t)
-        dyfunc = lambda t: np.cos(t)
+        func  = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
+        deriv = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
 
         #Get quad
-        xq, yq, wq = diffraq.quadrature.cartesian_quad( \
-            xfunc, yfunc, dxfunc, dyfunc, m, n)
+        xq, yq, wq = diffraq.quadrature.cartesian_quad(func, deriv, m, n)
 
         return xq, yq, wq
 

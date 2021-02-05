@@ -36,6 +36,7 @@ class Simulator(object):
         ### Derived ###
         if self.save_dir_base is None:
             self.save_dir_base = f"{diffraq.pkg_home_dir}/Results"
+            
         self.waves = np.atleast_1d(self.waves)
 
     def load_children(self):

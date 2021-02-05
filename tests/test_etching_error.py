@@ -26,7 +26,7 @@ class Test_Etching(object):
     z0 = 1e19
     tel_diameter = 2.4
     circle_rad = 12
-    etch = 1e-3
+    etch = 1
 
     def run_all_tests(self):
         for oa in ['occulter', 'aperture']:
@@ -50,23 +50,41 @@ class Test_Etching(object):
             'zz':               self.zz,
             'z0':               self.z0,
             'skip_image':       True,
+            'apod_func':        lambda t: self.circle_rad*np.hstack(( np.cos(t), np.sin(t))),
+            'apod_deriv':       lambda t: self.circle_rad*np.hstack((-np.sin(t), np.cos(t))),
+            'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 
-        sim = diffraq.Simulator(params)
+        #Loop over occulter types
+        for occ_shape in ['circle', 'cartesian', 'loci'][1:-1]:
 
-        #Get pupil field from sim
-        pupil, grid_pts = sim.calc_pupil_field()
-        pupil = pupil[0][len(pupil[0])//2]
+            #Set parameters
+            params['occulter_shape'] = occ_shape
 
-        #Calculate analytic solution
-        utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
-            sim.waves[0], sim.zz, sim.z0, \
-            sim.circle_rad + self.etching_error*etch_sign, is_babinet)
+            #Generate sim
+            sim = diffraq.Simulator(params)
 
-        import matplotlib.pyplot as plt;plt.ion()
-        breakpoint()
-        #Compare
-        assert(np.abs(pupil - utru).max() < self.tol)
+            #Get pupil field from sim
+            pupil, grid_pts = sim.calc_pupil_field()
+            pupil = pupil[0][len(pupil[0])//2]
+
+            #Calculate analytic solution (once)
+            # if occ_shape == 'circle':
+            if True:
+                utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
+                    sim.waves[0], sim.zz, sim.z0, \
+                    sim.circle_rad + sim.etching_error, is_babinet)
+
+            import matplotlib.pyplot as plt;plt.ion()
+            plt.cla()
+            plt.plot(np.abs(pupil))
+            plt.plot(np.abs(utru), '--')
+            breakpoint()
+            #Compare
+            # assert(np.abs(pupil - utru).max() < self.tol)
+
+        #Clean up
+        del pupil, grid_pts, sim, utru
 
 ############################################
 
