@@ -12,3 +12,4 @@ Description: __init__ package for the OCCULTER module.
 """
 
 from diffraq.occulter.occulter import Occulter
+import diffraq.occulter.defects

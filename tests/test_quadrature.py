@@ -17,7 +17,7 @@ import numpy as np
 class Test_Quadrature(object):
 
     def run_all_tests(self):
-        tsts = ['lgwt', 'polar', 'starshade']
+        tsts = ['lgwt', 'polar', 'cartesian', 'starshade']
         for t in tsts:
             getattr(self, f'test_{t}')()
 
@@ -26,7 +26,7 @@ class Test_Quadrature(object):
     def test_lgwt(self):
 
         #Test points
-        limits = [[-1,1], [-1,0], [0,1], [5,10]]
+        limits = [[-1,1], [-1,0], [5,10]]
         nums = [5, 10, 100, 1001, 5000]
 
         for (a,b) in limits:
@@ -50,9 +50,9 @@ class Test_Quadrature(object):
 ############################################
 
     def test_polar(self):
-        for m in range(10,100,10):
-            for n in range(10,100,10):
-                for a in np.arange(0.1, 1, 0.1):
+        for m in range(20,100,20):
+            for n in range(20,100,20):
+                for a in np.arange(0.1, 0.9, 0.1):
                     #Smooth radial function on [0, 2pi)
                     gfunc = lambda t: 1 + a*np.cos(3*t)
 
@@ -61,6 +61,27 @@ class Test_Quadrature(object):
 
                     #Assert with analytic area formula
                     assert(np.isclose(wq.sum(), np.pi*(1. + a**2/2)))
+
+        #Cleanup
+        del xq, yq, wq
+
+############################################
+
+    def test_cartesian(self):
+        for m in range(100,200,20):
+            for n in range(100,200,20):
+                #Kite occulter
+                xfunc = lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t)
+                yfunc = lambda t: np.sin(t)
+                dxfunc = lambda t: -0.5*np.sin(t) - np.sin(2*t)
+                dyfunc = lambda t: np.cos(t)
+
+                #Get quad
+                xq, yq, wq = diffraq.quadrature.cartesian_quad( \
+                    xfunc, yfunc, dxfunc, dyfunc, m, n)
+
+                #Assert with analytic area formula
+                assert(np.isclose(wq.sum(), np.pi/2))
 
         #Cleanup
         del xq, yq, wq
@@ -80,7 +101,7 @@ class Test_Quadrature(object):
         disk_Afunc = lambda t: 1 + 0*t
 
         for m in range(20,100,10):
-            for n in range(20,1000,100):
+            for n in range(20,100,10):
 
                 ### Test DISK ###
                 #Get quad
@@ -115,5 +136,4 @@ if __name__ == '__main__':
 
     tq = Test_Quadrature()
     # tq.run_all_tests()
-    # tq.test_polar()
-    tq.test_starshade()
+    tq.test_cartesian()

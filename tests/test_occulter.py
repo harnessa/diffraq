@@ -17,7 +17,7 @@ import numpy as np
 class Test_Occulter(object):
 
     def run_all_tests(self):
-        tsts = ['polar', 'circle', 'starshades']
+        tsts = ['polar', 'circle', 'cartesian', 'starshades']
         for t in tsts:
             getattr(self, f'test_{t}')()
 
@@ -67,6 +67,37 @@ class Test_Occulter(object):
 
         #Build directly
         xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, sim.radial_nodes, sim.theta_nodes)
+
+        #Check they are all the ame
+        assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
+               np.isclose(wq, sim.occulter.wq).all())
+
+        #Cleanup
+        del xq, yq, wq
+
+############################################
+
+    def test_cartesian(self):
+        #Build simulator
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
+            'occulter_shape':'cartesian'})
+
+        #Kite occulter
+        xfunc = lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t)
+        yfunc = lambda t: np.sin(t)
+        dxfunc = lambda t: -0.5*np.sin(t) - np.sin(2*t)
+        dyfunc = lambda t: np.cos(t)
+
+        #Add functions
+        sim.apod_func = (xfunc, yfunc)
+        sim.apod_deriv = (dxfunc, dyfunc)
+
+        #Build polar occulter
+        sim.occulter.build_quadrature()
+
+        #Build directly
+        xq, yq, wq = diffraq.quadrature.cartesian_quad( \
+            xfunc, yfunc, dxfunc, dyfunc, sim.radial_nodes, sim.theta_nodes)
 
         #Check they are all the ame
         assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \

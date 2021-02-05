@@ -62,26 +62,24 @@ def polar_quad(g, m, n):
 ############################################
 ############################################
 
-def polar_edge(g, m, n):
+def polar_edge(g,n):
     """
-    xe, ye = polar_edge(g, m, n)
+    xy = polar_edge(g, n)
 
     Build loci demarking the polar occulter edge.
 
     Inputs:
         g = function handle for g(theta), theta in [0,2pi)
-        m = # radial nodes (unused)
         n = # theta nodes
 
     Outputs:
-        xe, ye = numpy array of x,y coordinates of occulter edge [meters]
+        xy = numpy array (2D) of x,y coordinates of occulter edge [meters]
     """
 
     #Theta nodes
-    pt = 2.*np.pi/n * (np.arange(n)[:,None] + 1)
+    pt = 2.*np.pi/n * (np.arange(n) + 1)
 
     #Boundary points
-    bx = np.cos(pt) * g(pt)
-    by = np.sin(pt) * g(pt)
+    xy = g(pt)[:,None] * np.stack((np.cos(pt), np.sin(pt)), 1)
 
-    return bx, by
+    return xy

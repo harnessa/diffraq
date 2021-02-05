@@ -34,16 +34,20 @@ def_sim_params = {
     'free_on_end':          True,       #Delete results after simulation run?
 
     ### Occulter ###
-    'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, starshade]
+    'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, cartesian, starshade]
     'circle_rad':           12,         #Circle occulter radius
     'apod_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes apod_func
-    'apod_func':            None,       #Lambda function (accepts radius as argument) defining apodization function
+    'apod_func':            None,       #Lambda function defining apodization function. Is single function for polar and starshade, tuple of functions for cartesian
+    'apod_deriv':           None,       #Lambda function defining derivative of apodization function. Is single function for polar and starshade, tuple of functions for cartesian
     'is_babinet':           False,      #Using Babinet principle to calculate?
 
     ### Starshades ###
     'num_petals':           16,         #Number of starshade petals
     'ss_rmin':              5,          #Minimum starshade radius
     'ss_rmax':              13,         #Maximum starshade radius
+
+    ### Defects ###
+    'etching_error':        0,          #Over-etching (<0) i.e. less material; under-etching (>0) i.e more material..
 
     ### Observation ###
     'waves':                0.6e-6,     #Wavelengths

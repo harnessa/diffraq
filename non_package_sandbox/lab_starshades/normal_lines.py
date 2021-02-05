@@ -1,52 +1,82 @@
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 
-r0, r1 = 8, 15
-hga, hgb = 8,4
-hgn = 6
-num_pet = 16
+if [False, True][0]:
 
-hypergauss = lambda r: np.exp(-((r - hga)/hgb)**hgn)
+    r0, r1 = 8, 15
+    hga, hgb = 8,4
+    hgn = 6
+    num_pet = 16
 
-hypx = lambda r: r*np.cos(hypergauss(r)*np.pi/num_pet)
-hypy = lambda r: r*np.sin(hypergauss(r)*np.pi/num_pet)
+    etch = -0.1
 
-dadr = lambda r: hypergauss(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
+    #Apod functions
+    afunc = lambda r: np.exp(-((r - hga)/hgb)**hgn)
+    dadr = lambda r: afunc(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-rxy = lambda x, y: np.sqrt(x**2 + y**2)
-dydx = lambda x, y: (y + np.pi/num_pet*dadr(rxy(x,y))*rxy(x,y)*x) / \
-                    (x - np.pi/num_pet*dadr(rxy(x,y))*rxy(x,y)*y)
+    # hypergauss = lambda r: np.exp(-((r - hga)/hgb)**hgn)
+    # dadr = lambda r: hypergauss(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-rads = np.linspace(r0, r1, 1000)
-apod = hypergauss(rads)
+    #xy equations
+    xc = lambda r: r*np.cos(afunc(r)*np.pi/num_pet)
+    yc = lambda r: r*np.sin(afunc(r)*np.pi/num_pet)
 
-# plt.plot(rads, apod)
+    dx = lambda r: -etch*(np.sin(afunc(r)*np.pi/num_pet) + \
+        np.pi/num_pet*r*dadr(r)*np.cos(afunc(r)*np.pi/num_pet)) / \
+        np.sqrt(1. + (np.pi/num_pet*r*dadr(r))**2)
 
-x = hypx(rads)
-y = hypy(rads)
+    dy = lambda r:  etch*(np.cos(afunc(r)*np.pi/num_pet) - \
+        np.pi/num_pet*r*dadr(r)*np.sin(afunc(r)*np.pi/num_pet)) / \
+        np.sqrt(1. + (np.pi/num_pet*r*dadr(r))**2)
 
-newx = lambda x, y, d: x + d/np.sqrt(1. + 1./dydx(x,y)**2)
-newy = lambda x, y, d: y + d/np.sqrt(1. + dydx(x,y)**2)
+    rad = np.linspace(r0, r1, 1000)
 
-etch = 0.1
-x2 = newx(x,y, etch)
-y2 = newy(x,y, etch)
+    x1 = xc(rad)
+    y1 = yc(rad)
 
-plt.figure()
-plt.plot(x,y)
-plt.plot(x2, y2)
+    x2 = xc(rad) + dx(rad)
+    y2 = yc(rad) + dy(rad)
 
-# the = np.linspace(0,2*np.pi, 1000)
-# rr = 10
-#
-# xc = rr*np.cos(the)
-# yc = rr*np.sin(the)
-#
-# xc2 = xc + etch*10/np.sqrt(1. + (xc/yc)**2)
-# yc2 = yc + etch*10/np.sqrt(1. + (yc/xc)**2)
-#
-# plt.figure()
-# plt.plot(xc, yc)
-# plt.plot(xc2, yc2)
+    plt.figure()
+    plt.plot(x1, y1)
+    plt.plot(x2, y2)
+    breakpoint()
+
+if [False, True][1]:
+
+    etch = -0.05
+    the = np.linspace(0,2*np.pi, 1000)
+    rr = 2
+
+    # #Circle
+    # fr = lambda t: rr
+    # df = lambda t: 0.
+    #
+    # #Boomerang
+    # a=0.3
+    # fr = lambda t: 1 + a*np.cos(3*t)
+    # df = lambda t: -3*a*np.sin(3*t)
+
+    #Kite
+    fr = lambda t:
+
+    #Equations
+    xc = lambda t: fr(t)*np.cos(t)
+    yc = lambda t: fr(t)*np.sin(t)
+
+    dx = lambda t: -etch*(df(t)*np.sin(t) + fr(t)*np.cos(t))/np.sqrt(df(t)**2 + fr(t)**2)
+    dy = lambda t:  etch*(df(t)*np.cos(t) - fr(t)*np.sin(t))/np.sqrt(df(t)**2 + fr(t)**2)
+
+    x1 = xc(the)
+    y1 = yc(the)
+
+    x2 = xc(the) + dx(the)
+    y2 = yc(the) + dy(the)
+
+    plt.figure()
+    plt.plot(x1, y1)
+    plt.plot(x2, y2)
+    plt.axis('equal')
+
 
 breakpoint()

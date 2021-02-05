@@ -40,29 +40,55 @@ class Test_diffraction_points(object):
             #Fresnel number
             lambdaz = 1./fresnum
 
-            #Smooth radial function on [0, 2pi)
-            gfunc = lambda t: 1 + 0.3*np.cos(3*t)
+            #Run polar and cartesian
+            for shape in ['polar', 'cartesian']:
 
-            #Get quadratures
-            xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, m, n)
+                #Get quadratures
+                xq, yq, wq = getattr(self, f'get_quad_{shape}')(m, n)
 
-            #Calculate diffraction
-            uu = diffraq.diffraction.diffract_points(xq, yq, wq, lambdaz, xi, eta, tol)
+                #Calculate diffraction
+                uu = diffraq.diffraction.diffract_points(xq, yq, wq, lambdaz, xi, eta, tol)
 
-            #Reshape to match grid
-            uu = uu.reshape(grid_2D.shape)
+                #Reshape to match grid
+                uu = uu.reshape(grid_2D.shape)
 
-            #Calculate theoretical value
-            utru = diffraq.utils.solution_util.direct_integration(fresnum, \
-                uu.shape, xq, yq, wq, grid_2D)
+                #Calculate theoretical value
+                utru = diffraq.utils.solution_util.direct_integration(fresnum, \
+                    uu.shape, xq, yq, wq, grid_2D)
 
-            #Assert max difference is close to specified tolerance
-            max_diff = tol * fresnum
+                #Assert max difference is close to specified tolerance
+                max_diff = tol * fresnum
 
-            assert(np.abs(utru - uu).max() < max_diff)
+                assert(np.abs(utru - uu).max() < max_diff)
 
         #Cleanup
         del grid_pts, grid_2D, uu, utru, xi, eta
+
+############################################
+
+    def get_quad_polar(self, m, n):
+        #Smooth radial function on [0, 2pi)
+        gfunc = lambda t: 1 + 0.3*np.cos(3*t)
+
+        #Get quadratures
+        xq, yq, wq = diffraq.quadrature.polar_quad(gfunc, m, n)
+
+        return xq, yq, wq
+
+    def get_quad_cartesian(self, m, n):
+        #Kite occulter
+        xfunc = lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t)
+        yfunc = lambda t: np.sin(t)
+        dxfunc = lambda t: -0.5*np.sin(t) - np.sin(2*t)
+        dyfunc = lambda t: np.cos(t)
+
+        #Get quad
+        xq, yq, wq = diffraq.quadrature.cartesian_quad( \
+            xfunc, yfunc, dxfunc, dyfunc, m, n)
+
+        return xq, yq, wq
+
+############################################
 
 if __name__ == '__main__':
 

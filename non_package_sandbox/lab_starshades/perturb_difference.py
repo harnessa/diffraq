@@ -53,8 +53,10 @@ del newx, newy
 diff = defocc - nomocc
 
 pert = defocc[np.hypot(*diff.T) > 0]
+notpert = nomocc[np.hypot(*diff.T) > 0]
 
-plt.plot(*pert.T, 'x-')
+plt.plot(*pert.T, '-')
+plt.plot(*notpert.T, '--')
 
 
 breakpoint()

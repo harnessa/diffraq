@@ -1,0 +1,91 @@
+"""
+cartesian_quad.py
+
+Author: Anthony Harness
+Affiliation: Princeton University
+Created on: 02-05-2021
+Package: DIFFRAQ
+License: Refer to $pkg_home_dir/LICENSE
+
+Description: quadrature for integrals over area with cartesian parametric functions.
+    See Barnett (2021) Eq. 14.
+
+"""
+
+from diffraq.quadrature import lgwt
+import numpy as np
+
+def cartesian_quad(f, g, df, dg, m, n):
+    """
+    xq, yq, wq = cartesian_quad(f, g, df, dg, m, n)
+
+    returns list of nodes and their weights for 2D quadrature, over a cartesian domain,
+
+        sum_{j=1}^N f(xq(j),yq(j)) wq(j)   \approx   int_Omega f(x,y) dx dy
+
+    for all smooth functions f, where Omega is the cartesian domain defined by
+    functions x=f(theta), y=g(theta). (Barnett 2021)
+
+    Inputs:
+        f = function handle for x=f(theta), theta in [0,2pi)
+        g = function handle for y=g(theta), theta in [0,2pi)
+        df = function handle for df/dtheta, theta in [0,2pi)
+        dg = function handle for dg/dtheta, theta in [0,2pi)
+        m = # radial nodes
+        n = # theta nodes
+
+    Outputs:
+        xq, yq = numpy array of x,y coordinates of nodes [meters]
+        wq = numpy array of weights
+    """
+
+    #Theta nodes, constant weights
+    pt = 2.*np.pi/n * (np.arange(n)[:,None] + 1)
+    wt = 2.*np.pi/n
+
+    #Radial quadrature nodes, weights
+    pr, wr = lgwt(m, 0, 1)
+
+    #Get function values at all theta nodes
+    ft = f(pt)
+    gt = g(pt)
+    dft = df(pt)
+    dgt = dg(pt)
+
+    #Nodes (Eq. 11 Barnett 2021)
+    xq = (ft * pr).ravel()
+    yq = (gt * pr).ravel()
+
+    #Weights (Eq. 12 Barnett 2021)
+    wq = wt * (pr * wr * (ft * dgt - gt * dft)).ravel()
+
+    #Cleanup
+    del pt, wt, pr, wr, ft, gt, dft, dgt
+
+    return xq, yq, wq
+
+############################################
+############################################
+
+def cartesian_edge(f, g, n):
+    """
+    xy = cartesian_edge(f, g, n)
+
+    Build loci demarking the polar occulter edge.
+
+    Inputs:
+        f = function handle for x=f(theta), theta in [0,2pi)
+        g = function handle for y=g(theta), theta in [0,2pi)
+        n = # theta nodes
+
+    Outputs:
+        xy = numpy array (2D) of x,y coordinates of occulter edge [meters]
+    """
+
+    #Theta nodes
+    pt = 2.*np.pi/n * (np.arange(n) + 1)
+
+    #Boundary points
+    xy = np.hstack((f(pt), g(pt)))
+
+    return xy
