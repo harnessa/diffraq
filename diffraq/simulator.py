@@ -49,8 +49,8 @@ class Simulator(object):
             self.logger.error('Invalid Occulter Shape')
 
         #Load specific occulter
-        # self.occulter = getattr(diffraq.occulter, f'{self.occulter_shape.capitalize()}_Occulter')(self)
-        self.occulter = diffraq.occulter.Occulter(self)
+        self.occulter = getattr(diffraq.occulter, \
+            f'{self.occulter_shape.capitalize()}_Occulter')(self)
 
         #Open flag
         self.shop_is_open = False

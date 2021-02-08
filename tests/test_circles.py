@@ -38,7 +38,6 @@ class Test_Circles(object):
         """Test opaque circular occulter and compare to analytic solution"""
         #Load simulator
         params = {
-            'occulter_shape':   'circle',
             'is_babinet':       is_babinet,
             'circle_rad':       self.circle_rad,
             'radial_nodes':     self.radial_nodes,
@@ -48,16 +47,27 @@ class Test_Circles(object):
             'zz':               self.zz,
             'z0':               z0,
             'skip_image':       True,
-            'apod_func':        lambda t: self.circle_rad*np.hstack(( np.cos(t), np.sin(t))),
-            'apod_deriv':       lambda t: self.circle_rad*np.hstack((-np.sin(t), np.cos(t))),
             'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 
+        cart_func = [lambda t: self.circle_rad*np.cos(t), lambda t: self.circle_rad*np.sin(t)]
+        cart_deriv = [lambda t: -self.circle_rad*np.sin(t), lambda t: self.circle_rad*np.cos(t)]
+        polar_func = lambda t: self.circle_rad * np.ones_like(t)
+        polar_deriv = lambda t: np.zeros_like(t)
+
         #Loop over occulter types
-        for occ_shape in ['circle', 'cartesian', 'loci']:
+        utru = None
+        for occ_shape in ['polar', 'cartesian', 'circle', 'loci']:
 
             #Set parameters
             params['occulter_shape'] = occ_shape
+
+            if occ_shape == 'cartesian':
+                params['apod_func'] = cart_func
+                params['apod_deriv'] = cart_deriv
+            elif occ_shape == 'polar':
+                params['apod_func'] = polar_func
+                params['apod_deriv'] = polar_deriv
 
             #Load simulator
             sim = diffraq.Simulator(params)
@@ -67,7 +77,7 @@ class Test_Circles(object):
             pupil = pupil[0][len(pupil[0])//2]
 
             #Calculate analytic solution (once)
-            if occ_shape == 'circle':
+            if utru is None:
                 utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
                     sim.waves[0], sim.zz, sim.z0, sim.circle_rad, is_babinet)
 

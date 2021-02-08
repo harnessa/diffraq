@@ -51,8 +51,10 @@ class Test_Starshades(object):
             if ss == 'loci':
                 sim.occulter_shape = 'loci'
                 sim.loci_file = ss_Lfile
+                sim.load_children()
 
             #Build occulter
+            sim.occulter.set_shape_function()
             sim.occulter.build_quadrature()
 
             #Calculate diffraction
