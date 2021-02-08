@@ -36,10 +36,10 @@ def_sim_params = {
     ### Occulter ###
     'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, cartesian, starshade, loci]
     'circle_rad':           12,         #Circle occulter radius
+    'loci_file':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
     'apod_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes apod_func
     'apod_func':            None,       #Lambda function defining apodization function.
     'apod_deriv':           None,       #Lambda function defining derivative of apodization function.
-    'loci_file':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
     'is_babinet':           False,      #Using Babinet principle to calculate?
 
     ### Starshades ###

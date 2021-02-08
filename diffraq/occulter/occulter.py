@@ -27,16 +27,16 @@ class Occulter(object):
         if self.sim.occulter_shape not in self.approved_shapes:
             self.sim.logger.error('Invalid Occulter Shape')
 
-        #Flip etching error sign in Babinet
-        if self.sim.is_babinet:
-            self.sim.etching_error *= -1
+        #Etching error sign is flipped for Babinet
+        self.bab_etch = [1, -1][self.sim.is_babinet]
 
 ############################################
 #####  Main Wrappers #####
 ############################################
 
     def build_quadrature(self):
-        return getattr(self, f'build_quad_{self.sim.occulter_shape}')()
+        #Build shape quadrature
+        getattr(self, f'build_quad_{self.sim.occulter_shape}')()
 
     def get_edge_points(self):
         return getattr(self, f'build_edge_{self.sim.occulter_shape}')()
@@ -57,7 +57,8 @@ class Occulter(object):
 
         #Add etching error if applicable
         if self.sim.etching_error != 0:
-            apod_func = defects.add_polar_etching(apod_func, self.sim.etching_error)
+            apod_func = defects.add_polar_etching(apod_func, \
+                self.sim.etching_error * self.bab_etch)
 
         #Calculate polar quadrature
         self.xq, self.yq, self.wq = quad.polar_quad(apod_func, \
@@ -110,7 +111,7 @@ class Occulter(object):
         #Add etching error if applicable
         if self.sim.etching_error != 0:
             apod_func, apod_deriv = defects.add_cartesian_etching(apod_func, apod_deriv, \
-                self.sim.etching_error)
+                self.sim.etching_error * self.bab_etch)
 
         #Calculate cartesian quadrature
         self.xq, self.yq, self.wq = quad.cartesian_quad(apod_func, apod_deriv, \
@@ -176,7 +177,8 @@ class Occulter(object):
 
         #Add etching error if applicable
         if self.sim.etching_error != 0:
-            apod_func = defects.add_starshade_etching(apod_func, self.sim.etching_error)
+            apod_func = defects.add_starshade_etching(apod_func, \
+                self.sim.etching_error * self.bab_etch)
 
         return apod_func
 
@@ -193,7 +195,7 @@ class Occulter(object):
             loci = self.load_loci_data(self.sim.loci_file)
 
         #Calculate loci quadrature
-        self.xq, self.yq, self.wq = quad.loci_quad(*loci.T, self.sim.radial_nodes)
+        self.xq, self.yq, self.wq = quad.loci_quad(loci[:,0], loci[:,1], self.sim.radial_nodes)
 
         #Cleanup
         del loci

@@ -36,7 +36,6 @@ class Test_Etching(object):
 ############################################
 
     def run_calculation(self, is_babinet, etch_sign):
-        """Test opaque circular occulter with plane wave"""
         #Load simulator
         params = {
             'occulter_shape':   'circle',
@@ -56,7 +55,7 @@ class Test_Etching(object):
         }
 
         #Loop over occulter types
-        for occ_shape in ['circle', 'cartesian', 'loci'][1:-1]:
+        for occ_shape in ['circle', 'cartesian', 'loci'][:-1]:
 
             #Set parameters
             params['occulter_shape'] = occ_shape
@@ -73,7 +72,7 @@ class Test_Etching(object):
             if True:
                 utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
                     sim.waves[0], sim.zz, sim.z0, \
-                    sim.circle_rad + sim.etching_error, is_babinet)
+                    sim.circle_rad + sim.etching_error * sim.occulter.bab_etch, is_babinet)
 
             import matplotlib.pyplot as plt;plt.ion()
             plt.cla()

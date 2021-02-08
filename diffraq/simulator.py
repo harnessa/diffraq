@@ -36,12 +36,23 @@ class Simulator(object):
         ### Derived ###
         if self.save_dir_base is None:
             self.save_dir_base = f"{diffraq.pkg_home_dir}/Results"
-            
+
         self.waves = np.atleast_1d(self.waves)
 
     def load_children(self):
+        #Logging + Saving
         self.logger = diffraq.utils.Logger(self)
+
+        #Check shape name is in approved list
+        approved_shapes = ['polar', 'circle', 'cartesian', 'starshade', 'loci']
+        if self.occulter_shape not in approved_shapes:
+            self.logger.error('Invalid Occulter Shape')
+
+        #Load specific occulter
+        # self.occulter = getattr(diffraq.occulter, f'{self.occulter_shape.capitalize()}_Occulter')(self)
         self.occulter = diffraq.occulter.Occulter(self)
+
+        #Open flag
         self.shop_is_open = False
 
     def load_focuser(self):

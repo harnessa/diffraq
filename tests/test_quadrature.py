@@ -134,7 +134,7 @@ class Test_Quadrature(object):
         sim = diffraq.Simulator({'radial_nodes':100, 'occulter_shape':'loci'})
 
         #Load loci
-        loci = np.genfromtxt(f'{diffraq.int_data_dir}/Test_Data/test_loci_file.txt', delimiter=',')
+        loci = np.genfromtxt(f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt', delimiter=',')
 
         for m in range(100,200,20):
             for dn in [2, 5, 10]:

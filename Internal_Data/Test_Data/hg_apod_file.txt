@@ -1,3 +1,4 @@
+#Test hypergaussian apodization function with HG parameters: a=5, b=13.333333333333334, n=6
 5.0,1.0
 5.000800080008001,1.0
 5.001600160016001,1.0

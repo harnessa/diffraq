@@ -44,23 +44,21 @@ if [False, True][0]:
 
 if [False, True][1]:
 
-    etch = -0.05
+    etch = 0.05*2
     the = np.linspace(0,2*np.pi, 1000)
     rr = 2
 
-    # #Circle
-    # fr = lambda t: rr
-    # df = lambda t: 0.
-    #
-    # #Boomerang
-    # a=0.3
-    # fr = lambda t: 1 + a*np.cos(3*t)
-    # df = lambda t: -3*a*np.sin(3*t)
+    if [False, True][0]:
+        #Circle
+        fr = lambda t: rr
+        df = lambda t: 0.
+    else:
+        #Boomerang
+        a=0.3
+        fr = lambda t: 1 + a*np.cos(3*t)
+        df = lambda t: -3*a*np.sin(3*t)
 
-    #Kite
-    fr = lambda t:
-
-    #Equations
+    #Cartesian Equations
     xc = lambda t: fr(t)*np.cos(t)
     yc = lambda t: fr(t)*np.sin(t)
 
@@ -73,10 +71,24 @@ if [False, True][1]:
     x2 = xc(the) + dx(the)
     y2 = yc(the) + dy(the)
 
+    #Polar equations
+    nf = lambda t: fr(t) - etch*fr(t)/np.sqrt(df(t)**2 + fr(t)**2)
+    nt = lambda t: t + etch*df(t)/np.sqrt(df(t)**2 + fr(t)**2)
+
+    nxc = lambda t: fr(t) * np.cos(t) * (1. - etch/np.sqrt(df(t)**2 + fr(t)**2)*(1. + df(t)/fr(t)*np.tan(t)))
+    nyc = lambda t: fr(t) * np.sin(t) * (1. - etch/np.sqrt(df(t)**2 + fr(t)**2)*(1. - df(t)/fr(t)/np.tan(t)))
+
+    # xr2, yr2 = nf(nt(the))*np.cos(nt(the)),  nf(nt(the))*np.sin(nt(the))
+    # xr2, yr2 = nf(the)*np.cos(nt(the)),  nf(the)*np.sin(nt(the))
+    xr2, yr2 = nxc(the), nyc(the)
+
+    print(np.nanmax(np.hypot(xr2-x2, yr2-y2)))
+
     plt.figure()
     plt.plot(x1, y1)
     plt.plot(x2, y2)
-    plt.axis('equal')
 
+    plt.plot(xr2, yr2, '--')
+    plt.axis('equal')
 
 breakpoint()

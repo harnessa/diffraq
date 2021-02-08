@@ -29,22 +29,28 @@ class Test_Starshades(object):
 
         #HG function and file
         ss_Afunc = lambda r: np.exp(-((r-sim.ss_rmin)/(sim.ss_rmax-sim.ss_rmin)/0.6)**6)
-        ss_Afile = f'{diffraq.int_data_dir}/Test_Data/test_apod_file.txt'
+        ss_Afile = f'{diffraq.int_data_dir}/Test_Data/hg_apod_file.txt'
+        ss_Lfile = f'{diffraq.int_data_dir}/Test_Data/hg_loci_file.txt'
 
         #Analytic vs numeric
-        afunc_dict = {'analytic':ss_Afunc, 'numeric':None}
-        afile_dict = {'analytic':None,     'numeric':ss_Afile}
+        afunc_dict = {'analytic':ss_Afunc, 'numeric':None,      'loci':None}
+        afile_dict = {'analytic':None,     'numeric':ss_Afile,  'loci':None}
 
         #Lambdaz
         lamz = sim.waves[0] * sim.zz
 
         #Test analytic and numeric
         UUs = []
-        for ss in ['analytic', 'numeric']:
+        for ss in ['analytic', 'numeric', 'loci']:
 
             #Set apod values
             sim.apod_func = afunc_dict[ss]
             sim.apod_file = afile_dict[ss]
+
+            #Loci run
+            if ss == 'loci':
+                sim.occulter_shape = 'loci'
+                sim.loci_file = ss_Lfile
 
             #Build occulter
             sim.occulter.build_quadrature()
@@ -62,7 +68,9 @@ class Test_Starshades(object):
             assert(np.abs(uu).max()**2 < max_con)
 
         #Check if results agree with each other (conservative)
-        assert(np.abs(UUs[1] - UUs[0]).max() < max_con)
+        assert((np.abs(UUs[1] - UUs[0]).max() < max_con) & \
+               (np.abs(UUs[2] - UUs[0]).max() < max_con) & \
+               (np.abs(UUs[2] - UUs[1]).max() < max_con))
 
         #Cleanup
         sim.clean_up()

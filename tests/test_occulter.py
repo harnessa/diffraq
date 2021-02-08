@@ -113,7 +113,7 @@ class Test_Occulter(object):
 
         #HG function and file
         ss_Afunc = lambda r: np.exp(-((r-sim.ss_rmin)/(sim.ss_rmax-sim.ss_rmin)/0.6)**6)
-        ss_Afile = f'{diffraq.int_data_dir}/Test_Data/test_apod_file.txt'
+        ss_Afile = f'{diffraq.int_data_dir}/Test_Data/hg_apod_file.txt'
 
         #Analytic vs numeric
         afunc_dict = {'analytic':ss_Afunc, 'numeric':None}
@@ -149,7 +149,7 @@ class Test_Occulter(object):
         sim = diffraq.Simulator({'radial_nodes':100, 'occulter_shape':'loci'})
 
         #Point to loci file
-        sim.loci_file = f'{diffraq.int_data_dir}/Test_Data/test_loci_file.txt'
+        sim.loci_file = f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt'
 
         #Build loci occulter
         sim.occulter.build_quadrature()
