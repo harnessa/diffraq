@@ -13,7 +13,7 @@ Description: Derived class of occulter defined by loci of edge points.
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.occulter import Occulter, Shape_Function
+from diffraq.geometry import Occulter, Shape_Function
 
 class Loci_Occulter(Occulter):
 
@@ -24,7 +24,7 @@ class Loci_Occulter(Occulter):
 ############################################
 
     def set_shape_function(self):
-        pass
+        self.shape_func = Shape_Function('loci', self.get_loci, None)
 
 ############################################
 ############################################
@@ -35,7 +35,7 @@ class Loci_Occulter(Occulter):
 
     def build_shape_quadrature(self):
         #Load loci data
-        loci = self.load_loci_data(self.sim.loci_file)
+        loci = self.get_loci()
 
         #Calculate loci quadrature
         xq, yq, wq = quad.loci_quad(loci[:,0], loci[:,1], self.sim.radial_nodes)
@@ -46,7 +46,7 @@ class Loci_Occulter(Occulter):
         return xq, yq, wq
 
     def build_edge(self):
-        return self.load_loci_data(self.sim.loci_file)
+        return self.get_loci()
 
 ############################################
 ############################################
@@ -65,6 +65,9 @@ class Loci_Occulter(Occulter):
 ############################################
 #####  Helper Functions #####
 ############################################
+
+    def get_loci(self):
+        return self.load_loci_data(self.sim.loci_file)
 
     def load_loci_data(self, loci_file):
         return np.genfromtxt(loci_file, delimiter=',')

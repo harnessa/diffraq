@@ -13,7 +13,7 @@ Description: Derived class of starshade occulter.
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.occulter import Occulter, Shape_Function
+from diffraq.geometry import Occulter, Shape_Function
 
 class Starshade_Occulter(Occulter):
 
@@ -33,7 +33,7 @@ class Starshade_Occulter(Occulter):
             #Use user-supplied apodization function
             apod_func = self.sim.apod_func
 
-        self.shape_func = Shape_Function(apod_func, self.sim.apod_deriv)
+        self.shape_func = Shape_Function('apod', apod_func, self.sim.apod_diff)
 
 ############################################
 ############################################

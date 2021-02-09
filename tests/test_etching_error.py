@@ -50,7 +50,7 @@ class Test_Etching(object):
             'z0':               self.z0,
             'skip_image':       True,
             'apod_func':        lambda t: self.circle_rad*np.hstack(( np.cos(t), np.sin(t))),
-            'apod_deriv':       lambda t: self.circle_rad*np.hstack((-np.sin(t), np.cos(t))),
+            'apod_diff':        lambda t: self.circle_rad*np.hstack((-np.sin(t), np.cos(t))),
             'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 

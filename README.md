@@ -42,5 +42,5 @@ No public documentation yet :(
 
 Contributors
 ------------
-Primary author: Anthony Harness (Princeton University)
-Author of original _fresnaq_ code: Alex Barnett (Flatiron Institute)
+ - Primary author: Anthony Harness (Princeton University)
+ - Author of original _fresnaq_ code: Alex Barnett (Flatiron Institute)

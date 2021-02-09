@@ -7,7 +7,7 @@ Created on: 01-08-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Default parameters for DIFFRAQ simulations.
+Description: Default parameters for DIFFRAQ simulations and analyses.
 
 """
 
@@ -39,7 +39,7 @@ def_sim_params = {
     'loci_file':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
     'apod_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes apod_func
     'apod_func':            None,       #Lambda function defining apodization function.
-    'apod_deriv':           None,       #Lambda function defining derivative of apodization function.
+    'apod_diff':            None,       #Lambda function defining derivative of apodization function.
     'is_babinet':           False,      #Using Babinet principle to calculate?
 
     ### Starshades ###
@@ -49,6 +49,7 @@ def_sim_params = {
 
     ### Defects ###
     'etching_error':        0,          #Over-etching (<0) i.e. less material; under-etching (>0) i.e more material..
+    'perturbations':        {},         #Dictionary of dictionaries describing perturbations to be added to the shape
 
     ### Observation ###
     'waves':                0.6e-6,     #Wavelengths

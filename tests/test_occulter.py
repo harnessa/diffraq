@@ -52,13 +52,14 @@ class Test_Occulter(object):
 ############################################
 
     def test_circle(self):
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
-            'occulter_shape':'circle'})
 
         #Real circle function
         r0 = 0.3
         gfunc = lambda t: r0 * np.ones_like(t)
+
+        #Build simulator
+        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
+            'occulter_shape':'circle', 'circle_rad':r0})
 
         #Add radius to sim
         sim.circle_rad = r0
@@ -85,19 +86,19 @@ class Test_Occulter(object):
             'occulter_shape':'cartesian'})
 
         #Kite occulter
-        func  = [lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t), lambda t: np.sin(t)]
-        deriv = [lambda t: -0.5*np.sin(t) - np.sin(2*t), lambda t: np.cos(t)]
+        func = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
+        diff = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
 
         #Add functions
         sim.apod_func = func
-        sim.apod_deriv = deriv
+        sim.apod_diff = diff
 
         #Build polar occulter
         sim.occulter.set_shape_function()
         sim.occulter.build_quadrature()
 
         #Build directly
-        xq, yq, wq = diffraq.quadrature.cartesian_quad(*func, *deriv, \
+        xq, yq, wq = diffraq.quadrature.cartesian_quad(func, diff, \
             sim.radial_nodes, sim.theta_nodes)
 
         #Check they are all the same
@@ -163,15 +164,15 @@ class Test_Occulter(object):
         theta_nodes = len(edge)
 
         #Kite occulter
-        func  = [lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t), lambda t: np.sin(t)]
-        deriv = [lambda t: -0.5*np.sin(t) - np.sin(2*t), lambda t: np.cos(t)]
+        func = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
+        diff = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
 
         #Add functions
         sim.apod_func = func
-        sim.apod_deriv = deriv
+        sim.apod_diff = diff
 
         #Build directly
-        xq, yq, wq = diffraq.quadrature.cartesian_quad(*func, *deriv, \
+        xq, yq, wq = diffraq.quadrature.cartesian_quad(func, diff, \
             sim.radial_nodes, theta_nodes)
 
         #Check they are all close

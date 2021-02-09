@@ -42,4 +42,4 @@ from diffraq.simulator import Simulator
 from diffraq.analysis import Analyzer
 import diffraq.quadrature
 import diffraq.diffraction
-import diffraq.occulter
+import diffraq.geometry

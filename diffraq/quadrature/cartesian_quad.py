@@ -15,9 +15,9 @@ Description: quadrature for integrals over area with cartesian parametric functi
 from diffraq.quadrature import lgwt
 import numpy as np
 
-def cartesian_quad(fx, fy, dx, dy, m, n):
+def cartesian_quad(fxy, dxy, m, n):
     """
-    xq, yq, wq = cartesian_quad(fx, fy, dx, dy, m, n)
+    xq, yq, wq = cartesian_quad(fxy, dxy, m, n)
 
     returns list of nodes and their weights for 2D quadrature, over a cartesian domain,
 
@@ -27,8 +27,8 @@ def cartesian_quad(fx, fy, dx, dy, m, n):
     function (x,y) = fxy(theta). (Barnett 2021)
 
     Inputs:
-        fx[y] = function handle for [y]]) = fx[y](theta), theta in [0,2pi)
-        dx[y] = function handle for derivative of fx[y], theta in [0,2pi)
+        fxy = function handle for (x,y) = fxy(theta), theta in [0,2pi)
+        dxy = function handle for derivative of fxy, theta in [0,2pi)
         m = # radial nodes
         n = # theta nodes
 
@@ -45,32 +45,32 @@ def cartesian_quad(fx, fy, dx, dy, m, n):
     pr, wr = lgwt(m, 0, 1)
 
     #Get function values at all theta nodes
-    ftx = fx(pt)
-    fty = fy(pt)
+    ft = fxy(pt)[:,:,None]
+    dt = dxy(pt)[:,:,None]
 
     #Nodes (Eq. 11 Barnett 2021)
-    xq = (ftx[:,None] * pr).ravel()
-    yq = (fty[:,None] * pr).ravel()
+    xq = (ft[:,0] * pr).ravel()
+    yq = (ft[:,1] * pr).ravel()
 
     #Weights (Eq. 12 Barnett 2021)
-    wq = wt * (pr * wr * (ftx * dy(pt) - fty * dx(pt))[:,None]).ravel()
+    wq = wt * (pr * wr * (ft[:,0] * dt[:,1] - ft[:,1] * dt[:,0])).ravel()
 
     #Cleanup
-    del pt, pr, wr, ftx, fty
+    del pt, pr, wr, ft, dt
 
     return xq, yq, wq
 
 ############################################
 ############################################
 
-def cartesian_edge(fx, fy, n):
+def cartesian_edge(fxy, n):
     """
-    xy = cartesian_edge(fx, fy, n)
+    xy = cartesian_edge(fxy, n)
 
     Build loci demarking the cartesian occulter edge.
 
     Inputs:
-        fx[y] = function handle for [y]]) = fx[y](theta), theta in [0,2pi)
+        fxy = function handle for (x,y) = fxy(theta), theta in [0,2pi)
         n = # theta nodes
 
     Outputs:
@@ -81,4 +81,4 @@ def cartesian_edge(fx, fy, n):
     pt = 2.*np.pi/n * (np.arange(n) + 1)
 
     #Boundary points
-    return np.stack((fx(pt), fy(pt)),1)
+    return fxy(pt)

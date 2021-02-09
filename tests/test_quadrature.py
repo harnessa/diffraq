@@ -71,11 +71,11 @@ class Test_Quadrature(object):
         for m in range(100,200,20):
             for n in range(100,200,20):
                 #Kite occulter
-                func  = [lambda t: 0.5*np.cos(t) + 0.5*np.cos(2*t), lambda t: np.sin(t)]
-                deriv = [lambda t: -0.5*np.sin(t) - np.sin(2*t), lambda t: np.cos(t)]
+                func = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
+                diff = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
 
                 #Get quad
-                xq, yq, wq = diffraq.quadrature.cartesian_quad(*func, *deriv, m, n)
+                xq, yq, wq = diffraq.quadrature.cartesian_quad(func, diff, m, n)
 
                 #Assert with analytic area formula
                 assert(np.isclose(wq.sum(), np.pi/2))

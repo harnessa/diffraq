@@ -1,27 +1,24 @@
 """
-defects.py
+etching_error.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
-Created on: 02-04-2021
+Created on: 02-09-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Functions to add various defects and perturbations to the occulter shape.
+Description: Class of the etching error perturbation.
 
 """
 
 import numpy as np
+from diffraq.geometry import Perturbation
 from scipy.misc import derivative
-
-############################################
-#####  Etching Error #####
-############################################
 
 def add_polar_etching(fr, dr, etch):
 
     #Build new functions that use normal vector to point to new shape (flipped etch, so positive etch points outward)
-    # nfr = lambda t: fr(t) + 
+    # nfr = lambda t: fr(t) +
     import matplotlib.pyplot as plt;plt.ion()
 
     t = np.linspace(0,2*np.pi, 1000)
@@ -57,6 +54,3 @@ def add_cartesian_etching(fxy, dxy, etch):
             fp[:,::-1]*(np.sum(fp*fpp,1)/norm**2)[:,None])/norm[:,None]
 
     return nfxy, ndxy
-
-############################################
-############################################

@@ -49,7 +49,7 @@ class Simulator(object):
             self.logger.error('Invalid Occulter Shape')
 
         #Load specific occulter
-        self.occulter = getattr(diffraq.occulter, \
+        self.occulter = getattr(diffraq.geometry, \
             f'{self.occulter_shape.capitalize()}_Occulter')(self)
 
         #Open flag

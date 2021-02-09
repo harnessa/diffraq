@@ -50,10 +50,10 @@ class Test_Circles(object):
             'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 
-        cart_func = [lambda t: self.circle_rad*np.cos(t), lambda t: self.circle_rad*np.sin(t)]
-        cart_deriv = [lambda t: -self.circle_rad*np.sin(t), lambda t: self.circle_rad*np.cos(t)]
+        cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
+        cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
         polar_func = lambda t: self.circle_rad * np.ones_like(t)
-        polar_deriv = lambda t: np.zeros_like(t)
+        polar_diff = lambda t: np.zeros_like(t)
 
         #Loop over occulter types
         utru = None
@@ -64,10 +64,10 @@ class Test_Circles(object):
 
             if occ_shape == 'cartesian':
                 params['apod_func'] = cart_func
-                params['apod_deriv'] = cart_deriv
+                params['apod_diff'] = cart_diff
             elif occ_shape == 'polar':
                 params['apod_func'] = polar_func
-                params['apod_deriv'] = polar_deriv
+                params['apod_diff'] = polar_diff
 
             #Load simulator
             sim = diffraq.Simulator(params)

@@ -13,7 +13,7 @@ Description: Derived class of occulter with shape parameterized in cartesian coo
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.occulter import Occulter, Shape_Function
+from diffraq.geometry import Occulter, Shape_Function
 
 class Cartesian_Occulter(Occulter):
 
@@ -24,14 +24,12 @@ class Cartesian_Occulter(Occulter):
 ############################################
 
     def set_shape_function(self):
-        func =  np.atleast_1d(self.sim.apod_func)
-        deriv = np.atleast_1d(self.sim.apod_deriv)
-        self.shape_func = [Shape_Function(func[i], deriv[i]) for i in range(len(func))]
+        self.shape_func = Shape_Function('cart', np.atleast_1d(self.sim.apod_func), \
+            np.atleast_1d(self.sim.apod_diff))
 
     def build_shape_quadrature(self):
         #Calculate quadrature
-        xq, yq, wq = quad.cartesian_quad(self.shape_func[0].func, self.shape_func[1].func,\
-            self.shape_func[0].deriv, self.shape_func[1].deriv, \
+        xq, yq, wq = quad.cartesian_quad(self.shape_func.func, self.shape_func.diff, \
             self.sim.radial_nodes, self.sim.theta_nodes)
 
         return xq, yq, wq
@@ -42,7 +40,7 @@ class Cartesian_Occulter(Occulter):
             npts = self.sim.theta_nodes
 
         #Get cartesian edge
-        edge = quad.cartesian_edge(*self.shape_func.func, npts)
+        edge = quad.cartesian_edge(self.shape_func.func, npts)
 
         return edge
 
