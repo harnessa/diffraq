@@ -7,7 +7,7 @@ Created on: 02-09-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: __init__ package for the OCCULTER/PERTURBATIONS module.
+Description: __init__ package for the OCCULTER.PERTURBATIONS module.
 
 """
 

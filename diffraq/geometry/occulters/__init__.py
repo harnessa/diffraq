@@ -7,7 +7,7 @@ Created on: 01-15-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: __init__ package for the GEOMETRY/OCCULTERS module.
+Description: __init__ package for the GEOMETRY.OCCULTERS module.
 
 """
 

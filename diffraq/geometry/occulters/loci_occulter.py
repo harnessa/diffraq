@@ -13,7 +13,7 @@ Description: Derived class of occulter defined by loci of edge points.
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Occulter, Shape_Function
+from diffraq.geometry import Occulter, Loci_Shape_Func
 
 class Loci_Occulter(Occulter):
 
@@ -24,7 +24,7 @@ class Loci_Occulter(Occulter):
 ############################################
 
     def set_shape_function(self):
-        self.shape_func = Shape_Function('loci', self.get_loci, None)
+        self.shape_func = Loci_Shape_Func(self.get_loci, None)
 
 ############################################
 ############################################
