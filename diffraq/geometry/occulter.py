@@ -45,8 +45,6 @@ class Occulter(object):
         del xp, yp, wp
 
     def build_perturbation_quadrature(self):
-        #Build shape edge
-        edge = self.get_edge_points()
 
         #Initialize
         xp, yp, wp = np.empty(0), np.empty(0), np.empty(0)
@@ -59,7 +57,8 @@ class Occulter(object):
             pert = getattr(geometry, kind.capitalize())(self.shape_func, **pms)
 
             #Get perturbations's quadrature
-            x, y, w = pert.build_quadrature(edge)
+            x, y, w = pert.build_quadrature(self.sim.radial_nodes, \
+                self.sim.theta_nodes, self.bab_etch)
 
             #Append
             xp = np.concatenate((xp, x))

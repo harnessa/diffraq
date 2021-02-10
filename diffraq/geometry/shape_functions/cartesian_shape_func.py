@@ -42,6 +42,9 @@ class Cartesian_Shape_Func(Shape_Function):
     def cart_diff(self, t):
         return self.diff(t)
 
+    def cart_diff_solo(self, t):
+        return self.diff_solo(t)
+
     def cart_diff_2nd(self, t):
         return self.diff_2nd(t)
 

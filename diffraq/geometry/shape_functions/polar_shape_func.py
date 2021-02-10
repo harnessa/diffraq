@@ -13,7 +13,6 @@ Description: Class that is the function that describes the shape of a polar
 """
 
 import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline
 from diffraq.geometry import Shape_Function
 
 class Polar_Shape_Func(Shape_Function):
@@ -28,14 +27,33 @@ class Polar_Shape_Func(Shape_Function):
         return self.func(t) * np.hstack((np.cos(t), np.sin(t)))
 
     def cart_diff(self, t):
-        return np.hstack((self.diff(t)*np.cos(t) - self.func(t)*np.sin(t), \
-                          self.diff(t)*np.sin(t) + self.func(t)*np.cos(t)))
+        func = self.func(t)
+        diff = self.diff(t)
+        ct = np.cos(t)
+        st = np.sin(t)
+        ans = np.hstack((diff*ct - func*st, diff*st + func*ct))
+        del func, diff, ct, st
+        return ans
+
+    def cart_diff_solo(self, t):
+        func = self.func(t)
+        diff = self.diff_solo(t)
+        ct = np.cos(t)
+        st = np.sin(t)
+        ans = np.hstack((diff*ct - func*st, diff*st + func*ct))
+        del func, diff, ct, st
+        return ans
 
     def cart_diff_2nd(self, t):
-        return np.hstack((
-            self.diff_2nd(t)*np.cos(t) - 2.*self.diff(t)*np.sin(t) - self.func(t)*np.cos(t),
-            self.diff_2nd(t)*np.sin(t) + 2.*self.diff(t)*np.cos(t) - self.func(t)*np.sin(t),
-        ))
+        func = self.func(t)
+        diff = self.diff(t)
+        dif2 = self.diff_2nd(t)
+        ct = np.cos(t)
+        st = np.sin(t)
+        ans =  np.hstack((dif2*ct - 2.*diff*st - func*ct,
+                          dif2*st + 2.*diff*ct - func*st))
+        del func, diff, dif2, ct, st
+        return ans
 
 ############################################
 ############################################

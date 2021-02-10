@@ -13,7 +13,6 @@ Description: Class that is the function that describes the shape of a radial (st
 """
 
 import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline
 from diffraq.geometry import Shape_Function
 
 class Radial_Shape_Func(Shape_Function):
@@ -31,18 +30,31 @@ class Radial_Shape_Func(Shape_Function):
     def cart_diff(self, r):
         func = self.func(r)
         diff = self.diff(r)
-        return np.hstack((np.cos(func) - r*np.sin(func)*diff, \
-                          np.sin(func) + r*np.cos(func)*diff))
+        cf = np.cos(func)
+        sf = np.sin(func)
+        ans = np.hstack((cf - r*sf*diff, sf + r*cf*diff))
+        del func, diff, cf, sf
+        return ans
+
+    def cart_diff_solo(self, r):
+        func = self.func(r)
+        diff = self.diff_solo(r)
+        cf = np.cos(func)
+        sf = np.sin(func)
+        ans = np.hstack((cf - r*sf*diff, sf + r*cf*diff))
+        del func, diff, cf, sf
+        return ans
 
     def cart_diff_2nd(self, r):
         func = self.func(r)
         diff = self.diff(r)
         dif2 = self.diff_2nd(r)
-        return np.hstack(( \
-            -np.sin(func)*diff - ((np.sin(func) + r*np.cos(func)*diff)*diff + \
-                r*np.sin(func)*dif2), \
-             np.cos(func)*diff + ((np.cos(func) - r*np.sin(func)*diff)*diff + \
-                r*np.cos(func)*dif2)  ))
+        cf = np.cos(func)
+        sf = np.sin(func)
+        ans = np.hstack((-sf*diff - ((sf + r*cf*diff)*diff + r*sf*dif2), \
+                          cf*diff + ((cf - r*sf*diff)*diff + r*cf*dif2)))
+        del func, diff, dif2, cf, sf
+        return ans
 
 ############################################
 ############################################

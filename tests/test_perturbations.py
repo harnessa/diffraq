@@ -17,9 +17,10 @@ import numpy as np
 class Test_Perturbations(object):
 
     circle_rad = 12
+    tol = 1e-5
 
     def run_all_tests(self):
-        for dd in ['notch', 'sines']:
+        for dd in ['notch', 'sines'][:1]:
             getattr(self, f'test_{dd}')()
 
 ############################################
@@ -31,12 +32,15 @@ class Test_Perturbations(object):
             'circle_rad':       self.circle_rad,
         }
 
-
         #Build notch
-        center = [self.circle_rad*np.cos(np.pi/6), self.circle_rad*np.sin(np.pi/6)]
-        height = 1
+        xy0 = [self.circle_rad*np.cos(np.pi/6), self.circle_rad*np.sin(np.pi/6)]
+        height = 1.25
         width = 2
-        notch = {'center':center, 'height':height, 'width':width}
+        notch = {'xy0':xy0, 'height':height, 'width':width}
+
+        #Areas
+        disk_area = np.pi*self.circle_rad**2
+        notch_area = height * width
 
         #Loop over occulter/aperture
         for bab in [False, True]:
@@ -54,9 +58,19 @@ class Test_Perturbations(object):
                 #Generate simulator
                 sim = diffraq.Simulator(params)
 
+                #Get perturbation quadrature
+                xp, yp, wp = sim.occulter.build_perturbation_quadrature()
+
                 #Get quadrature
                 sim.occulter.build_quadrature()
-                breakpoint()
+
+                #Get current notch area
+                cur_area = notch_area*nch
+                cur_disk_area = disk_area + cur_area
+
+                #Assert true
+                assert(np.isclose(cur_area, wp.sum()) and \
+                    (cur_disk_area, sim.occulter.wq.sum()))
 
 ############################################
 

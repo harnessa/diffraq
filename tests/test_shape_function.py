@@ -23,7 +23,8 @@ class Test_Shape_Function(object):
     tol2 = 4e-5
 
     def run_all_tests(self):
-        for tt in ['polar', 'starshade', 'cartesian', 'polar_cart', 'radial_cart']:
+        for tt in ['polar', 'starshade', 'cartesian', 'polar_cart', 'radial_cart', \
+            'closest_point']:
             getattr(self, f'test_{tt}')()
 
 ############################################
@@ -159,6 +160,39 @@ class Test_Shape_Function(object):
 
         #Cleanup
         del rr
+
+############################################
+
+    def test_closest_point(self):
+
+        #Other function
+        pole_func = lambda t: 2.*np.cos(3*t)
+        pole_diff = lambda t: -6*np.sin(3*t)
+
+        cart_func = lambda t: 2.*np.cos(3*t) * np.hstack(( np.cos(t), np.sin(t)))
+        cart_diff = lambda t: np.hstack((-6*np.sin(3*t)*np.cos(t) - 2*np.cos(3*t)*np.sin(t), \
+            -6*np.sin(3*t)*np.sin(t) + 2*np.cos(3*t)*np.cos(t)))
+
+        point = np.array([1.399, .363])
+
+        #Loop over analytic or numerical differentiation
+        for w_diff in [False, True]:
+
+            if w_diff:
+                d1 = pole_diff
+                d2 = cart_diff
+            else:
+                d1, d2 = None, None
+
+            sf1 = Polar_Shape_Func(pole_func,     diff=d1, diff_2nd=None)
+            sf2 = Cartesian_Shape_Func(cart_func, diff=d2, diff_2nd=None)
+
+            #Get closest point
+            c1 = sf1.cart_func(sf1.find_closest_point(point))
+            c2 = sf2.cart_func(sf2.find_closest_point(point))
+
+            #Make sure it matches
+            assert((np.hypot(*(c1 - point)) < 1e-3) & (np.hypot(*(c2 - point)) < 1e-3))
 
 ############################################
 
