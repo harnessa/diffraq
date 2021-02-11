@@ -22,6 +22,27 @@ class Notch(Perturbation):
     def get_pert_quad(self, t0, tf, m, n, bab_etch):
         """ + direction = more material, - direction = less material"""
 
+        #Get edge loci
+        loci, npts = self.get_pert_edge(t0, tf, m, n, bab_etch)
+
+        #Shift to center
+        loci_shift = loci.mean(0)
+        loci -= loci_shift
+
+        #Get quadrature from loci points
+        xq, yq, wq = quad.loci_quad(loci[:,0], loci[:,1], npts)
+
+        #Shift back to edge
+        xq += loci_shift[0]
+        yq += loci_shift[1]
+
+        #Cleanup
+        del loci
+
+        return xq, yq, wq
+
+    def get_pert_edge(self, t0, tf, m, n, bab_etch):
+
         #Get number of points per side
         npts = 2*max(m,n)
 
@@ -41,7 +62,7 @@ class Notch(Perturbation):
         new_edge = new_edge[::-1]
 
         #Join with straight lines
-        nline = int(self.height/self.width*npts)
+        nline = max(9, int(self.height/self.width*npts))
         line1 = self.make_line(old_edge[-1], new_edge[0], nline)
         line2 = self.make_line(new_edge[-1], old_edge[0], nline)
 
@@ -51,18 +72,7 @@ class Notch(Perturbation):
         #Go CW if not babinet
         loci = loci[::-bab_etch]
 
-        #Shift to center
-        loci_shift = loci.mean(0)
-        loci -= loci_shift
-
-        #Get quadrature from loci points
-        xq, yq, wq = quad.loci_quad(loci[:,0], loci[:,1], npts)
-
-        #Shift back to edge
-        xq += loci_shift[0]
-        yq += loci_shift[1]
-
         #Cleanup
-        del loci, old_edge, new_edge, line1, line2, ts
+        del old_edge, new_edge, line1, line2, ts
 
-        return xq, yq, wq
+        return loci, npts

@@ -108,25 +108,27 @@ def starshade_edge(Afunc, num_pet, r0, r1, m):
     #Scale radius quadrature nodes to physical size
     pr = r0 + (r1 - r0) * pr
 
-    #Apodization value at nodes
-    Aval = Afunc(pr)
-
     #Add axis
     pr = pr[:,None]
 
-    #Angle between petals
-    pet_ang = 2.*np.pi/num_pet
+    #Apodization value at nodes
+    Aval = Afunc(pr)
 
-    #Build Petal edges
-    xy = np.empty((0,2))
-    for ip in range(num_pet):
-        #Trailing/leading edges
-        for tl in [-1, 1]:
-            ti = pet_ang*(ip + tl*Aval/2)
-            cur_xy = np.stack((np.cos(ti), np.sin(ti)), 1) * pr
-            xy = np.concatenate((xy, cur_xy[::tl]))
+    #Theta nodes (only at edges on each side)
+    pw = np.array([1, -1])
+
+    #thetas
+    tt = np.tile((np.pi/num_pet) * Aval * pw, (1, num_pet)) + \
+         np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 2)
+
+    #Cartesian coords
+    xx = (pr * np.cos(tt)).ravel()
+    yy = (pr * np.sin(tt)).ravel()
+
+    #Stack
+    xy = np.stack((xx, yy),1)
 
     #Cleanup
-    del pr, wr, Aval, cur_xy, ti
+    del xx, yy, tt, pr, wr, Aval
 
     return xy

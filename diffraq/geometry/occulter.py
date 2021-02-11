@@ -25,7 +25,7 @@ class Occulter(object):
         self.set_shape_function()
 
 ############################################
-#####  Main Wrappers #####
+#####  Quadrature #####
 ############################################
 
     def build_quadrature(self):
@@ -51,7 +51,7 @@ class Occulter(object):
         self.perturb_list = []
 
         #Loop through perturbation list and grab quadratures
-        for kind, pms in self.sim.perturbations.items():
+        for kind, pms in self.sim.perturbations:
 
             #Build perturbation
             pert = getattr(geometry, kind.capitalize())(self.shape_func, **pms)
@@ -68,8 +68,51 @@ class Occulter(object):
 
         return xp, yp, wp
 
+############################################
+############################################
+
+############################################
+#####  Edge Points #####
+############################################
+
     def get_edge_points(self):
-        return self.build_edge()
+
+        #Build perturbation edge points
+        xyp = self.build_perturbation_edge()
+
+        #Build shape edge points
+        xyq = self.build_edge()
+
+        #Add perturbations to quadrature
+        xyq = np.concatenate((xyq, xyp))
+
+        #Cleanup
+        del xyp
+
+        #Sort by angle
+        xyq = xyq[np.argsort(np.arctan2(xyq[:,1], xyq[:,0]))]
+
+        return xyq
+
+    def build_perturbation_edge(self):
+
+        #Initialize
+        xyp = np.empty((0,2))
+
+        #Loop through perturbation list and grab quadratures
+        for kind, pms in self.sim.perturbations:
+
+            #Build perturbation
+            pert = getattr(geometry, kind.capitalize())(self.shape_func, **pms)
+
+            #Get perturbations's quadrature
+            xy = pert.build_edge_points(self.sim.radial_nodes, \
+                self.sim.theta_nodes, self.bab_etch)
+
+            #Append
+            xyp = np.concatenate((xyp, xy))
+
+        return xyp
 
 ############################################
 ############################################

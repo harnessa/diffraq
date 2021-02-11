@@ -76,10 +76,7 @@ class Shape_Function(object):
         min_diff = lambda t: np.sum((self.cart_func(t) - point)*self.cart_diff_solo(t))
 
         #Get initial guess
-        if self.kind == 'radial':
-            x0 = np.hypot(*point)
-        else:
-            x0 = np.arctan2(point[1], point[0])
+        x0 = np.arctan2(point[1], point[0])
 
         #Find root
         out, msg = newton(min_diff, x0, full_output=True)
@@ -95,16 +92,12 @@ class Shape_Function(object):
         #Build distance = width equation
         dist = lambda t: np.hypot(*(self.cart_func(t) - self.cart_func(t0))) - width
 
-        #Get initial guess
-        #TODO: get better guess
-        x0 = 0
-
         #Solve
-        out, msg = newton(dist, x0, full_output=True)
+        out, msg = newton(dist, t0, full_output=True)
 
         #Check
         if not msg.converged:
-            print('\n!Closest point not Converged!\n')
+            print('\n!Closest point (width) not Converged!\n')
             breakpoint()
 
         #Make sure it is going the right direction (CW)

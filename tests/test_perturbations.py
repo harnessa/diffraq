@@ -53,7 +53,7 @@ class Test_Perturbations(object):
 
                 #Add to parameters
                 params['is_babinet'] = bab
-                params['perturbations'] = {'notch':notch}
+                params['perturbations'] = [['notch', notch]]
 
                 #Generate simulator
                 sim = diffraq.Simulator(params)

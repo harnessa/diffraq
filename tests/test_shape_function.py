@@ -12,7 +12,7 @@ Description: Test of apodization function and its diffatives
 """
 
 import numpy as np
-from diffraq.geometry import Cartesian_Shape_Func, Polar_Shape_Func, Radial_Shape_Func
+from diffraq.geometry import Cartesian_Shape_Func, Polar_Shape_Func, Petal_Shape_Func
 
 class Test_Shape_Function(object):
 
@@ -23,7 +23,7 @@ class Test_Shape_Function(object):
     tol2 = 4e-5
 
     def run_all_tests(self):
-        for tt in ['polar', 'starshade', 'cartesian', 'polar_cart', 'radial_cart', \
+        for tt in ['polar', 'starshade', 'cartesian', 'polar_cart', 'petal_cart', \
             'closest_point']:
             getattr(self, f'test_{tt}')()
 
@@ -88,27 +88,30 @@ class Test_Shape_Function(object):
 
 ############################################
 
-    def test_radial_cart(self):
+    def test_petal_cart(self):
         r0, r1 = 8, 15
         hga, hgb, hgn = 8,4, 6
-        radi_func = lambda r: np.exp(-((r - hga)/hgb)**hgn) * np.pi/12
-        radi_diff = lambda r: radi_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
+        num_pet = 12
+        petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
+        petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-        cart_func = lambda r: r * np.hstack((np.cos(radi_func(r)), np.sin(radi_func(r))))
+        petal_func_p = lambda r: petal_func(r) * np.pi/num_pet
+        petal_diff_p = lambda r: petal_diff(r) * np.pi/num_pet
+        cart_func = lambda r: r * np.hstack((np.cos(petal_func_p(r)), np.sin(petal_func_p(r))))
         cart_diff = lambda r: np.hstack(( \
-            np.cos(radi_func(r)) - r*np.sin(radi_func(r))*radi_diff(r),
-            np.sin(radi_func(r)) + r*np.cos(radi_func(r))*radi_diff(r) ))
+            np.cos(petal_func_p(r)) - r*np.sin(petal_func_p(r))*petal_diff_p(r),
+            np.sin(petal_func_p(r)) + r*np.cos(petal_func_p(r))*petal_diff_p(r) ))
 
         #Loop over analytic or numerical differentiation
         for w_diff in [False, True]:
 
             if w_diff:
-                d1 = radi_diff
+                d1 = petal_diff
                 d2 = cart_diff
             else:
                 d1, d2 = None, None
 
-            sf1 = Radial_Shape_Func(radi_func,    diff=d1, diff_2nd=None)
+            sf1 = Petal_Shape_Func(petal_func,    diff=d1, diff_2nd=None, num_petals=num_pet)
             sf2 = Cartesian_Shape_Func(cart_func, diff=d2, diff_2nd=None)
 
             #Check cartesian function
@@ -169,30 +172,53 @@ class Test_Shape_Function(object):
         pole_func = lambda t: 2.*np.cos(3*t)
         pole_diff = lambda t: -6*np.sin(3*t)
 
-        cart_func = lambda t: 2.*np.cos(3*t) * np.hstack(( np.cos(t), np.sin(t)))
-        cart_diff = lambda t: np.hstack((-6*np.sin(3*t)*np.cos(t) - 2*np.cos(3*t)*np.sin(t), \
+        cart_pfunc = lambda t: 2.*np.cos(3*t) * np.hstack(( np.cos(t), np.sin(t)))
+        cart_pdiff = lambda t: np.hstack((-6*np.sin(3*t)*np.cos(t) - 2*np.cos(3*t)*np.sin(t), \
             -6*np.sin(3*t)*np.sin(t) + 2*np.cos(3*t)*np.cos(t)))
 
-        point = np.array([1.399, .363])
+        r0, r1 = 8, 15
+        hga, hgb, hgn = 8,4, 6
+        num_pet = 12
+        petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
+        petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
+
+        petal_func_p = lambda r: petal_func(r) * np.pi/num_pet
+        petal_diff_p = lambda r: petal_diff(r) * np.pi/num_pet
+        cart_rfunc = lambda r: r * np.hstack((np.cos(petal_func_p(r)), np.sin(petal_func_p(r))))
+        cart_rdiff = lambda r: np.hstack(( \
+            np.cos(petal_func_p(r)) - r*np.sin(petal_func_p(r))*petal_diff_p(r),
+            np.sin(petal_func_p(r)) + r*np.cos(petal_func_p(r))*petal_diff_p(r) ))
 
         #Loop over analytic or numerical differentiation
-        for w_diff in [False, True]:
+        for kind in ['polar', 'petal']:
+            for w_diff in [False, True]:
 
-            if w_diff:
-                d1 = pole_diff
-                d2 = cart_diff
-            else:
-                d1, d2 = None, None
+                if kind == 'polar':
+                    if w_diff:
+                        d1 = pole_diff
+                        d2 = cart_pdiff
+                    else:
+                        d1, d2 = None, None
+                    sf1 = Polar_Shape_Func(pole_func, diff=d1, diff_2nd=None)
+                    sf2 = Cartesian_Shape_Func(cart_pfunc, diff=d2, diff_2nd=None)
+                    point = np.array([1.399, 0.363])
 
-            sf1 = Polar_Shape_Func(pole_func,     diff=d1, diff_2nd=None)
-            sf2 = Cartesian_Shape_Func(cart_func, diff=d2, diff_2nd=None)
+                else:
+                    if w_diff:
+                        d1 = petal_diff
+                        d2 = cart_rdiff
+                    else:
+                        d1, d2 = None, None
+                    sf1 = Petal_Shape_Func(petal_func, diff=d1, diff_2nd=None, num_petals=num_pet)
+                    sf2 = Cartesian_Shape_Func(cart_rfunc, diff=d2, diff_2nd=None)
+                    point = np.array([11.97, 1.117])
 
-            #Get closest point
-            c1 = sf1.cart_func(sf1.find_closest_point(point))
-            c2 = sf2.cart_func(sf2.find_closest_point(point))
+                #Get closest point
+                c1 = sf1.cart_func(sf1.find_closest_point(point))
+                c2 = sf2.cart_func(sf2.find_closest_point(point))
 
-            #Make sure it matches
-            assert((np.hypot(*(c1 - point)) < 1e-3) & (np.hypot(*(c2 - point)) < 1e-3))
+                #Make sure it matches
+                assert((np.hypot(*(c1 - point)) < 1e-3) & (np.hypot(*(c2 - point)) < 1e-3))
 
 ############################################
 
