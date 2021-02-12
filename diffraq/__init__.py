@@ -34,6 +34,7 @@ apod_dir = f"{ext_data_dir}/Apodization_Profiles"
 loci_dir = f"{ext_data_dir}/Occulter_Loci"
 
 results_dir = "/home/aharness/Research/Optics_Modeling/Diffraq_Results"
+
 #####################
 #####   Modules #####
 #####################
