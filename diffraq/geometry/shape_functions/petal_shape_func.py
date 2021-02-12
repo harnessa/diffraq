@@ -38,7 +38,7 @@ class Petal_Shape_Func(Shape_Function):
         pet = t//self.param_code
         pet_mul = np.pi/self.num_petals*(np.sign(pet)+(pet==0))
         pet_add = 2*np.abs(pet)*np.pi/self.num_petals
-        return r, pet_mul, pet_add
+        return r, pet, pet_mul, pet_add
 
     def pack_param(self, r, pet):
         return r + self.param_code*pet
@@ -46,12 +46,12 @@ class Petal_Shape_Func(Shape_Function):
     ################################
 
     def cart_func(self, t):
-        r, pet_mul, pet_add = self.unpack_param(t)
+        r, pet, pet_mul, pet_add = self.unpack_param(t)
         func = self.func(r)*pet_mul + pet_add
         return r * np.hstack((np.cos(func), np.sin(func)))
 
     def cart_diff(self, t):
-        r, pet_mul, pet_add = self.unpack_param(t)
+        r, pet, pet_mul, pet_add = self.unpack_param(t)
         func = self.func(r)*pet_mul + pet_add
         diff = self.diff(r)*pet_mul
         cf = np.cos(func)
@@ -61,7 +61,7 @@ class Petal_Shape_Func(Shape_Function):
         return ans
 
     def cart_diff_solo(self, t):
-        r, pet_mul, pet_add = self.unpack_param(t)
+        r, pet, pet_mul, pet_add = self.unpack_param(t)
         func = self.func(r)*pet_mul + pet_add
         diff = self.diff_solo(r)*pet_mul
         cf = np.cos(func)
@@ -71,7 +71,7 @@ class Petal_Shape_Func(Shape_Function):
         return ans
 
     def cart_diff_2nd(self, t):
-        r, pet_mul, pet_add = self.unpack_param(t)
+        r, pet, pet_mul, pet_add = self.unpack_param(t)
         func = self.func(r)*pet_mul + pet_add
         diff = self.diff(r)*pet_mul
         dif2 = self.diff_2nd(r)*pet_mul

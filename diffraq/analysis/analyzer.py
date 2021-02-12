@@ -147,6 +147,8 @@ class Analyzer(object):
     def show_results(self):
 
         import matplotlib.pyplot as plt;plt.ion()
+        plt.imshow(self.image[0])
+        print(self.image[0].max())
         breakpoint()
 
 ############################################

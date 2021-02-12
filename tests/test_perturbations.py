@@ -36,7 +36,7 @@ class Test_Perturbations(object):
         xy0 = [self.circle_rad*np.cos(np.pi/6), self.circle_rad*np.sin(np.pi/6)]
         height = 1.25
         width = 2
-        notch = {'xy0':xy0, 'height':height, 'width':width}
+        notch = {'xy0':xy0, 'height':height, 'width':width, 'local_norm':False}
 
         #Areas
         disk_area = np.pi*self.circle_rad**2
@@ -70,7 +70,7 @@ class Test_Perturbations(object):
 
                 #Assert true
                 assert(np.isclose(cur_area, wp.sum()) and \
-                    (cur_disk_area, sim.occulter.wq.sum()))
+                    np.isclose(cur_disk_area, sim.occulter.wq.sum()))
 
 ############################################
 

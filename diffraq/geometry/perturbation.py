@@ -28,29 +28,27 @@ class Perturbation(object):
 #####  Quadrature + Edge points #####
 ############################################
 
-    def build_quadrature(self, radial_nodes, theta_nodes, bab_etch):
+    def build_quadrature(self, radial_nodes, theta_nodes, bab_sign):
         #Get location of perturbation
         t0, tf = self.get_param_locs()
 
         #Determine how many node points to use
-        #TODO: what is converged?
         m, n = radial_nodes//2, theta_nodes//2
 
         #Get perturbation specifc quadrature
-        xq, yq, wq = self.get_pert_quad(t0, tf, m, n, bab_etch)
+        xq, yq, wq = self.get_pert_quad(t0, tf, m, n, bab_sign)
 
         return xq, yq, wq
 
-    def build_edge_points(self, radial_nodes, theta_nodes, bab_etch):
+    def build_edge_points(self, radial_nodes, theta_nodes, bab_sign):
         #Get location of perturbation
         t0, tf = self.get_param_locs()
 
         #Determine how many node points to use
-        #TODO: what is converged?
         m, n = radial_nodes//2, theta_nodes//2
 
         #Get perturbation specifc quadrature
-        xy, npts = self.get_pert_edge(t0, tf, m, n, bab_etch)
+        xy = self.get_pert_edge(t0, tf, m, n, bab_sign)
 
         return xy
 

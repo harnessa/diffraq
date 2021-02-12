@@ -20,7 +20,7 @@ class Occulter(object):
     def __init__(self, sim):
         self.sim = sim
         #Etching error sign is flipped for Babinet
-        self.bab_etch = [1, -1][self.sim.is_babinet]
+        self.bab_sign = [1, -1][self.sim.is_babinet]
         #Set shape function
         self.set_shape_function()
 
@@ -58,7 +58,7 @@ class Occulter(object):
 
             #Get perturbations's quadrature
             x, y, w = pert.build_quadrature(self.sim.radial_nodes, \
-                self.sim.theta_nodes, self.bab_etch)
+                self.sim.theta_nodes, self.bab_sign)
 
             #Append
             xp = np.concatenate((xp, x))
@@ -107,7 +107,7 @@ class Occulter(object):
 
             #Get perturbations's quadrature
             xy = pert.build_edge_points(self.sim.radial_nodes, \
-                self.sim.theta_nodes, self.bab_etch)
+                self.sim.theta_nodes, self.bab_sign)
 
             #Append
             xyp = np.concatenate((xyp, xy))

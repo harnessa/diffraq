@@ -17,8 +17,9 @@ import diffraq
 params = {
 
     ### Loading ###
-    'session':          'test',
-    'load_ext':         '',
+    'load_dir_base':    f'{diffraq.results_dir}/diffraq_test',
+    'session':          'M12P2',
+    'load_ext':         'm2000__n100__2',
 
 }
 

@@ -72,7 +72,7 @@ class Test_Etching(object):
             if True:
                 utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
                     sim.waves[0], sim.zz, sim.z0, \
-                    sim.circle_rad + sim.etching_error * sim.occulter.bab_etch, is_babinet)
+                    sim.circle_rad + sim.etching_error * sim.occulter.bab_sign, is_babinet)
 
             import matplotlib.pyplot as plt;plt.ion()
             plt.cla()
