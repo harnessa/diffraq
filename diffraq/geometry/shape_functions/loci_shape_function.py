@@ -13,9 +13,9 @@ Description: Class that is the function that describes the shape of a loci
 """
 
 import numpy as np
-from diffraq.geometry import Shape_Function
+from diffraq.geometry import ShapeFunction
 
-class Loci_Shape_Func(Shape_Function):
+class LociShapeFunction(ShapeFunction):
 
     kind = 'loci'
 

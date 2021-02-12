@@ -115,7 +115,10 @@ class Notch(Perturbation):
         newr = np.hypot(*new_edge.T)
 
         #Do we need to flip to increasing radius?
-        dir_sign = [1, -1][newr[-1] < newr[0]]
+        if newr[-1] < newr[0]:
+            dir_sign = -1
+        else:
+            dir_sign = 1
 
         #Resample new edge onto radial nodes (need to flip b/c of decreasing rad)
         newt = np.interp(pr[:,0][::dir_sign], \

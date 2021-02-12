@@ -13,10 +13,10 @@ Description: Class that is the function that describes the shape of a petalized 
 """
 
 import numpy as np
-from diffraq.geometry import Shape_Function
+from diffraq.geometry import ShapeFunction
 from scipy.optimize import fmin
 
-class Petal_Shape_Func(Shape_Function):
+class PetalShapeFunction(ShapeFunction):
 
     kind = 'petal'
     param_code = 1000

@@ -13,9 +13,9 @@ Description: Derived class of occulter with shape parameterized in polar coordin
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Occulter, Polar_Shape_Func
+from diffraq.geometry import Occulter, PolarShapeFunction
 
-class Polar_Occulter(Occulter):
+class PolarOcculter(Occulter):
 
     name = 'polar'
 
@@ -24,7 +24,7 @@ class Polar_Occulter(Occulter):
 ############################################
 
     def set_shape_function(self):
-        self.shape_func = Polar_Shape_Func(self.sim.apod_func, self.sim.apod_diff)
+        self.shape_func = PolarShapeFunction(self.sim.apod_func, self.sim.apod_diff)
 
     def build_shape_quadrature(self):
         #Calculate quadrature
@@ -50,12 +50,12 @@ class Polar_Occulter(Occulter):
 #####  Circle Occulter #####
 ############################################
 
-class Circle_Occulter(Polar_Occulter):
+class CircleOcculter(PolarOcculter):
 
     def set_shape_function(self):
         func = lambda t: self.sim.circle_rad * np.ones_like(t)
         diff = lambda t: np.zeros_like(t)
-        self.shape_func = Polar_Shape_Func(func, diff)
+        self.shape_func = PolarShapeFunction(func, diff)
 
 ############################################
 ############################################

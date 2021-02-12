@@ -11,7 +11,7 @@ Description: __init__ package for the GEOMETRY.OCCULTERS module.
 
 """
 
-from diffraq.geometry.occulters.cartesian_occulter import Cartesian_Occulter
-from diffraq.geometry.occulters.loci_occulter import Loci_Occulter
-from diffraq.geometry.occulters.polar_occulter import Polar_Occulter, Circle_Occulter
-from diffraq.geometry.occulters.starshade_occulter import Starshade_Occulter
+from diffraq.geometry.occulters.cartesian_occulter import CartesianOcculter
+from diffraq.geometry.occulters.loci_occulter import LociOcculter
+from diffraq.geometry.occulters.polar_occulter import PolarOcculter, CircleOcculter
+from diffraq.geometry.occulters.starshade_occulter import StarshadeOcculter

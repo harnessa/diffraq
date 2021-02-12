@@ -50,7 +50,7 @@ class Simulator(object):
 
         #Load specific occulter
         self.occulter = getattr(diffraq.geometry, \
-            f'{self.occulter_shape.capitalize()}_Occulter')(self)
+            f'{self.occulter_shape.capitalize()}Occulter')(self)
 
         #Open flag
         self.shop_is_open = False

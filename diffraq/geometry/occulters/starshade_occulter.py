@@ -13,9 +13,9 @@ Description: Derived class of starshade occulter.
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Occulter, Petal_Shape_Func
+from diffraq.geometry import Occulter, PetalShapeFunction
 
-class Starshade_Occulter(Occulter):
+class StarshadeOcculter(Occulter):
 
     name = 'starshade'
 
@@ -33,7 +33,7 @@ class Starshade_Occulter(Occulter):
             #Use user-supplied apodization function
             apod_func = self.sim.apod_func
 
-        self.shape_func = Petal_Shape_Func(apod_func, self.sim.apod_diff, \
+        self.shape_func = PetalShapeFunction(apod_func, self.sim.apod_diff, \
             num_petals=self.sim.num_petals)
 
 ############################################

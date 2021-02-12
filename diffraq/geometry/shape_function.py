@@ -16,7 +16,7 @@ from scipy.misc import derivative
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import newton
 
-class Shape_Function(object):
+class ShapeFunction(object):
 
     def __init__(self, func, diff=None, diff_2nd=-1):
 

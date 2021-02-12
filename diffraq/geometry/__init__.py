@@ -11,7 +11,7 @@ Description: __init__ package for the GEOMETRY module.
 
 """
 
-from diffraq.geometry.shape_function import Shape_Function
+from diffraq.geometry.shape_function import ShapeFunction
 from diffraq.geometry.occulter import Occulter
 from diffraq.geometry.perturbation import Perturbation
 from diffraq.geometry.shape_functions import *

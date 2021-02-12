@@ -14,9 +14,9 @@ Description: Class that is the function that describes the shape of a cartesian
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
-from diffraq.geometry import Shape_Function
+from diffraq.geometry import ShapeFunction
 
-class Cartesian_Shape_Func(Shape_Function):
+class CartesianShapeFunction(ShapeFunction):
 
     kind = 'cartesian'
 

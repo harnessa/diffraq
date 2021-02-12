@@ -13,9 +13,9 @@ Description: Derived class of occulter with shape parameterized in cartesian coo
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Occulter, Cartesian_Shape_Func
+from diffraq.geometry import Occulter, CartesianShapeFunction
 
-class Cartesian_Occulter(Occulter):
+class CartesianOcculter(Occulter):
 
     name = 'cartesian'
 
@@ -24,7 +24,7 @@ class Cartesian_Occulter(Occulter):
 ############################################
 
     def set_shape_function(self):
-        self.shape_func = Cartesian_Shape_Func(self.sim.apod_func, self.sim.apod_diff)
+        self.shape_func = CartesianShapeFunction(self.sim.apod_func, self.sim.apod_diff)
 
     def build_shape_quadrature(self):
         #Calculate quadrature
