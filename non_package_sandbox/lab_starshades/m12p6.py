@@ -7,17 +7,21 @@ z1 = 50.
 z0 = 27.455
 focal_length = 0.498
 num_pts = 256
-num_foc = 128
+num_foc = 128//2
+num_pet = 12
 
-mm = 1000
+mm = 2000
 nn = 200
 
 #perturbations
+pet_ang = np.pi/num_pet
+pet1_dir = np.array([np.cos(pet_ang), np.sin(pet_ang)])
+
 perts = [
-    ['shiftedPetal', {'petal':1, 'shift':2.500e-6, }],
+    ['ShiftedPetal', {'angles':pet_ang*np.array([0,2]), 'shift':10e-6, \
+        'direction':pet1_dir, 'max_radius':12.5312e-3}],
 ]
 
-breakpoint()
 params = {
 
     ### World ###
@@ -36,7 +40,7 @@ params = {
     ### Occulter ###
     'occulter_shape':   'starshade',
     'is_babinet':       False,
-    'num_petals':       12,
+    'num_petals':       num_pet,
     'apod_file':        f'{diffraq.apod_dir}/bb_2017.txt',
     'perturbations':    perts,
 
@@ -50,12 +54,9 @@ params = {
 sim = diffraq.Simulator(params)
 # sim.run_sim()
 
-# sim.occulter.build_quadrature()
-occ = sim.occulter.get_edge_points()
+sim.occulter.build_edge()
 
 import matplotlib.pyplot as plt;plt.ion()
-plt.plot(*occ.T, 'x')
-plt.plot(*xyi, 'o')
-plt.plot(*xyo, 's')
+plt.plot(*sim.occulter.edge.T, 'x')
 
 breakpoint()

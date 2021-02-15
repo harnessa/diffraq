@@ -31,7 +31,8 @@ def lgwt(N, a, b):
     """
 
     #Use numpy legendre (isn't tested above 100, but agrees for me)
-    if N < 10000:
+    # if N < 10000:
+    if True:
         #Get nodes, weights on [-1,1]
         p1, wq = np.polynomial.legendre.leggauss(N)
         p1 = p1[::-1]
@@ -84,6 +85,6 @@ def lgwt(N, a, b):
     wq = (b-a) / ((1-y**2)*LGP**2) * ((N+1)/N)**2
 
     #Cleanup
-    del pu, LGV, LGP, ks, pq, wq
+    del pu, LGV, LGP, ks
 
     return pq, wq

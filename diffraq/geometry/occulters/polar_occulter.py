@@ -33,7 +33,7 @@ class PolarOcculter(Occulter):
 
         return xq, yq, wq
 
-    def build_edge(self, npts=None):
+    def build_shape_edge(self, npts=None):
         #Theta nodes
         if npts is None:
             npts = self.sim.theta_nodes

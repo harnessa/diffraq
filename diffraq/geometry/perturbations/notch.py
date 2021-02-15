@@ -13,24 +13,98 @@ Description: Class of the notched edge perturbation.
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Perturbation
 
-class Notch(Perturbation):
+class Notch(object):
 
     kind = 'notch'
 
+    def __init__(self, parent, **kwargs):
+        """
+        Keyword arguments:
+            - xy0:          (x,y) coordinates of start of notch (innermost point) [m],
+            - height:       height of notch [m],
+            - width:        width (along edge) of notch [m],
+            - direction:    direction of notch. 1 = excess material, -1 = less material,
+            - local_norm:   True = shift each part of original edge by its local normal,
+                            False = shift entire edge by single direction (equal to normal in the middle),
+        """
+        #Point to parent [occulter]
+        self.parent = parent
+
+        #Point to parent occulter's shape function (for quick access)
+        self.shape_func = self.parent.shape_func
+
+        #Set Default parameters
+        def_params = {'xy0':[0,0], 'height':0, 'width':0, 'direction':1, 'local_norm':True}
+        for k,v in {**def_params, **kwargs}.items():
+            setattr(self, k, v)
+
 ############################################
-#####  Shared Quad + Edge #####
+#####  Main Scripts #####
 ############################################
 
-    def get_pert_quad(self, t0, tf, m, n, bab_sign):
-        """ + direction = more material, - direction = less material"""
+    def build_quadrature(self):
+        #Get quadrature
+        xq, yq, wq = self.get_quadrature()
 
-        #Get nodes
-        xq, yq, wq = getattr(self, \
-            f'get_quad_{self.shape_func.kind}')(t0, tf, m, n, bab_sign)
+        #Add to parent's quadrature
+        self.parent.xq = np.concatenate((self.parent.xq, xq))
+        self.parent.yq = np.concatenate((self.parent.yq, yq))
+        self.parent.wq = np.concatenate((self.parent.wq, wq))
+
+        #Cleanup
+        del xq, yq, wq
+
+    def get_quadrature(self):
+        #Get location of perturbation
+        t0, tf = self.get_param_locs()
+
+        #Determine how many node points to use
+        m, n = self.parent.sim.radial_nodes//2, self.parent.sim.theta_nodes//2
+
+        #Get perturbation specifc quadrature
+        xq, yq, wq = getattr(self, f'get_quad_{self.shape_func.kind}')( \
+            t0, tf, m, n, self.parent.bab_sign)
 
         return xq, yq, wq
+
+    def build_edge_points(self):
+        #Get edge
+        xy = self.get_edge_points()
+
+        #Add to parent's edge points
+        self.parent.edge = np.concatenate((self.parent.edge, xy))
+
+        #Cleanup
+        del xy
+
+    def get_edge_points(self):
+        #Get location of perturbation
+        t0, tf = self.get_param_locs()
+
+        #Determine how many node points to use
+        m, n = self.parent.sim.radial_nodes//2, self.parent.sim.theta_nodes//2
+
+        #Get perturbation specifc edge points
+        xy = self.get_pert_edge(t0, tf, m, n, self.parent.bab_sign)
+
+        return xy
+
+############################################
+############################################
+
+############################################
+#####  Shared Functions #####
+############################################
+
+    def get_param_locs(self):
+        #Get parameter of edge point closest to starting point
+        t0 = self.shape_func.find_closest_point(self.xy0)
+
+        #Get parameter to where the cart. distance between is equal to pert. width
+        tf = self.shape_func.find_width_point(t0, self.width)
+
+        return t0, tf
 
     def get_pert_edge(self, t0, tf, m, n, bab_sign):
         #Get number of points per side
@@ -81,6 +155,11 @@ class Notch(Perturbation):
         new_edge = old_edge + etch * normal
 
         return old_edge, new_edge
+
+    def make_line(self, r1, r2, num_pts):
+        xline = np.linspace(r1[0], r2[0], num_pts)
+        yline = np.linspace(r1[1], r2[1], num_pts)
+        return np.stack((xline,yline),1)[1:-1]
 
 ############################################
 ############################################

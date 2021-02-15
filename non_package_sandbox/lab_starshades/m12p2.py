@@ -16,8 +16,8 @@ nn = 100
 xyi = np.array([-2.576, -11.517]) * 1e-3
 xyo = np.array([ 2.915,  20.752]) * 1e-3
 perts = [
-    ['notch', {'xy0':xyi, 'height':2.500e-6, 'width':413.817e-6, 'direction':1, 'local_norm':True}], #Inner
-    ['notch', {'xy0':xyo, 'height':1.726e-6, 'width':530.944e-6, 'direction':1, 'local_norm':True}]  #Outer
+    ['Notch', {'xy0':xyi, 'height':2.500e-6, 'width':413.817e-6, 'direction':1, 'local_norm':True}], #Inner
+    ['Notch', {'xy0':xyo, 'height':1.726e-6, 'width':530.944e-6, 'direction':1, 'local_norm':True}]  #Outer
 ]
 
 params = {
@@ -53,7 +53,7 @@ sim = diffraq.Simulator(params)
 sim.run_sim()
 
 # # sim.occulter.build_quadrature()
-# occ = sim.occulter.get_edge_points()
+# occ = sim.occulter.build_edge()
 #
 # import matplotlib.pyplot as plt;plt.ion()
 # plt.plot(*occ.T, 'x')

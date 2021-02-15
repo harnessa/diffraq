@@ -160,8 +160,8 @@ class Test_Occulter(object):
         sim.occulter.build_quadrature()
 
         #Get number of points in loci file
-        edge = sim.occulter.get_edge_points()
-        theta_nodes = len(edge)
+        sim.occulter.build_edge()
+        theta_nodes = len(sim.occulter.edge)
 
         #Kite occulter
         func = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
@@ -181,7 +181,7 @@ class Test_Occulter(object):
                (np.abs(sim.occulter.wq - wq).max() < tol))
 
         #Cleanup
-        del xq, yq, wq, edge
+        del xq, yq, wq
 
 ############################################
 ############################################

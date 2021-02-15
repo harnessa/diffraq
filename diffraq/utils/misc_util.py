@@ -61,34 +61,25 @@ def get_filename(dir_name,base_name,ext,file_type):
 #####   Parameter Functions    #####
 ############################################
 
-def set_default_params(parent, params, in_def_pms):
+def set_default_params(parent, params, def_pms):
     bad_str = color_string('!*!', bad_color)
 
-    #Copy defaults
-    def_pms = deepcopy(in_def_pms)
+    #Get difference in keywords
+    diff_set = set(params.keys()).difference(set(def_pms.keys()))
 
-    #Set default parameters
-    for k,v in def_pms.items():
+    #Check all user-specified keywords are in default keywords
+    for bad_key in diff_set:
+        #Print and exit
+        col_str = color_string(bad_key, neutral_color)
+        print(f'\n{bad_str} New Parameter not in Defaults: {col_str} {bad_str}\n')
+        import sys; sys.exit(0)
+
+    #Combine parameters
+    use_params = {**def_pms, **params}
+
+    #Set parameters
+    for k,v in use_params.items():
         setattr(parent, k, v)
-
-    #Overwrite with user-specified parameters
-    def_keys = def_pms.keys()
-    for k,v in params.items():
-        #Error message if unknown parameter supplied
-        if k not in def_keys:
-            col_str = color_string(k, neutral_color)
-            print(f'\n{bad_str} New Parameter not in Defaults: {col_str} {bad_str}\n')
-            import sys; sys.exit(0)
-
-        setattr(parent, k, v)
-
-def mix_usr_def_params(usr_pms, def_pms):
-    """Overwrite default parameters with user-input parameters. Assumes all
-        user keys are present in default."""
-    for k, v in usr_pms.items():
-        def_pms[k] = v
-
-    return def_pms
 
 ############################################
 ############################################

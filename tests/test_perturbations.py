@@ -53,13 +53,16 @@ class Test_Perturbations(object):
 
                 #Add to parameters
                 params['is_babinet'] = bab
-                params['perturbations'] = [['notch', notch]]
+                params['perturbations'] = [['Notch', notch]]
 
                 #Generate simulator
                 sim = diffraq.Simulator(params)
 
+                #Add perturbation
+                pert = diffraq.geometry.Notch(sim.occulter, **notch)
+
                 #Get perturbation quadrature
-                xp, yp, wp = sim.occulter.build_perturbation_quadrature()
+                xp, yp, wp = pert.get_quadrature()
 
                 #Get quadrature
                 sim.occulter.build_quadrature()

@@ -45,7 +45,7 @@ class LociOcculter(Occulter):
 
         return xq, yq, wq
 
-    def build_edge(self):
+    def build_shape_edge(self):
         return self.get_loci()
 
 ############################################

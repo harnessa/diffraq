@@ -18,8 +18,8 @@ params = {
 
     ### Loading ###
     'load_dir_base':    f'{diffraq.results_dir}/diffraq_test',
-    'session':          'M12P2',
-    'load_ext':         'm2000__n100__2',
+    'session':          'M12P6',
+    'load_ext':         'm4000__n200',
 
 }
 

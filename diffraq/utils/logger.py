@@ -190,7 +190,7 @@ class Logger(object):
         def_pms = misc_util.json_load(def_file)
 
         #Mix parameters
-        params = misc_util.mix_usr_def_params(usr_pms, def_pms)
+        params = {**def_pms, **usr_pms}
 
         return params
 

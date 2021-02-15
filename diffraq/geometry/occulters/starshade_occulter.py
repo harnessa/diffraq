@@ -51,7 +51,7 @@ class StarshadeOcculter(Occulter):
 
         return xq, yq, wq
 
-    def build_edge(self, npts=None):
+    def build_shape_edge(self, npts=None):
         #Radial nodes
         if npts is None:
             npts = self.sim.radial_nodes
