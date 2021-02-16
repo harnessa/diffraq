@@ -1,5 +1,5 @@
 """
-shape_function.py
+outline.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -7,7 +7,7 @@ Created on: 01-15-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Class that is the function that describes the shape of the occulter's edge.
+Description: Class that is the function that describes the outline of the occulter's shape.
 
 """
 
@@ -16,7 +16,7 @@ from scipy.misc import derivative
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import newton
 
-class ShapeFunction(object):
+class Outline(object):
 
     def __init__(self, func, diff=None, diff_2nd=-1):
 

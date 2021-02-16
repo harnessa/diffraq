@@ -34,12 +34,9 @@ class Test_Circles(object):
 
 ############################################
 
-    def run_calculation(self, is_babinet, z0):
-        """Test opaque circular occulter and compare to analytic solution"""
+    def run_calculation(self, is_opaque, z0):
         #Load simulator
         params = {
-            'is_babinet':       is_babinet,
-            'circle_rad':       self.circle_rad,
             'radial_nodes':     self.radial_nodes,
             'theta_nodes':      self.theta_nodes,
             'num_pts':          self.num_pts,
@@ -47,7 +44,6 @@ class Test_Circles(object):
             'zz':               self.zz,
             'z0':               z0,
             'skip_image':       True,
-            'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 
         cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
@@ -55,22 +51,25 @@ class Test_Circles(object):
         polar_func = lambda t: self.circle_rad * np.ones_like(t)
         polar_diff = lambda t: np.zeros_like(t)
 
+        shape = {'is_opaque':is_opaque, 'max_radius':self.circle_rad, \
+            'loci_file':f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt'}
+
         #Loop over occulter types
         utru = None
         for occ_shape in ['polar', 'cartesian', 'circle', 'loci']:
 
             #Set parameters
-            params['occulter_shape'] = occ_shape
+            shape['kind'] = occ_shape
 
             if occ_shape == 'cartesian':
-                params['apod_func'] = cart_func
-                params['apod_diff'] = cart_diff
+                shape['edge_func'] = cart_func
+                shape['edge_diff'] = cart_diff
             elif occ_shape == 'polar':
-                params['apod_func'] = polar_func
-                params['apod_diff'] = polar_diff
+                shape['edge_func'] = polar_func
+                shape['edge_diff'] = polar_diff
 
             #Load simulator
-            sim = diffraq.Simulator(params)
+            sim = diffraq.Simulator(params, shapes=shape)
 
             #Get pupil field from sim
             pupil, grid_pts = sim.calc_pupil_field()
@@ -79,7 +78,7 @@ class Test_Circles(object):
             #Calculate analytic solution (once)
             if utru is None:
                 utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
-                    sim.waves[0], sim.zz, sim.z0, sim.circle_rad, is_babinet)
+                    sim.waves[0], sim.zz, sim.z0, self.circle_rad, is_opaque)
 
             #Get tolerance
             if occ_shape == 'loci':
@@ -138,7 +137,7 @@ class Test_Circles(object):
             #Calculate diffraction
             uu = diffraq.diffraction.diffract_points(sim.occulter.xq, \
                 sim.occulter.yq, sim.occulter.wq, lamzz, xi, eta, sim.fft_tol,
-                is_babinet=sim.is_babinet, lamz0=lamz0)
+                is_babinet=sim.occulter.is_babinet, lamz0=lamz0)
 
             #Store
             pupil[iw] = uu.reshape(grid_2D.shape)

@@ -17,24 +17,32 @@ import numpy as np
 class Test_Starshades(object):
 
     def test_starshades(self):
+        #Defaults
+        rmin, rmax = 5, 13
+        num_petals = 16
+
         #Max contrast with default paramters
         max_con = 1e-8
 
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':100, \
-            'occulter_shape':'starshade', 'is_babinet':True})
-
-        #Build target
-        grid_pts = diffraq.utils.image_util.get_grid_points(128, sim.tel_diameter)
-
         #HG function and file
-        ss_Afunc = lambda r: np.exp(-((r-sim.ss_rmin)/(sim.ss_rmax-sim.ss_rmin)/0.6)**6)
+        ss_Afunc = lambda r: np.exp(-((r-rmin)/(rmax-rmin)/0.6)**6)
         ss_Afile = f'{diffraq.int_data_dir}/Test_Data/hg_apod_file.txt'
         ss_Lfile = f'{diffraq.int_data_dir}/Test_Data/hg_loci_file.txt'
 
         #Analytic vs numeric
         afunc_dict = {'analytic':ss_Afunc, 'numeric':None,      'loci':None}
         afile_dict = {'analytic':None,     'numeric':ss_Afile,  'loci':None}
+
+        #Simulated shape
+        shape = {'kind':'starshade', 'is_opaque':True, \
+            'min_radius':rmin, 'max_radius':rmax, 'num_petals':num_petals}
+
+        #Simulator parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
+        sim = diffraq.Simulator(params)
+
+        #Build target
+        grid_pts = diffraq.utils.image_util.get_grid_points(128, sim.tel_diameter)
 
         #Lambdaz
         lamz = sim.waves[0] * sim.zz
@@ -44,17 +52,18 @@ class Test_Starshades(object):
         for ss in ['analytic', 'numeric', 'loci']:
 
             #Set apod values
-            sim.apod_func = afunc_dict[ss]
-            sim.apod_file = afile_dict[ss]
+            shape['edge_func'] = afunc_dict[ss]
+            shape['edge_file'] = afile_dict[ss]
 
             #Loci run
             if ss == 'loci':
-                sim.occulter_shape = 'loci'
-                sim.loci_file = ss_Lfile
-                sim.load_children()
+                shape['kind'] = 'loci'
+                shape['loci_file'] = ss_Lfile
+
+            #Build simulator
+            sim = diffraq.Simulator(params, shape)
 
             #Build occulter
-            sim.occulter.set_shape_function()
             sim.occulter.build_quadrature()
 
             #Calculate diffraction

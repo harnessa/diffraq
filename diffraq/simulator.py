@@ -17,12 +17,12 @@ import numpy as np
 
 class Simulator(object):
 
-    def __init__(self, params={}):
+    def __init__(self, params={}, shapes=[]):
         #Set parameters
         self.set_parameters(params)
 
         #Load children
-        self.load_children()
+        self.load_children(shapes)
 
 ############################################
 ####	Initialize  ####
@@ -39,18 +39,21 @@ class Simulator(object):
 
         self.waves = np.atleast_1d(self.waves)
 
-    def load_children(self):
+    def load_children(self, shapes):
         #Logging + Saving
         self.logger = diffraq.utils.Logger(self)
 
-        #Check shape name is in approved list
-        approved_shapes = ['polar', 'circle', 'cartesian', 'starshade', 'loci']
-        if self.occulter_shape not in approved_shapes:
-            self.logger.error('Invalid Occulter Shape')
+        #Occulter
+        self.occulter = diffraq.geometry.Occulter(self, shapes)
 
-        #Load specific occulter
-        self.occulter = getattr(diffraq.geometry, \
-            f'{self.occulter_shape.capitalize()}Occulter')(self)
+        # #Check shape name is in approved list
+        # approved_shapes = ['polar', 'circle', 'cartesian', 'starshade', 'loci']
+        # if self.occulter_shape not in approved_shapes:
+        #     self.logger.error('Invalid Occulter Shape')
+        #
+        # #Load specific occulter
+        # self.occulter = getattr(diffraq.geometry, \
+        #     f'{self.occulter_shape.capitalize()}Occulter')(self)
 
         #Open flag
         self.shop_is_open = False
@@ -188,7 +191,7 @@ class Simulator(object):
             #Calculate diffraction
             uu = diffraq.diffraction.diffract_grid(self.occulter.xq, \
                 self.occulter.yq, self.occulter.wq, lamzz, grid_pts, self.fft_tol,
-                is_babinet=self.is_babinet, lamz0=lamz0)
+                is_babinet=self.occulter.is_babinet, lamz0=lamz0)
 
             #Store
             pupil[iw] = uu

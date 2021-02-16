@@ -1,5 +1,5 @@
 """
-cartesian_occulter.py
+cartesian_shape.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -13,33 +13,31 @@ Description: Derived class of occulter with shape parameterized in cartesian coo
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Occulter, CartesianShapeFunction
+from diffraq.geometry import Shape, CartesianOutline
 
-class CartesianOcculter(Occulter):
-
-    name = 'cartesian'
+class CartesianShape(Shape):
 
 ############################################
 #####  Main Shape #####
 ############################################
 
-    def set_shape_function(self):
-        self.shape_func = CartesianShapeFunction(self.sim.apod_func, self.sim.apod_diff)
+    def set_outline(self):
+        self.outline = CartesianOutline(self.edge_func, self.edge_diff)
 
     def build_shape_quadrature(self):
         #Calculate quadrature
-        xq, yq, wq = quad.cartesian_quad(self.shape_func.func, self.shape_func.diff, \
-            self.sim.radial_nodes, self.sim.theta_nodes)
+        xq, yq, wq = quad.cartesian_quad(self.outline.func, self.outline.diff, \
+            self.radial_nodes, self.theta_nodes)
 
         return xq, yq, wq
 
     def build_shape_edge(self, npts=None):
         #Theta nodes
         if npts is None:
-            npts = self.sim.theta_nodes
+            npts = self.theta_nodes
 
         #Get cartesian edge
-        edge = quad.cartesian_edge(self.shape_func.func, npts)
+        edge = quad.cartesian_edge(self.outline.func, npts)
 
         return edge
 

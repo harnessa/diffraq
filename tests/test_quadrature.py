@@ -130,9 +130,7 @@ class Test_Quadrature(object):
 ############################################
 
     def test_loci(self):
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'occulter_shape':'loci'})
-
+        
         #Load loci
         loci = np.genfromtxt(f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt', delimiter=',')
 

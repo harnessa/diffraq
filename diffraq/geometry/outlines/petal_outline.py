@@ -1,5 +1,5 @@
 """
-petal_shape_func.py
+petal_outline.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -13,10 +13,10 @@ Description: Class that is the function that describes the shape of a petalized 
 """
 
 import numpy as np
-from diffraq.geometry import ShapeFunction
+from diffraq.geometry import Outline
 from scipy.optimize import fmin
 
-class PetalShapeFunction(ShapeFunction):
+class PetalOutline(Outline):
 
     kind = 'petal'
     param_code = 1000

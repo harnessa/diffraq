@@ -1,5 +1,5 @@
 """
-cartesian_shape_func.py
+cartesian_outline.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -14,9 +14,9 @@ Description: Class that is the function that describes the shape of a cartesian
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
-from diffraq.geometry import ShapeFunction
+from diffraq.geometry import Outline
 
-class CartesianShapeFunction(ShapeFunction):
+class CartesianOutline(Outline):
 
     kind = 'cartesian'
 

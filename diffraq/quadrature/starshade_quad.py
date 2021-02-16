@@ -15,7 +15,7 @@ Description: quadrature for integrals over area with starshade.
 from diffraq.quadrature import lgwt, polar_quad
 import numpy as np
 
-def starshade_quad(Afunc, num_pet, r0, r1, m, n, is_babinet=True):
+def starshade_quad(Afunc, num_pet, r0, r1, m, n, is_opaque=True):
     """
     xq, yq, wq = starshade_quad(Afunc, num_pet, r0, r1, m, n)
 
@@ -28,7 +28,7 @@ def starshade_quad(Afunc, num_pet, r0, r1, m, n, is_babinet=True):
         r0, r1 = apodization domain of radii [meters]. r<r0: A=1; r>r1: A=0
         m = # nodes over disc and over radial apodization [r0, r1]
         n = # nodes over petal width
-        is_babinet = does the starshade have a central disc? i.e., invokes Babinet's Principle (common)
+        is_opaque = does the starshade have an opaque central disc? i.e., invokes Babinet's Principle (common)
 
     Outputs:
         xq, yq = numpy array of x,y coordinates of nodes [meters]
@@ -36,7 +36,7 @@ def starshade_quad(Afunc, num_pet, r0, r1, m, n, is_babinet=True):
     """
 
     #Central disk radial nodes and weights
-    if is_babinet:
+    if is_opaque:
         nd = int(np.ceil(0.3*n*num_pet))    #Less in theta, rough guess so dx about same
         xq, yq, wq = polar_quad(lambda t: r0*np.ones_like(t), m, nd)
     else:

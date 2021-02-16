@@ -13,33 +13,31 @@ Description: Derived class of occulter with shape parameterized in polar coordin
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Occulter, PolarShapeFunction
+from diffraq.geometry import Shape, PolarOutline
 
-class PolarOcculter(Occulter):
-
-    name = 'polar'
+class PolarShape(Shape):
 
 ############################################
 #####  Main Shape #####
 ############################################
 
-    def set_shape_function(self):
-        self.shape_func = PolarShapeFunction(self.sim.apod_func, self.sim.apod_diff)
+    def set_outline(self):
+        self.outline = PolarOutline(self.edge_func, self.edge_diff)
 
     def build_shape_quadrature(self):
         #Calculate quadrature
-        xq, yq, wq = quad.polar_quad(self.shape_func.func, \
-            self.sim.radial_nodes, self.sim.theta_nodes)
+        xq, yq, wq = quad.polar_quad(self.outline.func, \
+            self.radial_nodes, self.theta_nodes)
 
         return xq, yq, wq
 
     def build_shape_edge(self, npts=None):
         #Theta nodes
         if npts is None:
-            npts = self.sim.theta_nodes
+            npts = self.theta_nodes
 
         #Get polar edge
-        edge = quad.polar_edge(self.shape_func.func, npts)
+        edge = quad.polar_edge(self.outline.func, npts)
 
         return edge
 
@@ -50,12 +48,12 @@ class PolarOcculter(Occulter):
 #####  Circle Occulter #####
 ############################################
 
-class CircleOcculter(PolarOcculter):
+class CircleShape(PolarShape):
 
-    def set_shape_function(self):
-        func = lambda t: self.sim.circle_rad * np.ones_like(t)
+    def set_outline(self):
+        func = lambda t: self.max_radius * np.ones_like(t)
         diff = lambda t: np.zeros_like(t)
-        self.shape_func = PolarShapeFunction(func, diff)
+        self.outline = PolarOutline(func, diff)
 
 ############################################
 ############################################

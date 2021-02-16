@@ -24,19 +24,20 @@ class Test_Occulter(object):
 ############################################
 
     def test_polar(self):
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
-            'occulter_shape':'polar'})
-
         #Real polar function
         a = 0.3
         gfunc = lambda t: 1 + a*np.cos(3*t)
 
-        #Add polar function
-        sim.apod_func = gfunc
+        #Simulation parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
+
+        #Simulated shapes
+        shapes = {'kind':'polar', 'edge_func':gfunc}
+
+        #Build simulator
+        sim = diffraq.Simulator(params, shapes)
 
         #Build polar occulter
-        sim.occulter.set_shape_function()
         sim.occulter.build_quadrature()
 
         #Build directly
@@ -57,15 +58,16 @@ class Test_Occulter(object):
         r0 = 0.3
         gfunc = lambda t: r0 * np.ones_like(t)
 
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
-            'occulter_shape':'circle', 'circle_rad':r0})
+        #Simulation parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
 
-        #Add radius to sim
-        sim.circle_rad = r0
+        #Simulated shapes
+        shapes = {'kind':'circle', 'max_radius':r0}
+
+        #Build simulator
+        sim = diffraq.Simulator(params, shapes)
 
         #Build circle occulter
-        sim.occulter.set_shape_function()
         sim.occulter.build_quadrature()
 
         #Build directly
@@ -81,20 +83,20 @@ class Test_Occulter(object):
 ############################################
 
     def test_cartesian(self):
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
-            'occulter_shape':'cartesian'})
-
         #Kite occulter
         func = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
         diff = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
 
-        #Add functions
-        sim.apod_func = func
-        sim.apod_diff = diff
+        #Simulation parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
+
+        #Simulated shapes
+        shapes = {'kind':'cartesian', 'edge_func':func, 'edge_diff':diff}
+
+        #Build simulator
+        sim = diffraq.Simulator(params, shapes)
 
         #Build polar occulter
-        sim.occulter.set_shape_function()
         sim.occulter.build_quadrature()
 
         #Build directly
@@ -111,32 +113,40 @@ class Test_Occulter(object):
 ############################################
 
     def test_starshades(self):
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'theta_nodes':110, \
-            'occulter_shape':'starshade', 'is_babinet':True})
+        rmin, rmax = 5, 13
+        num_petals = 16
 
         #HG function and file
-        ss_Afunc = lambda r: np.exp(-((r-sim.ss_rmin)/(sim.ss_rmax-sim.ss_rmin)/0.6)**6)
+        ss_Afunc = lambda r: np.exp(-((r-rmin)/(rmax-rmin)/0.6)**6)
         ss_Afile = f'{diffraq.int_data_dir}/Test_Data/hg_apod_file.txt'
 
         #Analytic vs numeric
         afunc_dict = {'analytic':ss_Afunc, 'numeric':None}
         afile_dict = {'analytic':None,     'numeric':ss_Afile}
 
+        #Simulation parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
+
+        #Simulated shape
+        shape = {'kind':'starshade', 'is_opaque':True, \
+            'min_radius':rmin, 'max_radius':rmax, 'num_petals':num_petals}
+
         #Test analytic and numeric
         for ss in ['analytic', 'numeric']:
 
             #Set apod values
-            sim.apod_func = afunc_dict[ss]
-            sim.apod_file = afile_dict[ss]
+            shape['edge_func'] = afunc_dict[ss]
+            shape['edge_file'] = afile_dict[ss]
+
+            #Build simulator
+            sim = diffraq.Simulator(params, shape)
 
             #Build occulter
-            sim.occulter.set_shape_function()
             sim.occulter.build_quadrature()
 
             #Get quadrature for comparison
-            xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, sim.num_petals, \
-                sim.ss_rmin, sim.ss_rmax, sim.radial_nodes, sim.theta_nodes)
+            xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, num_petals, \
+                rmin, rmax, sim.radial_nodes, sim.theta_nodes)
 
             #Check they are all the same
             assert(np.isclose(xq, sim.occulter.xq).all() and np.isclose(yq, sim.occulter.yq).all() and \
@@ -150,11 +160,17 @@ class Test_Occulter(object):
     def test_loci(self):
         tol = 1e-3
 
-        #Build simulator
-        sim = diffraq.Simulator({'radial_nodes':100, 'occulter_shape':'loci'})
-
         #Point to loci file
-        sim.loci_file = f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt'
+        loci_file = f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt'
+
+        #Simulation parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
+
+        #Simulated shapes
+        shapes = {'kind':'loci', 'loci_file':loci_file}
+
+        #Build simulator
+        sim = diffraq.Simulator(params, shapes)
 
         #Build loci occulter
         sim.occulter.build_quadrature()
@@ -166,10 +182,6 @@ class Test_Occulter(object):
         #Kite occulter
         func = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
         diff = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
-
-        #Add functions
-        sim.apod_func = func
-        sim.apod_diff = diff
 
         #Build directly
         xq, yq, wq = diffraq.quadrature.cartesian_quad(func, diff, \

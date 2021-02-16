@@ -34,22 +34,24 @@ def_sim_params = {
     'free_on_end':          True,       #Delete results after simulation run?
 
     ### Occulter ###
-    'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, cartesian, starshade, loci]
-    'circle_rad':           12,         #Circle occulter radius
-    'loci_file':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
-    'apod_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes apod_func
-    'apod_func':            None,       #Lambda function defining apodization function.
-    'apod_diff':            None,       #Lambda function defining derivative of apodization function.
-    'is_babinet':           False,      #Using Babinet principle to calculate?
+    'is_finite':            True,       #Diffraction integral does not extend to infinity? Necessary only for multiple shapes
 
-    ### Starshades ###
-    'num_petals':           16,         #Number of starshade petals
-    'ss_rmin':              5,          #Minimum starshade radius
-    'ss_rmax':              13,         #Maximum starshade radius
+    # 'occulter_shape':       'circle',   #Shape of occulter. Options: [circle, polar, cartesian, starshade, loci]
+    # 'circle_rad':           12,         #Circle occulter radius
+    # 'loci_file':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
+    # 'apod_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes apod_func
+    # 'apod_func':            None,       #Lambda function defining apodization function.
+    # 'apod_diff':            None,       #Lambda function defining derivative of apodization function.
+    # 'is_babinet':           False,      #Using Babinet principle to calculate?
+    #
+    # ### Starshades ###
+    # 'num_petals':           16,         #Number of starshade petals
+    # 'ss_rmin':              5,          #Minimum starshade radius
+    # 'ss_rmax':              13,         #Maximum starshade radius
 
     ### Defects ###
-    'etching_error':        0,          #Over-etching (<0) i.e. less material; under-etching (>0) i.e more material..
-    'perturbations':        {},         #Dictionary of dictionaries describing perturbations to be added to the shape
+    # 'etching_error':        0,          #Over-etching (<0) i.e. less material; under-etching (>0) i.e more material..
+    # 'perturbations':        {},         #Dictionary of dictionaries describing perturbations to be added to the shape
 
     ### Observation ###
     'waves':                0.6e-6,     #Wavelengths

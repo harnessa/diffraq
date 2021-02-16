@@ -24,23 +24,24 @@ class Test_calc_pupil_field(object):
         shapes = ['circle', 'polar']
         tol = 1e-9              #tolerance
 
+        #Simulator params
+        params = {
+            'zz':               1,
+            'waves':            1/np.array(fresnums),
+            'radial_nodes':     120,
+            'theta_nodes':      350,
+            'tel_diameter':     grid_width,
+            'num_pts':          ngrid,
+            'skip_image':       True,
+        }
+
+        shapes = [{'kind':'circle', 'max_radius':1},
+            {'kind':'polar', 'edge_func':lambda t: 1 + 0.3*np.cos(3*t)}]
+
         for shape in shapes:
 
-            #Load simulator
-            params = {
-                'zz':               1,
-                'waves':            1/np.array(fresnums),
-                'occulter_shape':   shape,
-                'circle_rad':       1,
-                'apod_func':        lambda t: 1 + 0.3*np.cos(3*t),
-                'radial_nodes':     120,
-                'theta_nodes':      350,
-                'tel_diameter':     grid_width,
-                'num_pts':          ngrid,
-                'skip_image':       True,
-            }
-
-            sim = diffraq.Simulator(params)
+            #Build simulator
+            sim = diffraq.Simulator(params, shape)
 
             #Get pupil field
             pupil, grid_pts = sim.calc_pupil_field()

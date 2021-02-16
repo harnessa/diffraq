@@ -1,5 +1,5 @@
 """
-loci_shape_func.py
+loci_outline.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -13,9 +13,9 @@ Description: Class that is the function that describes the shape of a loci
 """
 
 import numpy as np
-from diffraq.geometry import ShapeFunction
+from diffraq.geometry import Outline
 
-class LociShapeFunction(ShapeFunction):
+class LociOutline(Outline):
 
     kind = 'loci'
 

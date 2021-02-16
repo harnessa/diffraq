@@ -78,7 +78,7 @@ def get_field(uu, vv, ss, kk, zz, z0, is_opaque=True, is_shadow=True):
         AA *= -1.
 
     #Calculate field due to mask QPF phase term
-    EE = np.exp(1j*uu/2.)*(AA + 1j*BB*[1.,-1.][is_shadow])
+    EE = np.exp(1j*uu/2.)*(AA + 1j*BB*[1.,-1.][int(is_shadow)])
 
     #Add illuminated beam
     if not is_shadow:

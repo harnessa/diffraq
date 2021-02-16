@@ -1,5 +1,5 @@
 """
-test_shape_function.py
+test_outline.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -12,9 +12,9 @@ Description: Test of apodization function and its diffatives
 """
 
 import numpy as np
-from diffraq.geometry import CartesianShapeFunction, PolarShapeFunction, PetalShapeFunction
+from diffraq.geometry import CartesianOutline, PolarOutline, PetalOutline
 
-class Test_Shape_Function(object):
+class Test_Outline(object):
 
     radial_nodes = 400
     theta_nodes = 400
@@ -36,14 +36,14 @@ class Test_Shape_Function(object):
 
         #Get appropriate shape function
         if kind == 'cart':
-            Shape_Func = CartesianShapeFunction
+            Outline = CartesianOutline
         else:
-            Shape_Func = PolarShapeFunction
+            Outline = PolarOutline
 
-        #Get different shape functions
-        sf1 = Shape_Func(func,   diff=diff, diff_2nd=None)
-        sf2 = Shape_Func(func,   diff=None, diff_2nd=None)
-        sf3 = Shape_Func(points, diff=None, diff_2nd=None)
+        #Get different outlines
+        sf1 = Outline(func,   diff=diff, diff_2nd=None)
+        sf2 = Outline(func,   diff=None, diff_2nd=None)
+        sf3 = Outline(points, diff=None, diff_2nd=None)
 
         for val in ['func', 'diff', 'diff_2nd']:
             tol = [self.tol, self.tol2][val == 'diff_2nd']
@@ -72,8 +72,8 @@ class Test_Shape_Function(object):
             else:
                 d1, d2 = None, None
 
-            sf1 = PolarShapeFunction(pole_func,     diff=d1, diff_2nd=None)
-            sf2 = CartesianShapeFunction(cart_func, diff=d2, diff_2nd=None)
+            sf1 = PolarOutline(pole_func,     diff=d1, diff_2nd=None)
+            sf2 = CartesianOutline(cart_func, diff=d2, diff_2nd=None)
 
             #Check cartesian function
             tt = np.linspace(0, 2*np.pi, self.radial_nodes * self.theta_nodes)[:,None]
@@ -111,8 +111,8 @@ class Test_Shape_Function(object):
             else:
                 d1, d2 = None, None
 
-            sf1 = PetalShapeFunction(petal_func,    diff=d1, diff_2nd=None, num_petals=num_pet)
-            sf2 = CartesianShapeFunction(cart_func, diff=d2, diff_2nd=None)
+            sf1 = PetalOutline(petal_func,    diff=d1, diff_2nd=None, num_petals=num_pet)
+            sf2 = CartesianOutline(cart_func, diff=d2, diff_2nd=None)
 
             #Check cartesian function
             rr = np.linspace(r0, r1, self.radial_nodes * self.theta_nodes)[:,None]
@@ -199,8 +199,8 @@ class Test_Shape_Function(object):
                         d2 = cart_pdiff
                     else:
                         d1, d2 = None, None
-                    sf1 = PolarShapeFunction(pole_func, diff=d1, diff_2nd=None)
-                    sf2 = CartesianShapeFunction(cart_pfunc, diff=d2, diff_2nd=None)
+                    sf1 = PolarOutline(pole_func, diff=d1, diff_2nd=None)
+                    sf2 = CartesianOutline(cart_pfunc, diff=d2, diff_2nd=None)
                     point = np.array([1.399, 0.363])
 
                 else:
@@ -209,8 +209,8 @@ class Test_Shape_Function(object):
                         d2 = cart_rdiff
                     else:
                         d1, d2 = None, None
-                    sf1 = PetalShapeFunction(petal_func, diff=d1, diff_2nd=None, num_petals=num_pet)
-                    sf2 = CartesianShapeFunction(cart_rfunc, diff=d2, diff_2nd=None)
+                    sf1 = PetalOutline(petal_func, diff=d1, diff_2nd=None, num_petals=num_pet)
+                    sf2 = CartesianOutline(cart_rfunc, diff=d2, diff_2nd=None)
                     point = np.array([11.97, 1.117])
 
                 #Get closest point

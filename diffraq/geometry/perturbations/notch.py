@@ -32,7 +32,7 @@ class Notch(object):
         self.parent = parent
 
         #Point to parent occulter's shape function (for quick access)
-        self.shape_func = self.parent.shape_func
+        self.outline = self.parent.outline
 
         #Set Default parameters
         def_params = {'xy0':[0,0], 'height':0, 'width':0, 'direction':1, 'local_norm':True}
@@ -63,7 +63,7 @@ class Notch(object):
         m, n = self.parent.sim.radial_nodes//2, self.parent.sim.theta_nodes//2
 
         #Get perturbation specifc quadrature
-        xq, yq, wq = getattr(self, f'get_quad_{self.shape_func.kind}')( \
+        xq, yq, wq = getattr(self, f'get_quad_{self.outline.kind}')( \
             t0, tf, m, n, self.parent.bab_sign)
 
         return xq, yq, wq
@@ -99,10 +99,10 @@ class Notch(object):
 
     def get_param_locs(self):
         #Get parameter of edge point closest to starting point
-        t0 = self.shape_func.find_closest_point(self.xy0)
+        t0 = self.outline.find_closest_point(self.xy0)
 
         #Get parameter to where the cart. distance between is equal to pert. width
-        tf = self.shape_func.find_width_point(t0, self.width)
+        tf = self.outline.find_width_point(t0, self.width)
 
         return t0, tf
 
@@ -138,16 +138,16 @@ class Notch(object):
     def get_new_edge(self, ts, bab_sign):
 
         #Get loci of edge across test region
-        old_edge = self.shape_func.cart_func(ts)
+        old_edge = self.outline.cart_func(ts)
 
         #Use one normal or local normals
         if self.local_norm:
             #Local normals
-            normal = self.shape_func.cart_diff(ts)[:,::-1]
+            normal = self.outline.cart_diff(ts)[:,::-1]
             normal /= np.hypot(*normal.T)[:,None]
         else:
             #Get normal vector of middle of old_edge
-            normal = self.shape_func.cart_diff(ts)[:,::-1][len(ts)//2]
+            normal = self.outline.cart_diff(ts)[:,::-1][len(ts)//2]
             normal /= np.hypot(*normal)
 
         #Shift edge out by the normal vector (use negative to get direction correct)
@@ -171,8 +171,8 @@ class Notch(object):
     def get_quad_petal(self, t0, tf, m, n, bab_sign):
 
         #Get radius range
-        r0, p0 = self.shape_func.unpack_param(t0)[:2]
-        rf, pf = self.shape_func.unpack_param(tf)[:2]
+        r0, p0 = self.outline.unpack_param(t0)[:2]
+        rf, pf = self.outline.unpack_param(tf)[:2]
 
         #Get radial and theta nodes
         pw, ww = quad.lgwt(n, 0, 1)
@@ -183,7 +183,7 @@ class Notch(object):
         pr = pr[:,None]
 
         #Turn into parameterize variable
-        ts = self.shape_func.pack_param(pr, p0)
+        ts = self.outline.pack_param(pr, p0)
 
         #Get old and new edge at radial points
         old_edge, new_edge = self.get_new_edge(ts, bab_sign)
