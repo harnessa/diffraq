@@ -24,14 +24,14 @@ class CartesianShape(Shape):
     def set_outline(self):
         self.outline = CartesianOutline(self.edge_func, self.edge_diff)
 
-    def build_shape_quadrature(self):
+    def build_local_shape_quad(self):
         #Calculate quadrature
         xq, yq, wq = quad.cartesian_quad(self.outline.func, self.outline.diff, \
             self.radial_nodes, self.theta_nodes)
 
         return xq, yq, wq
 
-    def build_shape_edge(self, npts=None):
+    def build_local_shape_edge(self, npts=None):
         #Theta nodes
         if npts is None:
             npts = self.theta_nodes

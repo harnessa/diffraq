@@ -21,6 +21,7 @@ class Notch(object):
     def __init__(self, parent, **kwargs):
         """
         Keyword arguments:
+            - kind:         kind of perturbation
             - xy0:          (x,y) coordinates of start of notch (innermost point) [m],
             - height:       height of notch [m],
             - width:        width (along edge) of notch [m],
@@ -28,14 +29,15 @@ class Notch(object):
             - local_norm:   True = shift each part of original edge by its local normal,
                             False = shift entire edge by single direction (equal to normal in the middle),
         """
-        #Point to parent [occulter]
+        #Point to parent [shape]
         self.parent = parent
 
         #Point to parent occulter's shape function (for quick access)
         self.outline = self.parent.outline
 
         #Set Default parameters
-        def_params = {'xy0':[0,0], 'height':0, 'width':0, 'direction':1, 'local_norm':True}
+        def_params = {'kind':'Notch', 'xy0':[0,0], 'height':0, 'width':0, \
+            'direction':1, 'local_norm':True}
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
@@ -43,50 +45,54 @@ class Notch(object):
 #####  Main Scripts #####
 ############################################
 
-    def build_quadrature(self):
+    def build_quadrature(self, sxq, syq, swq):
         #Get quadrature
         xq, yq, wq = self.get_quadrature()
 
         #Add to parent's quadrature
-        self.parent.xq = np.concatenate((self.parent.xq, xq))
-        self.parent.yq = np.concatenate((self.parent.yq, yq))
-        self.parent.wq = np.concatenate((self.parent.wq, wq))
+        sxq = np.concatenate((sxq, xq))
+        syq = np.concatenate((syq, yq))
+        swq = np.concatenate((swq, wq))
 
         #Cleanup
         del xq, yq, wq
+
+        return sxq, syq, swq
 
     def get_quadrature(self):
         #Get location of perturbation
         t0, tf = self.get_param_locs()
 
         #Determine how many node points to use
-        m, n = self.parent.sim.radial_nodes//2, self.parent.sim.theta_nodes//2
+        m, n = self.parent.radial_nodes//2, self.parent.theta_nodes//2
 
         #Get perturbation specifc quadrature
         xq, yq, wq = getattr(self, f'get_quad_{self.outline.kind}')( \
-            t0, tf, m, n, self.parent.bab_sign)
+            t0, tf, m, n, self.parent.opq_sign)
 
         return xq, yq, wq
 
-    def build_edge_points(self):
+    def build_edge_points(self, sedge):
         #Get edge
         xy = self.get_edge_points()
 
         #Add to parent's edge points
-        self.parent.edge = np.concatenate((self.parent.edge, xy))
+        sedge = np.concatenate((sedge, xy))
 
         #Cleanup
         del xy
+
+        return sedge
 
     def get_edge_points(self):
         #Get location of perturbation
         t0, tf = self.get_param_locs()
 
         #Determine how many node points to use
-        m, n = self.parent.sim.radial_nodes//2, self.parent.sim.theta_nodes//2
+        m, n = self.parent.radial_nodes//2, self.parent.theta_nodes//2
 
         #Get perturbation specifc edge points
-        xy = self.get_pert_edge(t0, tf, m, n, self.parent.bab_sign)
+        xy = self.get_pert_edge(t0, tf, m, n, self.parent.opq_sign)
 
         return xy
 
@@ -106,7 +112,7 @@ class Notch(object):
 
         return t0, tf
 
-    def get_pert_edge(self, t0, tf, m, n, bab_sign):
+    def get_pert_edge(self, t0, tf, m, n, opq_sign):
         #Get number of points per side
         npts = 2*max(m,n)
 
@@ -114,7 +120,7 @@ class Notch(object):
         ts = np.linspace(t0, tf, npts)[:,None]
 
         #Get new / shifted edge
-        old_edge, new_edge = self.get_new_edge(ts, bab_sign)
+        old_edge, new_edge = self.get_new_edge(ts, opq_sign)
 
         #Flip to continue CCW
         new_edge = new_edge[::-1]
@@ -128,14 +134,14 @@ class Notch(object):
         loci = np.concatenate((old_edge, line1, new_edge, line2))
 
         #Go CW if not babinet
-        loci = loci[::-bab_sign]
+        loci = loci[::-opq_sign]
 
         #Cleanup
         del old_edge, new_edge, line1, line2
 
         return loci
 
-    def get_new_edge(self, ts, bab_sign):
+    def get_new_edge(self, ts, opq_sign):
 
         #Get loci of edge across test region
         old_edge = self.outline.cart_func(ts)
@@ -151,7 +157,7 @@ class Notch(object):
             normal /= np.hypot(*normal)
 
         #Shift edge out by the normal vector (use negative to get direction correct)
-        etch = -self.height * np.array([1., -1]) * self.direction * bab_sign
+        etch = -self.height * np.array([1., -1]) * self.direction * opq_sign
         new_edge = old_edge + etch * normal
 
         return old_edge, new_edge
@@ -168,7 +174,7 @@ class Notch(object):
 #####  Petal Specific Quad #####
 ############################################
 
-    def get_quad_petal(self, t0, tf, m, n, bab_sign):
+    def get_quad_petal(self, t0, tf, m, n, opq_sign):
 
         #Get radius range
         r0, p0 = self.outline.unpack_param(t0)[:2]
@@ -186,7 +192,7 @@ class Notch(object):
         ts = self.outline.pack_param(pr, p0)
 
         #Get old and new edge at radial points
-        old_edge, new_edge = self.get_new_edge(ts, bab_sign)
+        old_edge, new_edge = self.get_new_edge(ts, opq_sign)
 
         #Get polar coordinates of edges
         oldt = np.arctan2(old_edge[:,1], old_edge[:,0])[:,None]
@@ -223,10 +229,10 @@ class Notch(object):
 #####  Polar Specific Quad #####
 ############################################
 
-    def get_quad_polar(self, t0, tf, m, n, bab_sign):
+    def get_quad_polar(self, t0, tf, m, n, opq_sign):
 
         #Get edge loci
-        loci = self.get_pert_edge(t0, tf, m, n, bab_sign)
+        loci = self.get_pert_edge(t0, tf, m, n, opq_sign)
 
         #Shift to center
         loci_shift = loci.mean(0)

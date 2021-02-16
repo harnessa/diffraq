@@ -21,6 +21,7 @@ class ShiftedPetal(object):
     def __init__(self, parent, **kwargs):
         """
         Keyword arguments:
+            - kind:         kind of perturbation
             - angles:       [start, end] coordinate angles that define petal [radians] (0 = 3:00, 90 = 12:00, 180 = 9:00, 270 = 6:00),
             - max_radius:   maximum radius of shifted petal (for use in lab starshades only),
             - shift:        amount to shift petal [m],
@@ -28,11 +29,12 @@ class ShiftedPetal(object):
                             > 0 = radially out, < 0 = radially in,
         """
 
-        #Point to parent [occulter]
+        #Point to parent [shape]
         self.parent = parent
 
         #Set Default parameters
-        def_params = {'angles':[0,0], 'max_radius':None, 'shift':0, 'direction':[0,0]}
+        def_params = {'kind':'shiftedPetal', 'angles':[0,0], 'max_radius':None, \
+            'shift':0, 'direction':[0,0]}
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
@@ -44,19 +46,21 @@ class ShiftedPetal(object):
 #####  Main Scripts #####
 ############################################
 
-    def build_quadrature(self):
-        #Find parent's quad points that are part of this petal
-        self.parent.xq, self.parent.yq, self.parent.wq = \
-            self.shift_petal_points(self.parent.xq, self.parent.yq, self.parent.wq)
+    def build_quadrature(self, sxq, syq, swq):
+        #Change parent's quad points to shift petal
+        sxq, syq, swq = self.shift_petal_points(sxq, syq, swq)
 
-    def build_edge_points(self):
+        return sxq, syq, swq
+
+    def build_edge_points(self, sedge):
         #Find parent's edge points that are part of this petal
-        newx, newy, dummy = self.shift_petal_points(self.parent.edge[:,0], \
-            self.parent.edge[:,1], None)
-        self.parent.edge = np.stack((newx, newy),1)
+        newx, newy, dummy = self.shift_petal_points(sedge[:,0], sedge[:,1], None)
+        sedge = np.stack((newx, newy),1)
 
         #Cleanup
         del newx, newy
+
+        return sedge
 
 ############################################
 ############################################
@@ -64,26 +68,6 @@ class ShiftedPetal(object):
 ############################################
 #####  Shared Functions #####
 ############################################
-
-    def find_between_angles(self, xx, yy):
-        #Difference between angles
-        dang = self.angles[1] - self.angles[0]
-
-        #Angle bisector (mean angle)
-        mang = (self.angles[0] + self.angles[1])/2
-
-        #Get angle between points and bisector
-        dot = xx*np.cos(mang) + yy*np.sin(mang)
-        det = xx*np.sin(mang) - yy*np.cos(mang)
-        diff_angs = np.abs(np.arctan2(det, dot))
-
-        #Indices are where angles are <= dang/2 away
-        inds = diff_angs <= dang/2
-
-        #Cleanup
-        del dot, det, diff_angs
-
-        return inds
 
     def shift_petal_points(self, xp, yp, wp):
         #Find points between specified angles
@@ -149,6 +133,26 @@ class ShiftedPetal(object):
         del inds
 
         return xp, yp, wp
+
+    def find_between_angles(self, xx, yy):
+        #Difference between angles
+        dang = self.angles[1] - self.angles[0]
+
+        #Angle bisector (mean angle)
+        mang = (self.angles[0] + self.angles[1])/2
+
+        #Get angle between points and bisector
+        dot = xx*np.cos(mang) + yy*np.sin(mang)
+        det = xx*np.sin(mang) - yy*np.cos(mang)
+        diff_angs = np.abs(np.arctan2(det, dot))
+
+        #Indices are where angles are <= dang/2 away
+        inds = diff_angs <= dang/2
+
+        #Cleanup
+        del dot, det, diff_angs
+
+        return inds
 
 ############################################
 ############################################

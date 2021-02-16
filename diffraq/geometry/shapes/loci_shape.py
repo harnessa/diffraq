@@ -31,7 +31,7 @@ class LociShape(Shape):
 #####  Main Shape #####
 ############################################
 
-    def build_shape_quadrature(self):
+    def build_local_shape_quad(self):
         #Load loci data
         loci = self.get_loci()
 
@@ -43,7 +43,7 @@ class LociShape(Shape):
 
         return xq, yq, wq
 
-    def build_shape_edge(self):
+    def build_local_shape_edge(self):
         return self.get_loci()
 
 ############################################

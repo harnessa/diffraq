@@ -26,40 +26,39 @@ class Test_Perturbations(object):
 ############################################
 
     def test_notch(self):
-        #Load simulator
-        params = {
-            'occulter_shape':   'circle',
-            'circle_rad':       self.circle_rad,
-        }
 
         #Build notch
         xy0 = [self.circle_rad*np.cos(np.pi/6), self.circle_rad*np.sin(np.pi/6)]
         height = 1.25
         width = 2
-        notch = {'xy0':xy0, 'height':height, 'width':width, 'local_norm':False}
+        notch = {'kind':'notch', 'xy0':xy0, 'height':height, 'width':width, \
+            'local_norm':False}
+
+        #Simulation parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
 
         #Areas
         disk_area = np.pi*self.circle_rad**2
         notch_area = height * width
 
         #Loop over occulter/aperture
-        for bab in [False, True]:
+        for is_opq in [False, True]:
 
             #Loop over positive and negative notches:
             for nch in [1, -1]:
 
-                #Add direction
+                #Add direction to notch
                 notch['direction'] = nch
 
-                #Add to parameters
-                params['is_babinet'] = bab
-                params['perturbations'] = [['Notch', notch]]
+                #Build shape
+                shapes = {'kind':'circle', 'max_radius':self.circle_rad, \
+                    'is_opaque':is_opq, 'perturbations':notch}
 
-                #Generate simulator
-                sim = diffraq.Simulator(params)
+                #Build simulator
+                sim = diffraq.Simulator(params, shapes)
 
                 #Add perturbation
-                pert = diffraq.geometry.Notch(sim.occulter, **notch)
+                pert = diffraq.geometry.Notch(sim.occulter.shape_list[0], **notch)
 
                 #Get perturbation quadrature
                 xp, yp, wp = pert.get_quadrature()

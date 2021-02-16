@@ -12,6 +12,7 @@ Description: Base class of an occulter shape, used to generate quadrature points
 """
 
 import numpy as np
+import diffraq.geometry as geometry
 
 class Shape(object):
 
@@ -46,5 +47,63 @@ class Shape(object):
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
+        #Load outline and perturbations
+        self.load_outline_perturbations()
+
+############################################
+#####  Outline and Perturbations #####
+############################################
+
+    def load_outline_perturbations(self):
+
         #Set outline function
         self.set_outline()
+
+        #Sign for perturbation directions
+        self.opq_sign = [1, -1][self.is_opaque]
+
+        #Turn perturbations into list
+        if not isinstance(self.perturbations, list):
+            self.perturbations = [self.perturbations]
+
+        #Loop through and build perturbations
+        self.pert_list = []
+        for pert_dict in self.perturbations:
+            #Get perturbation kind
+            kind = pert_dict['kind'].capitalize()
+
+            #Build perturbation
+            pert = getattr(geometry, kind)(self, **pert_dict)
+
+            #Add to list
+            self.pert_list.append(pert)
+
+############################################
+############################################
+
+############################################
+#####  Quadrature and Edge Points #####
+############################################
+
+    def build_shape_quadrature(self):
+        #Build main shape quadrature
+        sxq, syq, swq = self.build_local_shape_quad()
+
+        #Loop through perturbation list and add quadratures (which adds to current [sxq,syq,swq])
+        for pert in self.pert_list:
+            sxq, syq, swq = pert.build_quadrature(sxq, syq, swq)
+
+        return sxq, syq, swq
+
+    def build_shape_edge(self):
+        #Build main shape edge
+        sedge = self.build_local_shape_edge()
+
+        #Loop through perturbation list and add edge points (which adds to current sedge)
+        for pert in self.pert_list:
+            sedge = pert.build_edge_points(sedge)
+
+        return sedge
+
+############################################
+############################################

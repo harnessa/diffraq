@@ -11,5 +11,5 @@ pytest test_circles.py
 pytest test_focuser.py
 pytest test_starshades.py
 pytest test_annulus.py
-# pytest test_perturbations.py
+pytest test_perturbations.py
 # pytest test_etching_error.py
