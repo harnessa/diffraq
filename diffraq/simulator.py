@@ -46,15 +46,6 @@ class Simulator(object):
         #Occulter
         self.occulter = diffraq.geometry.Occulter(self, shapes)
 
-        # #Check shape name is in approved list
-        # approved_shapes = ['polar', 'circle', 'cartesian', 'starshade', 'loci']
-        # if self.occulter_shape not in approved_shapes:
-        #     self.logger.error('Invalid Occulter Shape')
-        #
-        # #Load specific occulter
-        # self.occulter = getattr(diffraq.geometry, \
-        #     f'{self.occulter_shape.capitalize()}Occulter')(self)
-
         #Open flag
         self.shop_is_open = False
 

@@ -61,9 +61,9 @@ class Logger(object):
         self.write(is_brk=True)
         self.write(f'Running DIFFRAQ with {self.sim.num_pts} x {self.sim.num_pts} Grid ' + \
             f'and {len(self.sim.waves)} wavelengths')
-        self.write(f'Shape: {self.sim.occulter_shape}', is_time=False)
-        self.write(f'Saved at: {self.save_dir}', is_time=False)
-        self.write(f'Save ext: {self.save_ext}', is_time=False)
+        if self.do_save:
+            self.write(f'Saved at: {self.save_dir}', is_time=False)
+            self.write(f'Save ext: {self.save_ext}', is_time=False)
 
     def print_end_message(self):
         self.write(is_brk=True)

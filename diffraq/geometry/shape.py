@@ -26,11 +26,13 @@ class Shape(object):
             - edge_file:    filename that holds numerical apodization function as a function of radius. Supercedes apod_func
             - is_opaque:    described shape is opaque?
             - num_petals:   number of petals
+            - has_center:   has central disk? (for petal/starshade only)
             - min_radius:   minimum radius
             - max_radius:   maximum radius
+            - rotation:     angle to rotate
+            - perturbations: List of dictionaries describing perturbations to be added to the shape
             - radial_nodes: number of radial quadrature nodes
             - theta_nodes:  number of azimuthal quadrature nodes
-            - perturbations: List of dictionaries describing perturbations to be added to the shape
         """
 
         #Point to parent [occulter]
@@ -39,9 +41,10 @@ class Shape(object):
         #Default parameters
         def_params = {'kind':'polar', 'edge_func':None, 'edge_diff':None, \
             'loci_file':None, 'edge_file':None, 'is_opaque':False, \
-            'num_petals':16, 'min_radius':0, 'max_radius':12, \
+            'num_petals':16, 'min_radius':0, 'max_radius':12, 'rotation':0, \
+            'has_center':True, 'perturbations':[], \
             'radial_nodes':self.parent.sim.radial_nodes, \
-            'theta_nodes':self.parent.sim.theta_nodes, 'perturbations':[]}
+            'theta_nodes':self.parent.sim.theta_nodes,}
 
         #Set Default parameters
         for k,v in {**def_params, **kwargs}.items():
@@ -93,6 +96,10 @@ class Shape(object):
         for pert in self.pert_list:
             sxq, syq, swq = pert.build_quadrature(sxq, syq, swq)
 
+        #Rotate (if applicable)
+        if not np.isclose(self.rotation, 0):
+            sxq, syq = self.rotate_points(self.rotation, sxq, syq).T
+
         return sxq, syq, swq
 
     def build_shape_edge(self):
@@ -103,7 +110,27 @@ class Shape(object):
         for pert in self.pert_list:
             sedge = pert.build_edge_points(sedge)
 
+        #Rotate (if applicable)
+        if not np.isclose(self.rotation, 0):
+            sedge = self.rotate_points(self.rotation, sedge.T)
+
         return sedge
+
+############################################
+############################################
+
+############################################
+#####   Misc Functions #####
+############################################
+
+    def rotate_points(self, rot_ang, vec, vec_xtra=None):
+        rot_arr = np.array([[ np.cos(rot_ang), np.sin(rot_ang)],
+                            [-np.sin(rot_ang), np.cos(rot_ang)]])
+
+        if vec.ndim == 1:
+            vec = np.stack((vec, vec_xtra), 0)
+
+        return rot_arr.dot(vec).T
 
 ############################################
 ############################################

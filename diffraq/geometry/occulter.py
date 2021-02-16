@@ -13,6 +13,7 @@ Description: Master class representing the occulter/aperture that holds all
 """
 
 import numpy as np
+import imp
 import diffraq.quadrature as quad
 import diffraq.geometry as geometry
 
@@ -20,13 +21,21 @@ class Occulter(object):
 
     def __init__(self, sim, shapes):
         self.sim = sim
+
+        #Load shapes
         self.load_shapes(shapes)
 
 ############################################
 #####  Shapes #####
 ############################################
 
-    def load_shapes(self, shapes=[]):
+    def load_shapes(self, shapes):
+
+        #If pointed to, get shapes from occulter file (takes presedence over given shapes list)
+        if self.sim.occulter_file is not None:
+            mod = imp.load_source('mask', self.sim.occulter_file)
+            shapes = mod.shapes
+
         #Turn into list
         if not isinstance(shapes, list):
             shapes = [shapes]
@@ -41,7 +50,7 @@ class Occulter(object):
         self.is_babinet = not self.sim.is_finite
 
         #Loop through and build shapes
-        self.shape_list = []
+        self.shapes = []
         for shp in shapes:
             #Get shape kind
             kind = shp['kind'].capitalize()
@@ -50,7 +59,7 @@ class Occulter(object):
             shp_inst = getattr(geometry, f'{kind}Shape')(self, **shp)
 
             #Save shape
-            self.shape_list.append(shp_inst)
+            self.shapes.append(shp_inst)
 
 ############################################
 ############################################
@@ -65,19 +74,17 @@ class Occulter(object):
         self.xq, self.yq, self.wq = np.empty(0), np.empty(0), np.empty(0)
 
         #Loop through shape list and build quadratures
-        for shape in self.shape_list:
+        for shape in self.shapes:
+
             #Build quadrature
             xs, ys, ws = shape.build_shape_quadrature()
 
             #If multiple shapes, check if we need to flip weights
             if self.is_multi:
 
-                #Get flag that tells if quadrature covers aperture
-                does_cover = np.any(np.hypot(xs, ys) <= self.sim.tel_diameter/2)
-
-                #Decide if we need to flip weights (does_cover AND (finite_flag XNOR opaque))
+                #Decide if we need to flip weights (finite_flag XNOR opaque)
                 #We flip weights to subtract opaque region overlapping transparent region
-                if does_cover and not (self.finite_flag ^ int(shape.is_opaque)):
+                if not (self.finite_flag ^ int(shape.is_opaque)):
                     ws *= -1
 
             else:
@@ -106,7 +113,8 @@ class Occulter(object):
         self.edge = np.empty((0,2))
 
         #Loop through shape list and add quadratures
-        for shape in self.shape_list:
+        for shape in self.shapes:
+            
             #Build edge
             ee = shape.build_shape_edge()
 

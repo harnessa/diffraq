@@ -31,8 +31,10 @@ if pkg_home_dir is None:
 ext_data_dir = f"{pkg_home_dir}/External_Data"
 int_data_dir = f"{pkg_home_dir}/Internal_Data"
 apod_dir = f"{ext_data_dir}/Apodization_Profiles"
-loci_dir = f"{ext_data_dir}/Occulter_Loci"
+loci_dir = f"{ext_data_dir}/Shape_Loci"
+occulter_dir = f"{ext_data_dir}/Occulter_Files"
 
+#Mine only
 results_dir = "/home/aharness/Research/Optics_Modeling/Diffraq_Results"
 
 #####################

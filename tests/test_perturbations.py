@@ -58,7 +58,7 @@ class Test_Perturbations(object):
                 sim = diffraq.Simulator(params, shapes)
 
                 #Add perturbation
-                pert = diffraq.geometry.Notch(sim.occulter.shape_list[0], **notch)
+                pert = diffraq.geometry.Notch(sim.occulter.shapes[0], **notch)
 
                 #Get perturbation quadrature
                 xp, yp, wp = pert.get_quadrature()

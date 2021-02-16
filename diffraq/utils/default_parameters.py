@@ -35,10 +35,7 @@ def_sim_params = {
 
     ### Occulter ###
     'is_finite':            True,       #Diffraction integral does not extend to infinity? Necessary only for multiple shapes
-
-    ### Defects ###
-    # 'etching_error':        0,          #Over-etching (<0) i.e. less material; under-etching (>0) i.e more material..
-    # 'perturbations':        {},         #Dictionary of dictionaries describing perturbations to be added to the shape
+    'occulter_file':        None,       #File to point to file containing pre-specified shape dictionaries
 
     ### Observation ###
     'waves':                0.6e-6,     #Wavelengths

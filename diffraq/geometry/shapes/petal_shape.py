@@ -45,7 +45,7 @@ class PetalShape(Shape):
         #Calculate starshade quadrature
         xq, yq, wq = quad.starshade_quad(self.outline.func, self.num_petals, \
             self.min_radius, self.max_radius, self.radial_nodes, self.theta_nodes, \
-            is_opaque=self.is_opaque)
+            has_center=self.has_center)
 
         return xq, yq, wq
 
