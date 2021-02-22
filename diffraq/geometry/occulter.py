@@ -14,8 +14,8 @@ Description: Master class representing the occulter/aperture that holds all
 
 import numpy as np
 import imp
-import diffraq.quadrature as quad
 import diffraq.geometry as geometry
+from diffraq.quadrature import lgwt
 
 class Occulter(object):
 
@@ -114,13 +114,9 @@ class Occulter(object):
 
         #Loop through shape list and add quadratures
         for shape in self.shapes:
-            
+
             #Build edge
             ee = shape.build_shape_edge()
-
-            #Sort by angle
-            #TODO: fix sorting for multiple, unconnected apertures
-            ee = ee[np.argsort(np.arctan2(ee[:,1] - ee[:,1].mean(), ee[:,0] - ee[:,0].mean()))]
 
             #Append
             self.edge = np.concatenate((self.edge, ee))

@@ -106,6 +106,9 @@ class Shape(object):
         #Build main shape edge
         sedge = self.build_local_shape_edge()
 
+        #Sort edge points
+        sedge = self.sort_edge_points(sedge, self.num_petals)
+
         #Loop through perturbation list and add edge points (which adds to current sedge)
         for pert in self.pert_list:
             sedge = pert.build_edge_points(sedge)
@@ -131,6 +134,55 @@ class Shape(object):
             vec = np.stack((vec, vec_xtra), 0)
 
         return rot_arr.dot(vec).T
+
+    def sort_edge_points(self, edge, num_petals):
+        #Sort by angle across petals
+        new_edge = np.empty((0,2))
+        for i in range(num_petals):
+
+            #Difference between angles
+            dang = 2*np.pi/num_petals
+
+            #Angle bisector (mean angle)
+            mang = i*2*np.pi/num_petals
+
+            #Get angle between points and bisector
+            dot = edge[:,0]*np.cos(mang) + edge[:,1]*np.sin(mang)
+            det = edge[:,0]*np.sin(mang) - edge[:,1]*np.cos(mang)
+            diff_angs = np.abs(np.arctan2(det, dot))
+
+            #Indices are where angles are <= dang/2 away
+            inds = diff_angs <= dang/2
+
+            #Grab points in this angle range
+            cur_pts = edge[inds]
+
+            if len(cur_pts) == 0:
+                continue
+
+            #Get new angles
+            cur_ang = np.arctan2(cur_pts[:,1] - cur_pts[:,1].mean(), \
+                cur_pts[:,0] - cur_pts[:,0].mean()) % (2.*np.pi)
+
+            #Sort current section
+            cur_pts = cur_pts[np.argsort(cur_ang)]
+
+            #Rotate to minimum radius
+            min_rad_ind = np.argmin(np.hypot(*cur_pts.T))
+            cur_pts = np.roll(cur_pts, -min_rad_ind, axis=0)
+
+            #Append
+            new_edge = np.concatenate((new_edge, cur_pts))
+
+        #Check the same
+        if new_edge.size != edge.size:
+            print('Bad Sort!')
+            breakpoint()
+
+        #Cleanup
+        del dot, det, diff_angs, inds, cur_pts, cur_ang, edge
+
+        return new_edge
 
 ############################################
 ############################################

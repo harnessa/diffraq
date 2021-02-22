@@ -110,7 +110,7 @@ class Analyzer(object):
         #Flip image to match lab data
         self.image = np.swapaxes(self.image, -2, -1)[...,::-1]
         self.is_normalized=False
-        
+
         #Normalize with calibration data
         self.calibrate_image()
 
@@ -131,12 +131,16 @@ class Analyzer(object):
             breakpoint()
 
     def calibrate_image(self):
-        #FIXME: load open data
-        if self.is_normalized:
-
-            breakpoint()
-        else:
-            self.image *= (self.sim.z0/(self.sim.z0 + self.sim.zz))**2
+        # #FIXME: load open data
+        # if self.is_normalized:
+        #
+        #     breakpoint()
+        # else:
+        #     self.image *= (self.sim.z0/(self.sim.z0 + self.sim.zz))**2
+        #
+        # #Convert to contrast by dividing by blocked apodization area
+        # self.image /= self.max_apod**2.
+        return
 
 ############################################
 ############################################

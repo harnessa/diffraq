@@ -77,9 +77,9 @@ def_alz_params = {
     'skip_image':           False,      #Skip loading + showing image data
 
     ### Analysis ###
-    'is_normalized':        True,       #Is normalized by unblocked simulation
+    'is_normalized':        False,      #Is normalized by unblocked simulation
     'wave_ind':             0,          #Wavelength index to show,
-
+    'max_apod':             1.,         #Maximum Apodization value, to convert to contrast
 }
 
 ############################################

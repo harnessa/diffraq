@@ -35,20 +35,23 @@ def starshade_quad(Afunc, num_pet, r0, r1, m, n, has_center=True):
         wq = numpy array of weights
     """
 
-    #Central disk radial nodes and weights
-    if has_center:
-        nd = int(np.ceil(0.3*n*num_pet))    #Less in theta, rough guess so dx about same
-        xq, yq, wq = polar_quad(lambda t: r0*np.ones_like(t), m, nd)
-    else:
-        xq, yq, wq = np.array([]), np.array([]), np.array([])
-
-    ### Build over petals ###
-
+    #Build nodes
     #Petals width nodes and weights over [-1,1]
     pw, ww = lgwt(n, -1, 1)
 
     #Petals radius nodes and weights over [0,1]
     pr, wr = lgwt(m, 0, 1)
+
+    ### Build Disk ###
+
+    #Central disk radial nodes and weights
+    if has_center:
+        nd = int(np.ceil(0.3*n*num_pet))    #Less in theta, rough guess so dx about same
+        xq, yq, wq = polar_quad(lambda t: r0*np.ones_like(t), m, nd, pr=pr, wr=wr)
+    else:
+        xq, yq, wq = np.array([]), np.array([]), np.array([])
+
+    ### Build petals ###
 
     #Add axis
     wr = wr[:,None]

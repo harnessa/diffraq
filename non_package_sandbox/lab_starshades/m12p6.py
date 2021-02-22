@@ -38,11 +38,7 @@ params = {
     'theta_nodes':      nn,
 
     ### Occulter ###
-    'occulter_shape':   'starshade',
-    'is_babinet':       False,
-    'num_petals':       num_pet,
-    'apod_file':        f'{diffraq.apod_dir}/bb_2017.txt',
-    'perturbations':    perts,
+    'occulter_file':   f'{diffraq.occulter_dir}/DW21.cfg',
 
     ### Saving ###
     'do_save':          True,

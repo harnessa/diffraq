@@ -157,10 +157,10 @@ class Focuser(object):
         #Multiply by constant phase term
         FF *= np.exp(1j * 2.*np.pi/wave * self.image_distance)
 
-        #Normalize by FFT + normalizations to match Fresnel diffraction (not used)
+        #(not used) Normalize by FFT + normalizations to match Fresnel diffraction
         # FF *= self.dx0**2./(wave*self.image_distance) / NN_full
 
-        #Normalize such that peak is 1. Needs to scale for wavelength
+        #Normalize such that peak is 1. Needs to scale for wavelength relative to other images
         FF /= NN_full
 
         return FF, dx

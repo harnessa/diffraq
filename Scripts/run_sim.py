@@ -21,10 +21,6 @@ params = {
     'tel_diameter':     2.4,
     'num_pts':          256,
 
-    ### Occulter ###
-    'occulter_shape':   'circle',
-    'is_babinet':       True,
-
     ### Saving ###
     'do_save':          True,
     'session':          'test',

@@ -61,10 +61,7 @@ class Notch(object):
 
     def get_quadrature(self):
         #Get location of perturbation
-        t0, tf = self.get_param_locs()
-
-        #Determine how many node points to use
-        m, n = self.parent.radial_nodes//2, self.parent.theta_nodes//2
+        t0, tf, m, n = self.get_param_locs()
 
         #Get perturbation specifc quadrature
         xq, yq, wq = getattr(self, f'get_quad_{self.outline.kind}')( \
@@ -76,6 +73,9 @@ class Notch(object):
         #Get edge
         xy = self.get_edge_points()
 
+        #Sort edge points
+        xy = self.parent.sort_edge_points(xy, 1)
+
         #Add to parent's edge points
         sedge = np.concatenate((sedge, xy))
 
@@ -86,13 +86,10 @@ class Notch(object):
 
     def get_edge_points(self):
         #Get location of perturbation
-        t0, tf = self.get_param_locs()
-
-        #Determine how many node points to use
-        m, n = self.parent.radial_nodes//2, self.parent.theta_nodes//2
+        t0, tf, m, n = self.get_param_locs()
 
         #Get perturbation specifc edge points
-        xy = self.get_pert_edge(t0, tf, m, n, self.parent.opq_sign)
+        xy = self.get_pert_edge(t0, tf, m, self.parent.opq_sign)
 
         return xy
 
@@ -110,12 +107,22 @@ class Notch(object):
         #Get parameter to where the cart. distance between is equal to pert. width
         tf = self.outline.find_width_point(t0, self.width)
 
-        return t0, tf
+        #Get number of radial nodes to match parent
+        drad = np.hypot(*self.outline.cart_func(tf)) - np.hypot(*self.outline.cart_func(t0))
+        m = max(100, int(drad / (self.parent.max_radius - self.parent.min_radius) * \
+            self.parent.radial_nodes))
 
-    def get_pert_edge(self, t0, tf, m, n, opq_sign):
-        #Get number of points per side
-        npts = 2*max(m,n)
+        #Get number of theta nodes to match parent
+        dthe = np.abs(np.arctan2(*self.outline.cart_func(tf)[::-1]) - \
+            np.arctan2(*self.outline.cart_func(t0)[::-1]))
+        n = max(50, int(dthe / (2.*np.pi) * self.parent.theta_nodes))
 
+        #(not used) Use many points #TODO: check if above is converged
+        # m, n = self.parent.radial_nodes//2, self.parent.theta_nodes//2
+
+        return t0, tf, m, n
+
+    def get_pert_edge(self, t0, tf, npts, opq_sign):
         #Get parameters of test region
         ts = np.linspace(t0, tf, npts)[:,None]
 
@@ -232,7 +239,7 @@ class Notch(object):
     def get_quad_polar(self, t0, tf, m, n, opq_sign):
 
         #Get edge loci
-        loci = self.get_pert_edge(t0, tf, m, n, opq_sign)
+        loci = self.get_pert_edge(t0, tf, m, opq_sign)
 
         #Shift to center
         loci_shift = loci.mean(0)

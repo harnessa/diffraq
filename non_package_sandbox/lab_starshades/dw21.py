@@ -9,8 +9,8 @@ focal_length = 0.498
 num_pts = 256
 num_foc = 128
 
-mm = 2000
-nn = 100
+mm = 4000
+nn = 200
 
 params = {
 
@@ -38,12 +38,12 @@ params = {
 }
 
 sim = diffraq.Simulator(params)
-# sim.run_sim()
+sim.run_sim()
 
-# sim.occulter.build_quadrature()
-sim.occulter.build_edge()
-
-import matplotlib.pyplot as plt;plt.ion()
-plt.plot(*sim.occulter.edge.T, 'x')
-
-breakpoint()
+# # sim.occulter.build_quadrature()
+# sim.occulter.build_edge()
+#
+# import matplotlib.pyplot as plt;plt.ion()
+# plt.plot(*sim.occulter.edge.T, 'x')
+#
+# breakpoint()

@@ -48,6 +48,8 @@ class Test_Occulter_File(object):
         reg_sim = diffraq.Simulator(params, shape)
 
         #Load occulter sim
+        params['radial_nodes'] = params['radial_nodes'] //2
+        params['theta_nodes'] = params['theta_nodes'] //2
         params['occulter_file'] = f'{self.apod_dir}/inv_apod_occulter.cfg'
         occ_sim = diffraq.Simulator(params)
 

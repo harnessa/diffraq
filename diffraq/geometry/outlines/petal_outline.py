@@ -106,25 +106,22 @@ class PetalOutline(Outline):
         return t0
 
     def find_width_point(self, t0, width):
-        #Build |distance - width| equation
-        min_diff = lambda r, pet: np.abs(np.hypot(*( \
+        #Start radius
+        r0 = self.unpack_param(t0)[0]
+
+        #Build |distance - width| equation (force increasing radius w/ heaviside)
+        min_diff = lambda r, pet:  1/(1+1e-9-np.heaviside(r0-r, 0.5)) * np.abs(np.hypot(*( \
             self.cart_func(self.pack_param(r, pet)) - self.cart_func(t0))) - width)
 
-        #Find best fit to equation
-        r0, p0 = self.minimize_over_petals(min_diff, self.unpack_param(t0)[0])
+        #Find best fit to equation (guess with nudge towards positive radius)
+        rf, pf = self.minimize_over_petals(min_diff, r0 + width/2)
 
         #Get best fit parameter
-        tf = self.pack_param(r0, p0)
+        tf = self.pack_param(rf, pf)
 
-        #Make sure it is going the right direction (CW)
-        if np.arctan2(*self.cart_func(tf)[::-1]) > np.arctan2(*self.cart_func(t0)[::-1]):
-            #Go same distance, but opposite direction
-            tf = 2*t0 - tf
-
-        #Check that width is within 10% of requested width
-        if np.abs(np.hypot(*(self.cart_func(tf) - self.cart_func(t0))) - width)/width > 0.1:
+        #Check that width is within 1% of requested width
+        if np.abs(np.hypot(*(self.cart_func(tf) - self.cart_func(t0))) - width)/width > 0.01:
             print('\n!Closest point (width) not Converged!\n')
-            breakpoint()
 
         return tf
 
