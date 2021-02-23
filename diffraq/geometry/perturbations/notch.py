@@ -140,9 +140,6 @@ class Notch(object):
         #Join together to create loci
         loci = np.concatenate((old_edge, line1, new_edge, line2))
 
-        #Go CW if not babinet
-        loci = loci[::-opq_sign]
-
         #Cleanup
         del old_edge, new_edge, line1, line2
 
@@ -222,7 +219,12 @@ class Notch(object):
         #Get cartesian nodes
         xq = (pr*np.cos(oldt + pw*dt)).ravel()
         yq = (pr*np.sin(oldt + pw*dt)).ravel()
-        wq = (ww * pr * wr * dt).ravel()
+
+        #Get quadrature sign depending if same opaqueness as parent
+        qd_sign = -(opq_sign * self.direction)
+
+        #Get weights (theta change is absolute)
+        wq = qd_sign * (ww * pr * wr * np.abs(dt)).ravel()
 
         #Cleanup
         del old_edge, new_edge, oldt, newt, pw, ww, pr, wr, ts, dt
@@ -246,7 +248,7 @@ class Notch(object):
         loci -= loci_shift
 
         #Get quadrature from loci points
-        xq, yq, wq = quad.loci_quad(loci[:,0], loci[:,1], 2*max(m,n))
+        xq, yq, wq = quad.loci_quad(loci[:,0], loci[:,1], max(m,n))
 
         #Shift back to edge
         xq += loci_shift[0]

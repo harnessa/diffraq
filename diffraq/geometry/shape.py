@@ -63,7 +63,7 @@ class Shape(object):
         self.set_outline()
 
         #Sign for perturbation directions
-        self.opq_sign = [1, -1][self.is_opaque]
+        self.opq_sign = -(2*int(self.is_opaque) - 1)
 
         #Turn perturbations into list
         if not isinstance(self.perturbations, list):

@@ -66,8 +66,8 @@ class Test_Perturbations(object):
                 #Get quadrature
                 sim.occulter.build_quadrature()
 
-                #Get current notch area
-                cur_area = notch_area*nch
+                #Get current notch area (sign of sum is direction * opaque)
+                cur_area = notch_area*nch * (2*int(is_opq) -1)
                 cur_disk_area = disk_area + cur_area
 
                 #Assert true
