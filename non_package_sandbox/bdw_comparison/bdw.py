@@ -369,7 +369,7 @@ class BDW(object):
     def add_leading_terms(self, Emap):
         #Add leading QPF phase
         ap_opd = (self.tel_pts_x**2 + self.tel_pts_y[:,None]**2) / self.z1
-        Emap *= np.exp(1j*self.kk/2. * ap_opd)
+        Emap *= np.exp(1j*self.kk/2 * ap_opd)
         Emap *= np.exp(1j*self.kk * self.z1)
 
         #Divide by numerical constants (negative sign to match lotus)
@@ -380,7 +380,8 @@ class BDW(object):
     def add_illumination(self, Emap):
         #Build incident field
         u0_opd = (self.tel_pts_x**2 + self.tel_pts_y[:,None]**2) / (self.z1 + self.z0)
-        u0 = self.z0 / (self.z0 + self.z1) * np.exp(1j*self.kk * (u0_opd/2 + self.z1))
+        u0 = self.z0 / (self.z0 + self.z1) * np.exp(1j*self.kk/2 * u0_opd)
+        u0 *= np.exp(1j*self.kk * self.z1)
 
         #Subtract from incident field
         Emap = u0 - Emap

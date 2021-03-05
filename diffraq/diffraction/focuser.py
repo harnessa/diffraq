@@ -90,7 +90,7 @@ class Focuser(object):
         pupil, NN_full = image_util.round_aperture(pupil)
 
         #Create input plane indices
-        et = np.tile(np.arange(NN0) - (NN0 - 1.)/2., (NN0,1))
+        et = np.tile(np.arange(NN0)/NN0 - 0.5, (NN0,1)) * NN0
 
         #Loop through pad groups and calculate images that are the same size
         for NN in self.unq_true_NN:

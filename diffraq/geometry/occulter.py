@@ -32,8 +32,8 @@ class Occulter(object):
     def load_shapes(self, shapes):
 
         #If pointed to, get shapes from occulter file (takes presedence over given shapes list)
-        if self.sim.occulter_file is not None:
-            mod = imp.load_source('mask', self.sim.occulter_file)
+        if self.sim.occulter_config is not None:
+            mod = imp.load_source('mask', self.sim.occulter_config)
             shapes = mod.shapes
 
         #Turn into list

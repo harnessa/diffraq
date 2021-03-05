@@ -76,15 +76,14 @@ class Test_Perturbations(object):
 
 ############################################
 
-    def test_sines(self):
+    def _test_sines(self):
         #Load simulator
         params = {
             'occulter_shape':   'circle',
             'circle_rad':       self.circle_rad,
         }
 
-
-    # breakpoint()
+        # breakpoint()
 
 ############################################
 

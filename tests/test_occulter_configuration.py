@@ -1,5 +1,5 @@
 """
-test_occulter_file.py
+test_occulter_configuration.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -15,7 +15,7 @@ import diffraq
 import numpy as np
 import copy
 
-class Test_Occulter_File(object):
+class Test_Occulter_Configuration(object):
 
     def run_all_tests(self):
         for tt in ['diffraction']:
@@ -50,7 +50,7 @@ class Test_Occulter_File(object):
         #Load occulter sim
         params['radial_nodes'] = params['radial_nodes'] //2
         params['theta_nodes'] = params['theta_nodes'] //2
-        params['occulter_file'] = f'{self.apod_dir}/inv_apod_occulter.cfg'
+        params['occulter_config'] = f'{self.apod_dir}/inv_apod_occulter.cfg'
         occ_sim = diffraq.Simulator(params)
 
         return reg_sim, occ_sim
@@ -85,5 +85,5 @@ class Test_Occulter_File(object):
 
 if __name__ == '__main__':
 
-    to = Test_Occulter_File()
+    to = Test_Occulter_Configuration()
     to.run_all_tests()

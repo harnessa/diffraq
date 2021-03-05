@@ -24,7 +24,6 @@ class Logger(object):
     def __init__(self, sim):
         self.sim = sim
         self.copy_params()
-        self.log_is_open = False
 
 ############################################
 #####  Start/Finish #####
@@ -46,16 +45,11 @@ class Logger(object):
         self.start_time = time.perf_counter()
         self.open_log_file()
         self.save_parameters()
-        self.log_is_open = True
 
     def close_up(self):
         #Finish
-        if not self.log_is_open:
-            return
-
         self.end_time = time.perf_counter()
-        self.close_log_file()
-        self.log_is_open = False
+        self.dump_log_file()
 
     def print_start_message(self):
         self.write(is_brk=True)
@@ -87,17 +81,21 @@ class Logger(object):
         if not self.do_save or not self.with_log:
             return
 
-        #Open file and register it to close at exit
-        self.log_file = open(self.filename('logfile','txt'), 'w')
+        #Create container for log file string and register to add to log file
+        self.log_file = ''
+        self.log_needs_dump = True
 
-    def close_log_file(self):
-        #Return immediately if not saving
-        if not self.do_save or not self.with_log:
+    def dump_log_file(self):
+        #Return immediately if not writeable (or log file is already dumped)
+        if not self.do_save or not self.log_needs_dump:
             return
 
-        #Close file if still open
-        if not self.log_file.closed:
-            self.log_file.close()
+        #Dump to file
+        with open(self.filename('logfile','txt'), 'w') as f:
+            f.write(self.log_file)
+
+        #Clear flag
+        self.log_needs_dump = False
 
 ############################################
 ############################################
@@ -120,9 +118,8 @@ class Logger(object):
             str_str = '*'*int(n_strs)
             new_str = f'{str_str} {txt} {str_str}\n'
 
-        if self.do_save and self.log_is_open and self.with_log:
-            self.log_file.write(new_str)
-
+        if self.do_save and self.with_log:
+            self.log_file += new_str + '\n'
         if self.verbose:
             print(new_str)
 

@@ -35,7 +35,7 @@ def_sim_params = {
 
     ### Occulter ###
     'is_finite':            True,       #Diffraction integral does not extend to infinity? Necessary only for multiple shapes
-    'occulter_file':        None,       #File to point to file containing pre-specified shape dictionaries
+    'occulter_config':      None,       #Configuration file to point to file containing pre-specified shape dictionaries
 
     ### Observation ###
     'waves':                0.6e-6,     #Wavelengths

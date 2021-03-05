@@ -184,6 +184,9 @@ class Simulator(object):
                 self.occulter.yq, self.occulter.wq, lamzz, grid_pts, self.fft_tol,
                 is_babinet=self.occulter.is_babinet, lamz0=lamz0)
 
+            #Multiply by plane wave
+            uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+
             #Store
             pupil[iw] = uu
 

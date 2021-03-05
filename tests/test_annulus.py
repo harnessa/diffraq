@@ -69,6 +69,7 @@ class Test_Annulus(object):
         if not is_aperture:
             zscl = sim.z0 / (sim.zz + sim.z0)
             u0 = np.exp(1j*2*np.pi/sim.waves[0]*grid_pts**2./(2*(sim.zz + sim.z0))) * zscl
+            u0 *= np.exp(1j*2.*np.pi/sim.waves[0] * sim.zz)
             utru = u0 - utru
 
         #Compare

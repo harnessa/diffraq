@@ -14,8 +14,6 @@ Description: Script to get occulter's edge profile
 import diffraq
 import numpy as np
 
-import matplotlib.pyplot as plt;plt.ion()
-
 #User-input parameters
 params = {
 
@@ -36,5 +34,10 @@ edge = sim.occulter.edge.copy()
 
 #Cleanup
 sim.clean_up()
+
+#Plot
+import matplotlib.pyplot as plt;plt.ion()
+
+plt.plot(*edge.T, 'x')
 
 breakpoint()

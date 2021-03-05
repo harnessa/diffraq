@@ -139,6 +139,9 @@ class Test_Circles(object):
                 sim.occulter.yq, sim.occulter.wq, lamzz, xi, eta, sim.fft_tol,
                 is_babinet=sim.occulter.is_babinet, lamz0=lamz0)
 
+            #Add plane wave
+            uu *= np.exp(1j*2*np.pi/sim.waves[iw] * sim.zz)
+
             #Store
             pupil[iw] = uu.reshape(grid_2D.shape)
 

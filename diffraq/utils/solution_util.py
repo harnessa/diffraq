@@ -11,7 +11,6 @@ Description: Functions to compute the analytic solution for a circular occulter.
 """
 
 import numpy as np
-from diffraq.utils import misc_util
 from scipy.special import jn
 
 #FIXED parameters
@@ -84,8 +83,9 @@ def get_field(uu, vv, ss, kk, zz, z0, is_opaque=True, is_shadow=True):
     if not is_shadow:
         EE += np.exp(-1j*vv**2./(2.*uu))
 
-    #Add final plane QPF phase terms (diffraq solution ignores plane wave phase)
-    EE *= np.exp(1j*kk*ss**2./(2.*zz))
+    #Add final plane QPF + plane wave phase terms
+    EE *= np.exp(1j*kk * ss**2./(2.*zz))
+    EE *= np.exp(1j*kk*zz)
 
     #Scale for diverging beam
     EE *= z0 / (zz + z0)

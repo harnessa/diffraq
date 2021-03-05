@@ -109,7 +109,6 @@ class Analyzer(object):
 
         #Flip image to match lab data
         self.image = np.swapaxes(self.image, -2, -1)[...,::-1]
-        self.is_normalized=False
 
         #Normalize with calibration data
         self.calibrate_image()
@@ -122,13 +121,14 @@ class Analyzer(object):
 ############################################
 
     def calibrate_pupil(self):
-        #FIXME: load open data
-        if self.is_normalized:
-
-            breakpoint()
-        else:
-
-            breakpoint()
+        # #FIXME: load open data
+        # if self.is_normalized:
+        #
+        #     breakpoint()
+        # else:
+        #
+        #     breakpoint()
+        return
 
     def calibrate_image(self):
         # #FIXME: load open data

@@ -58,7 +58,7 @@ def diffract_grid(xq, yq, wq, lamzz, grid_pts, tol, is_babinet=False, lamz0=1e13
     #Cleanup
     del cq
 
-    #post multiply by quadratic phase of target and Kirchoff prefactor
+    #Multiply by quadratic phase at target and Kirchhoff amplitude scaling
     tarq = np.exp((1j*np.pi/lamzz)*grid_pts**2)
     uu *= 1./(1j*lamzz) * (tarq * tarq[:,None])
 

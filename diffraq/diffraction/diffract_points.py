@@ -44,7 +44,7 @@ def diffract_points(xq, yq, wq, lamzz, xi, eta, tol, is_babinet=False, lamz0=1e1
     #Do FINUFFT
     uu = finufft.nufft2d3(xq, yq, cq, sc*xi, sc*eta, isign=-1, eps=tol)
 
-    #post multiply bit
+    #Multiply by quadratic phase at target and Kirchhoff amplitude scaling
     uu *= 1./(1j*lamzz) * np.exp((1j*np.pi/lamzz)*(xi**2 + eta**2))
 
     #Subtract from Babinet field
@@ -56,6 +56,6 @@ def diffract_points(xq, yq, wq, lamzz, xi, eta, tol, is_babinet=False, lamz0=1e1
         uu = u0 - uu
 
     #Cleanup
-    del cq    
+    del cq
 
     return uu

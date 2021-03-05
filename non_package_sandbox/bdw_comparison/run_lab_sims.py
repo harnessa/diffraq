@@ -3,15 +3,15 @@ import diffraq
 import numpy as np
 
 wave = 0.641e-6
-tel_diameter = 2.4
-z1 = 37.24e6 * 552./641.
-z0 = 1e19
-focal_length = 240
+tel_diameter = 5e-3
+z1 = 50.
+z0 = 27.5
 num_pts = 256
-num_foc = 128
-num_pet = 22
+num_pet = 12
 
-session = 'wfirst'
+apod = 'bb_2017'
+
+session = apod
 save_dir_base = f'{diffraq.results_dir}/bdw_compare'
 
 bdw_params = {
@@ -21,21 +21,17 @@ bdw_params = {
         'tel_diameter':     tel_diameter,
         'num_tel_pts':      num_pts,
         'num_petals':       num_pet,
-        'num_occ_pts':      2000,
+        'num_occ_pts':      4000,
         'image_pad':        0,
-        'apod_name':        'wfirst',
-        'is_connected':     True,
+        'apod_name':        apod,
         'do_save':          True,
         'save_dir_base':    save_dir_base,
         'session':          session,
-        'save_ext':         'bdw_2k',
+        'save_ext':         'bdw_4k',
 }
 
 mm = 6000
 nn = 300
-
-shape = {'kind':'starshade', 'is_opaque':True,  \
-    'num_petals':num_pet,'edge_file':f'{diffraq.apod_dir}/wfirst_ni2.txt'}
 
 dif_params = {
 
@@ -45,23 +41,25 @@ dif_params = {
     'z0':               z0,
     'tel_diameter':     tel_diameter,
     'waves':            wave,
-    'focal_length':     focal_length,
-    'image_size':       num_foc,
 
     ### Numerics ###
     'radial_nodes':     mm,
     'theta_nodes':      nn,
 
+    ### Occulter ###
+    'occulter_config':  f'{diffraq.occulter_dir}/{apod}.cfg',
+    'is_finite':        True,
+
     ### Saving ###
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq_pw',
+    'save_ext':         f'diffraq',
     'skip_image':       True,
 }
 
 if [False, True][1]:
-    sim = diffraq.Simulator(dif_params, shape)
+    sim = diffraq.Simulator(dif_params)
     sim.run_sim()
 
 if [False, True][0]:
