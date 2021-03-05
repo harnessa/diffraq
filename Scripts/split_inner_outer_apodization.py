@@ -34,7 +34,7 @@ max_apod = apod.max()
 
 #Get index of end of inner starshade (subtract one to go from strut to starshade)
 inn_cut = np.where(apod >= max_apod)[0][0] - 1
-ainn = 1 - apod[:inn_cut]           #Take inverse of apod
+ainn = 1 - apod[:inn_cut]   #Take inverse
 rinn = rads[:inn_cut]
 
 #Get index of start of outer starshade (add one to go from strut to starshade)

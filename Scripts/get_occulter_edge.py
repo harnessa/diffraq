@@ -18,11 +18,11 @@ import numpy as np
 params = {
 
     ### Numerics ###
-    'radial_nodes':     20292,
+    'radial_nodes':     2000,
     'theta_nodes':      200,
 
     ### Occulter ###
-    'occulter_file':   f'{diffraq.occulter_dir}/M12P2_joint.cfg',
+    'occulter_config':  f'{diffraq.occulter_dir}/M12P2_joint.cfg',
 }
 
 #Load simulator + build edge

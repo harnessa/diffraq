@@ -41,6 +41,9 @@ class Notch(object):
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
+        #Make sure array
+        self.xy0 = np.array(self.xy0)
+
 ############################################
 #####  Main Scripts #####
 ############################################
@@ -101,8 +104,14 @@ class Notch(object):
 ############################################
 
     def get_param_locs(self):
+        #Clock starting point to match pre-clocked parent shape
+        if self.parent.is_clocked:
+            xy0 = self.xy0.dot(self.parent.clock_mat.T)
+        else:
+            xy0 = self.xy0.copy()
+
         #Get parameter of edge point closest to starting point
-        t0 = self.outline.find_closest_point(self.xy0)
+        t0 = self.outline.find_closest_point(xy0)
 
         #Get parameter to where the cart. distance between is equal to pert. width
         tf = self.outline.find_width_point(t0, self.width)
@@ -160,7 +169,7 @@ class Notch(object):
             normal = self.outline.cart_diff(ts)[:,::-1][len(ts)//2]
             normal /= np.hypot(*normal)
 
-        #Shift edge out by the normal vector (use negative to get direction correct)
+        #Shift edge out by the normal vector
         etch = -self.height * np.array([1., -1]) * self.direction * opq_sign
         new_edge = old_edge + etch * normal
 

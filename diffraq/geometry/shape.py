@@ -29,7 +29,7 @@ class Shape(object):
             - has_center:   has central disk? (for petal/starshade only)
             - min_radius:   minimum radius
             - max_radius:   maximum radius
-            - rotation:     angle to rotate
+            - is_clocked:   shape is clocked by half a petal (for petal/starshade only)
             - perturbations: List of dictionaries describing perturbations to be added to the shape
             - radial_nodes: number of radial quadrature nodes
             - theta_nodes:  number of azimuthal quadrature nodes
@@ -41,7 +41,7 @@ class Shape(object):
         #Default parameters
         def_params = {'kind':'polar', 'edge_func':None, 'edge_diff':None, \
             'loci_file':None, 'edge_file':None, 'is_opaque':False, \
-            'num_petals':16, 'min_radius':0, 'max_radius':12, 'rotation':0, \
+            'num_petals':16, 'min_radius':0, 'max_radius':12, 'is_clocked':False, \
             'has_center':True, 'perturbations':[], \
             'radial_nodes':self.parent.sim.radial_nodes, \
             'theta_nodes':self.parent.sim.theta_nodes,}
@@ -52,6 +52,11 @@ class Shape(object):
 
         #Load outline and perturbations
         self.load_outline_perturbations()
+
+        #Clocking matrix
+        rot_ang = np.pi/self.num_petals
+        self.clock_mat = np.array([[ np.cos(rot_ang), np.sin(rot_ang)],
+                                   [-np.sin(rot_ang), np.cos(rot_ang)]])
 
 ############################################
 #####  Outline and Perturbations #####
@@ -96,9 +101,9 @@ class Shape(object):
         for pert in self.pert_list:
             sxq, syq, swq = pert.build_quadrature(sxq, syq, swq)
 
-        #Rotate (if applicable)
-        if not np.isclose(self.rotation, 0):
-            sxq, syq = self.rotate_points(self.rotation, sxq, syq).T
+        #Clock (if applicable)
+        if self.is_clocked:
+            sxq, syq = np.stack((sxq,syq),1).dot(self.clock_mat).T
 
         return sxq, syq, swq
 
@@ -113,9 +118,9 @@ class Shape(object):
         for pert in self.pert_list:
             sedge = pert.build_edge_points(sedge)
 
-        #Rotate (if applicable)
-        if not np.isclose(self.rotation, 0):
-            sedge = self.rotate_points(self.rotation, sedge.T)
+        #Clock (if applicable)
+        if self.is_clocked:
+            sedge = sedge.dot(self.clock_mat)
 
         return sedge
 
@@ -125,15 +130,6 @@ class Shape(object):
 ############################################
 #####   Misc Functions #####
 ############################################
-
-    def rotate_points(self, rot_ang, vec, vec_xtra=None):
-        rot_arr = np.array([[ np.cos(rot_ang), np.sin(rot_ang)],
-                            [-np.sin(rot_ang), np.cos(rot_ang)]])
-
-        if vec.ndim == 1:
-            vec = np.stack((vec, vec_xtra), 0)
-
-        return rot_arr.dot(vec).T
 
     def sort_edge_points(self, edge, num_petals):
         #Sort by angle across petals

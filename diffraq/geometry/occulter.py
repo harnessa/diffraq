@@ -100,6 +100,10 @@ class Occulter(object):
         #Cleanup
         del xs, ys, ws
 
+        #Add occulter motion
+        if not np.isclose(self.sim.spin_angle, 0):
+            self.xq, self.yq = self.spin_occulter(self.xq, self.yq)
+
 ############################################
 ############################################
 
@@ -123,6 +127,25 @@ class Occulter(object):
 
         #Cleanup
         del ee
+
+        #Add occulter motion
+        if not np.isclose(self.sim.spin_angle, 0):
+            self.edge = self.spin_occulter(self.edge)
+
+############################################
+############################################
+
+############################################
+#####  Occulter Motion #####
+############################################
+
+    def spin_occulter(self, xx, yy=None):
+        #Rotation angle
+        #FIXME: add
+        pass
+        #Spin edge
+
+
 
 ############################################
 ############################################

@@ -56,7 +56,10 @@ class PetalOutline(Outline):
         diff = self.diff(r)*pet_mul
         cf = np.cos(func)
         sf = np.sin(func)
-        ans = np.hstack((cf - r*sf*diff, sf + r*cf*diff))
+        #Derivative has sign from if trailing or leading
+        tl_sgn = -int(np.sign(pet[0]))
+        tl_sgn = 2*(tl_sgn >= 0) - 1        #Make sure never zero
+        ans = tl_sgn * np.hstack((cf - r*sf*diff, sf + r*cf*diff))
         del func, diff, cf, sf
         return ans
 
@@ -66,7 +69,10 @@ class PetalOutline(Outline):
         diff = self.diff_solo(r)*pet_mul
         cf = np.cos(func)
         sf = np.sin(func)
-        ans = np.hstack((cf - r*sf*diff, sf + r*cf*diff))
+        #Derivative has sign from if trailing or leading
+        tl_sgn = -int(np.sign(pet[0]))
+        tl_sgn = 2*(tl_sgn >= 0) - 1        #Make sure never zero
+        ans = tl_sgn * np.hstack((cf - r*sf*diff, sf + r*cf*diff))
         del func, diff, cf, sf
         return ans
 

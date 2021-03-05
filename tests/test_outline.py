@@ -224,5 +224,5 @@ class Test_Outline(object):
 
 if __name__ == '__main__':
 
-    ts = Test_Shape_Function()
+    ts = Test_Outline()
     ts.run_all_tests()
