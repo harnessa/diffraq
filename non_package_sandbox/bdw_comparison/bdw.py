@@ -64,6 +64,7 @@ class BDW(object):
             'with_mask':        False,          #With rounded mask?
             ### Starshade ###
             'apod_name':        'lab_ss',       #Apodization profile name. Options: ['lab_ss', 'circle']
+            'loci_file':        None,           #File point to full loci of points
             'num_petals':       12,             #Number of starshade petals
             'circle_rad':       12.5e-3,        #Radius of circle occulter
             'num_occ_pts':      1000,           #Number of points in occulter (per petal edge if starshade)
@@ -145,14 +146,30 @@ class BDW(object):
 ############################################
 
     def load_occulter(self):
-        #Build circle or starshade
-        if self.apod_name == 'circle':
+        #Build occulter depending on shape
+        if self.loci_file is not None:
+            #Get loci and edges from loci file
+            self.loci, self.dls = self.build_from_loci()
+
+        elif self.apod_name == 'circle':
             #Get midpoint edge locations and edge segment lengths
             self.loci, self.dls = self.build_circle()
 
         else:
             #Get midpoint edge locations and edge segment lengths
             self.loci, self.dls = self.build_starshade()
+
+    def get_midpoint_scheme(self, loci):
+        #Rollover 1 point
+        locr = np.concatenate((loci[1:], loci[:1]))
+
+        #Get midpoint values
+        mid_pt = (loci + locr)/2.
+
+        #Calculate edge lengths
+        dls = locr - loci
+
+        return mid_pt, dls
 
     def build_circle(self):
         #Build cartesian points
@@ -165,7 +182,8 @@ class BDW(object):
     def build_starshade(self):
 
         #Load occulter txt data (radius [um], apodization)
-        rads, apod = np.genfromtxt(f'{self.xtras_dir}/{self.apod_name}.dat', delimiter=',').T
+        fname = f'{self.xtras_dir}/{self.apod_name}.dat'
+        rads, apod = np.genfromtxt(fname, delimiter=',', unpack=True)
 
         #Convert to meters and angle
         rads *= 1e-6
@@ -223,17 +241,35 @@ class BDW(object):
 
         return loci, dls
 
-    def get_midpoint_scheme(self, loci):
-        #Rollover 1 point
-        locr = np.concatenate((loci[1:], loci[:1]))
+    def build_from_loci(self):
 
-        #Get midpoint values
-        mid_pt = (loci + locr)/2.
+        #Load loci from file
+        fname = f'{self.xtras_dir}/{self.loci_file}.dat'
+        occ_pts = np.genfromtxt(fname, delimiter=',', filling_values=-999)
 
-        #Calculate edge lengths
-        dls = locr - loci
+        #Split into individual occulters (i.e. petals)
+        splt_inds = np.where(occ_pts[:,0] == -999)[0]
+        self.num_petals = len(splt_inds)
 
-        return mid_pt, dls
+        #Add -1 to start split inds at beginning
+        splt_inds = np.concatenate(([-1], splt_inds))
+
+        #Loop through petals and calculate midpoint scheme for each
+        loci, dls = np.empty((0,2)), np.empty((0,2))
+        for i in range(len(splt_inds)-1):
+
+            #Get midpoint scheme. Add 1 to start ind to get rid of -999 flag
+            cur_loc, cur_dl = self.get_midpoint_scheme(\
+                occ_pts[splt_inds[i]+1:splt_inds[i+1]])
+
+            #Append
+            loci = np.concatenate((loci, cur_loc))
+            dls = np.concatenate((dls, cur_dl))
+
+        #Cleanup
+        del occ_pts, splt_inds
+
+        return loci, dls
 
 ############################################
 ############################################

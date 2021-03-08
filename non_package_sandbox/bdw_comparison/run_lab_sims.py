@@ -9,7 +9,7 @@ z0 = 27.5
 num_pts = 256
 num_pet = 12
 
-apod = 'bb_2017'
+apod = 'M12P6'
 
 session = apod
 save_dir_base = f'{diffraq.results_dir}/bdw_compare'
@@ -21,13 +21,14 @@ bdw_params = {
         'tel_diameter':     tel_diameter,
         'num_tel_pts':      num_pts,
         'num_petals':       num_pet,
-        'num_occ_pts':      4000,
+        'num_occ_pts':      2000,
         'image_pad':        0,
-        'apod_name':        apod,
+        # 'apod_name':        apod,             #For bb_2017
+        'loci_file':        apod,
         'do_save':          True,
         'save_dir_base':    save_dir_base,
         'session':          session,
-        'save_ext':         'bdw_4k',
+        'save_ext':         'bdw',
 }
 
 mm = 6000

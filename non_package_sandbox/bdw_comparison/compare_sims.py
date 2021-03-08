@@ -3,15 +3,11 @@ import matplotlib.pyplot as plt;plt.ion()
 import h5py
 import diffraq
 
-if [False,True][0]:
-    bdw_run = 'bdw_2k'
-    dif_run = 'diffraq_pw'
-    session  = 'wfirst'
-else:
-    bdw_run = 'bdw_4k'
-    # dif_run = 'diffraq_joint_pw'
-    dif_run = 'diffraq3'
-    session  = 'bb_2017'
+session = ['wfirst', 'bb_2017', 'M12P2'][-1]
+
+bdw_run = 'bdw'
+dif_run = 'diffraq'
+
 
 load_dir_base = f'{diffraq.results_dir}/bdw_compare'
 
@@ -19,6 +15,10 @@ load_dir_base = f'{diffraq.results_dir}/bdw_compare'
 with h5py.File(f'{load_dir_base}/{session}/pupil_{bdw_run}.h5', 'r') as f:
     bdw = f['pupil_Ec'][()]
     bxx = f['pupil_xx'][()]
+
+#FIXME: check coords
+#take transpose
+bdw = bdw.T
 
 #DIFFRAQ
 dif_params = {
@@ -31,11 +31,10 @@ dfq = dif_alz.pupil[0]
 dxx = dif_alz.pupil_xx
 
 print(np.abs(bdw - dfq).max()**2)
-print(np.angle(bdw)[128,128] - np.angle(dfq)[128,128])
 
-# fig, axes = plt.subplots(2)
-# axes[0].imshow(bdw)
-# axes[1].imshow(dfq)
+ifig, iaxes = plt.subplots(2)
+iaxes[0].imshow(np.abs(bdw)**2)
+iaxes[1].imshow(np.abs(dfq)**2)
 
 fig, axes = plt.subplots(2, figsize=(9,9))
 axes[0].semilogy(bxx, np.abs(bdw)[len(bdw)//2]**2, '-' , label='BDW')
