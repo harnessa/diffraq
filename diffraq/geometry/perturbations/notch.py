@@ -127,7 +127,7 @@ class Notch(object):
         n = max(50, int(dthe / (2.*np.pi) * self.parent.theta_nodes))
 
         #(not used) Use many points #TODO: check if above is converged
-        # m, n = self.parent.radial_nodes//2, self.parent.theta_nodes//2
+        # m, n = self.parent.radial_nodes, self.parent.theta_nodes
 
         return t0, tf, m, n
 

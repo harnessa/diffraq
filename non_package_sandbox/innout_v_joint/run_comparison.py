@@ -10,14 +10,15 @@ num_pts = 256
 num_foc = 128
 num_pet = 12
 
-apod = ['bb_2017', 'M12P2'][1]
+apod = ['bb_2017', 'M12P2'][0]
 
 save_dir_base = f'{diffraq.results_dir}/innout_v_joint'
 
 mm = 6000
 nn = 300
 
-for jnt in ['', '_joint'][:]:
+# for jnt in ['', '_joint'][:]:
+for jnt in ['', '_strt'][:]:
     params = {
 
         ### World ###

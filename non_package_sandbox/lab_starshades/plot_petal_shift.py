@@ -38,7 +38,10 @@ def shift(pet, angles, shft_dir, shift, rad_inn):
     inds = (angs >= angles[0]) & (angs <= angles[1])
     inds = inds & (rads <= rad_inn)
     pet[inds] += shft_dir * shift
-    bad_inds = (angs >= angles[0]) & (angs <= angles[1]) & (rads <= rad_inn + shift) & (rads >= rad_inn)
+    bad_inds = (angs >= angles[0]) & (angs <= angles[1]) & \
+        (rads <= rad_inn + shift) & (rads >= rad_inn)
+    print(np.hypot(*pet[bad_inds].T).max())
+    plt.plot(*pet[bad_inds].T, 'o')
     pet = pet[~bad_inds]
 
     return pet
@@ -51,8 +54,8 @@ pet_big = rot_pet(pet_big, -2.*np.pi/12*3)
 apod = np.arctan2(nom[nom[:,1] >= 0][:,1], nom[nom[:,1] >= 0][:,0]) * 12/np.pi
 rads = np.hypot(*nom[nom[:,1] >= 0].T)
 # rad_inn = rads[apod >= 0.9].min()
-rad_inn = 12.5312e-3
-
+# rad_inn = 12.5312e-3
+rad_inn = 0.012530074710099998
 
 big_dir = np.array([np.cos(-np.pi/12), np.sin(-np.pi/12)])
 big_shift = 10.5e-6
@@ -64,17 +67,22 @@ new_big = nom.copy()
 new_big = shift(new_big, [2*np.pi*(1. - 1/12), 2*np.pi], big_dir, big_shift, rad_inn)
 
 
-new_sml = nom.copy()
-new_sml = shift(new_sml, [0, 2*np.pi/12], sml_dir, sml_shift, rad_inn)
+# new_sml = nom.copy()
+# new_sml = shift(new_sml, [0, 2*np.pi/12], sml_dir, sml_shift, rad_inn)
 
 
 plt.plot(*nom.T)
-# plt.plot(*pet_big.T,'+-')
-# plt.plot(*new_big.T, 'x--')
-plt.plot(*pet_sml.T)
-plt.plot(*new_sml.T, '--')
+plt.plot(*pet_big.T,'x-')
+plt.plot(*new_big.T, '+--')
+# plt.plot(*pet_sml.T)
+# plt.plot(*new_sml.T, '--')
 # plt.xlim([8.23e-3, 8.3e-3])
 # plt.ylim([-3e-5, 3e-5])
-# plt.xlim([12.18e-3, 12.197e-3])
-# plt.ylim([-2.9290e-3, -2.9250e-3])
+
+the = np.linspace(0,2*np.pi,1000)
+plt.plot(rad_inn*np.cos(the), rad_inn* np.sin(the),'k')
+plt.plot((rad_inn + big_shift)*np.cos(the), (rad_inn + big_shift)* np.sin(the),'k')
+plt.xlim([12.185e-3, 12.2e-3])
+plt.ylim([-2.9290e-3, -2.9250e-3])
+
 breakpoint()

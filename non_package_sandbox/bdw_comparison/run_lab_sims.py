@@ -31,8 +31,11 @@ bdw_params = {
         'save_ext':         'bdw',
 }
 
-mm = 6000
-nn = 300
+# mm = 4000
+# nn = 300
+
+mm = 100
+nn = 30
 
 dif_params = {
 
@@ -42,6 +45,8 @@ dif_params = {
     'z0':               z0,
     'tel_diameter':     tel_diameter,
     'waves':            wave,
+    'focal_length':     0.498,
+    'image_size':       128,
 
     ### Numerics ###
     'radial_nodes':     mm,
@@ -55,8 +60,8 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq',
-    'skip_image':       True,
+    'save_ext':         f'diffraq6',
+    # 'skip_image':       True,
 }
 
 if [False, True][1]:

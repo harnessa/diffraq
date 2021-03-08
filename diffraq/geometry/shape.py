@@ -30,6 +30,7 @@ class Shape(object):
             - min_radius:   minimum radius
             - max_radius:   maximum radius
             - is_clocked:   shape is clocked by half a petal (for petal/starshade only)
+            - rotation:     angle to rotate individual shape by [radians]
             - perturbations: List of dictionaries describing perturbations to be added to the shape
             - radial_nodes: number of radial quadrature nodes
             - theta_nodes:  number of azimuthal quadrature nodes
@@ -42,7 +43,7 @@ class Shape(object):
         def_params = {'kind':'polar', 'edge_func':None, 'edge_diff':None, \
             'loci_file':None, 'edge_file':None, 'is_opaque':False, \
             'num_petals':16, 'min_radius':0, 'max_radius':12, 'is_clocked':False, \
-            'has_center':True, 'perturbations':[], \
+            'has_center':True, 'perturbations':[], 'rotation': 0,\
             'radial_nodes':self.parent.sim.radial_nodes, \
             'theta_nodes':self.parent.sim.theta_nodes,}
 
@@ -50,13 +51,12 @@ class Shape(object):
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
+        #Clocking matrix
+        self.clock_angle = np.pi/self.num_petals
+        self.clock_mat = self.build_rot_matrix(self.clock_angle)
+
         #Load outline and perturbations
         self.load_outline_perturbations()
-
-        #Clocking matrix
-        rot_ang = np.pi/self.num_petals
-        self.clock_mat = np.array([[ np.cos(rot_ang), np.sin(rot_ang)],
-                                   [-np.sin(rot_ang), np.cos(rot_ang)]])
 
 ############################################
 #####  Outline and Perturbations #####
@@ -78,7 +78,7 @@ class Shape(object):
         self.pert_list = []
         for pert_dict in self.perturbations:
             #Get perturbation kind
-            kind = pert_dict['kind'].capitalize()
+            kind = pert_dict['kind'].title()
 
             #Build perturbation
             pert = getattr(geometry, kind)(self, **pert_dict)
@@ -105,6 +105,11 @@ class Shape(object):
         if self.is_clocked:
             sxq, syq = np.stack((sxq,syq),1).dot(self.clock_mat).T
 
+        #Rotate (if applicable)
+        if not np.isclose(self.rotation, 0):
+            rot_mat = self.build_rot_matrix(self.rotation)
+            sxq, syq = np.stack((sxq,syq),1).dot(rot_mat).T
+
         return sxq, syq, swq
 
     def build_shape_edge(self):
@@ -121,6 +126,11 @@ class Shape(object):
         #Clock (if applicable)
         if self.is_clocked:
             sedge = sedge.dot(self.clock_mat)
+
+        #Rotate (if applicable)
+        if not np.isclose(self.rotation, 0):
+            rot_mat = self.build_rot_matrix(self.rotation)
+            sedge = sedge.dot(rot_mat)
 
         return sedge
 
@@ -179,6 +189,10 @@ class Shape(object):
         del dot, det, diff_angs, inds, cur_pts, cur_ang, edge
 
         return new_edge
+
+    def build_rot_matrix(self, angle):
+        return np.array([[ np.cos(angle), np.sin(angle)],
+                         [-np.sin(angle), np.cos(angle)]])
 
 ############################################
 ############################################

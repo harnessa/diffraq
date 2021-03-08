@@ -22,10 +22,11 @@ def get_edge(apod):
 
     return edge
 
-apod = ['M12P2', 'bb_2017'][0]
+apod = ['M12P2', 'bb_2017'][1]
 
 sedg = get_edge(apod)
-jedg = get_edge(f'{apod}_joint')
+# jedg = get_edge(f'{apod}_joint')
+jedg = get_edge(f'{apod}_strt')
 
 
 if [False, True][1]:
@@ -35,5 +36,5 @@ else:
     plt.plot(*jedg.T, '-')
     plt.plot(*sedg.T, '--')
 
-
+print(len(sedg), len(jedg))
 breakpoint()

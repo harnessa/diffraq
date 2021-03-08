@@ -20,7 +20,7 @@ class Test_Perturbations(object):
     tol = 1e-5
 
     def run_all_tests(self):
-        for dd in ['notch', 'sines'][:1]:
+        for dd in ['notch', 'shifted_petal'][1:]:
             getattr(self, f'test_{dd}')()
 
 ############################################
@@ -73,6 +73,59 @@ class Test_Perturbations(object):
                 #Assert true
                 assert(np.isclose(cur_area, wp.sum()) and \
                     np.isclose(cur_disk_area, sim.occulter.wq.sum()))
+
+############################################
+
+    def test_shifted_petal(self):
+
+        #Simulated shape
+        num_pet = 12
+        rmin, rmax = 8e-3, 10e-3
+        max_apod = 0.9
+
+        ss_Afunc = lambda r: 1 + max_apod*(np.exp(-((r-rmin)/(rmax-rmin)/0.6)**6) - 1)
+        inn_shape = {'kind':'starshade', 'is_opaque':True, 'num_petals':num_pet, \
+            'edge_func':ss_Afunc, 'min_radius':rmin, 'max_radius':rmax}
+
+        #Get nominal area
+        sim = diffraq.Simulator({}, inn_shape)
+        sim.occulter.build_quadrature()
+        area0 = -sim.occulter.wq.sum()
+        sim.clean_up()
+
+        #Petal shifts to test
+        petal_shifts = {1: 7.5e-6, 5: 25e-6, 9: 10.5e-6}
+
+        #Loop over shifts
+        for pet_num, shift in petal_shifts.items():
+
+            #Angles between petals
+            angles = np.pi/num_pet * np.array([2*(pet_num-1), 2*pet_num])
+
+            #Build shifted petal perturbation
+            pert_n = {'kind':'shifted_petal', 'angles':angles, 'shift':shift}
+
+            #Add perturbation to shape
+            inn_shape['perturbations'] = [pert_n]
+
+            #Build sim
+            sim = diffraq.Simulator({}, inn_shape)
+
+            #Get area
+            sim.occulter.build_quadrature()
+            cur_area = -sim.occulter.wq.sum()
+
+            #Get difference in area
+            darea = area0 - cur_area
+
+            #True area difference
+            da_tru = np.pi*((rmin + shift)**2 - rmin**2) / num_pet
+
+            #Cleanup
+            sim.clean_up()
+
+            #Check is true
+            assert(np.isclose(darea, da_tru))
 
 ############################################
 

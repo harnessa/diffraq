@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 import diffraq
 
-session = ['bb_2017', 'M12P2'][1]
+session = ['bb_2017', 'M12P2'][0]
 
 dif_params = {
     'load_dir_base':    f'{diffraq.results_dir}/innout_v_joint',
@@ -14,7 +14,8 @@ dif_params['load_ext'] = 'diffraq'
 salz = diffraq.Analyzer(dif_params)
 simg = salz.image[0]
 
-dif_params['load_ext'] = 'diffraq_joint'
+# dif_params['load_ext'] = 'diffraq_joint'
+dif_params['load_ext'] = 'diffraq_strt'
 jalz = diffraq.Analyzer(dif_params)
 jimg = jalz.image[0]
 
