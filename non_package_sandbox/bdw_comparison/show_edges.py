@@ -12,6 +12,7 @@ def get_dif_edge(apod):
 
     #Load simulator + build edge
     sim = diffraq.Simulator(params)
+    sim.occulter.build_quadrature()
     sim.occulter.build_edge()
 
     #Get edge
@@ -23,8 +24,11 @@ def get_dif_edge(apod):
     return edge, sim
 
 def get_bdw_edge(apod):
-    edges = np.genfromtxt(f'./xtras/{apod}.dat', delimiter=',', comments='%')
+    edges = np.genfromtxt(f'./xtras/{apod}_1x.dat', delimiter=',', comments='%')
     edges = edges[~np.isnan(edges[:,0])]
+    angle = -2*np.pi/12
+    edges = edges.dot( np.array([[ np.cos(angle), np.sin(angle)],
+                                 [-np.sin(angle), np.cos(angle)]]) )
     return edges
 
 apod = 'M12P6'
@@ -53,6 +57,7 @@ if apod == 'M12P6':
 
 # plt.xlim([12.189e-3,12.195e-3])
 # plt.ylim([2.923e-3,2.928e-3])
-plt.xlim([-8.631e-3, -8.6296e-3])
-plt.ylim([9.0936e-3, 9.095e-3])
+# plt.xlim([-8.631e-3, -8.6296e-3])
+# plt.ylim([9.0936e-3, 9.095e-3])
+plt.axis('equal')
 breakpoint()

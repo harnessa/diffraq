@@ -15,7 +15,7 @@ salz = diffraq.Analyzer(dif_params)
 simg = salz.image[0]
 
 # dif_params['load_ext'] = 'diffraq_joint'
-dif_params['load_ext'] = 'diffraq_strt'
+dif_params['load_ext'] = 'diffraq_circle'
 jalz = diffraq.Analyzer(dif_params)
 jimg = jalz.image[0]
 

@@ -18,7 +18,7 @@ mm = 6000
 nn = 300
 
 # for jnt in ['', '_joint'][:]:
-for jnt in ['', '_strt'][:]:
+for jnt in ['', '_circle'][:]:
     params = {
 
         ### World ###

@@ -32,8 +32,8 @@ class Shape(object):
             - is_clocked:   shape is clocked by half a petal (for petal/starshade only)
             - rotation:     angle to rotate individual shape by [radians]
             - perturbations: List of dictionaries describing perturbations to be added to the shape
-            - radial_nodes: number of radial quadrature nodes
-            - theta_nodes:  number of azimuthal quadrature nodes
+            - radial_nodes: number of radial quadrature nodes OR (if < 1) fraction of parent's nodes to use
+            - theta_nodes:  number of azimuthal quadrature nodes OR (if < 1) fraction of parent's nodes to use
         """
 
         #Point to parent [occulter]
@@ -50,6 +50,13 @@ class Shape(object):
         #Set Default parameters
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
+
+        #Set nodes if fraction
+        if self.radial_nodes < 1:
+            self.radial_nodes = int(self.radial_nodes * self.parent.sim.radial_nodes)
+
+        if self.theta_nodes < 1:
+            self.theta_nodes = int(self.theta_nodes * self.parent.sim.theta_nodes)
 
         #Clocking matrix
         self.clock_angle = np.pi/self.num_petals

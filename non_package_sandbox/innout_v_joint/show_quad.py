@@ -24,7 +24,7 @@ def get_edge(apod):
 
     return xq, yq, wq
 
-apod = ['M12P2', 'bb_2017'][1]
+apod = ['M12P2', 'bb_2017_circle'][1]
 
 sx, sy, sw = get_edge(apod)
 print(sx.size)

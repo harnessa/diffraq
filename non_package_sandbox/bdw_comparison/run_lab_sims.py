@@ -32,11 +32,11 @@ bdw_params = {
         'save_ext':         'bdw' + dec_ext,
 }
 
-# mm = 4000
-# nn = 300
+mm = 6000
+nn = 300
 
-mm = 100
-nn = 30
+# mm = 100
+# nn = 30
 
 dif_params = {
 
@@ -61,14 +61,14 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq6',
+    'save_ext':         f'diffraq7',
     # 'skip_image':       True,
 }
 
-if [False, True][0]:
+if [False, True][1]:
     sim = diffraq.Simulator(dif_params)
     sim.run_sim()
 
-if [False, True][1]:
+if [False, True][0]:
     bdw = BDW(bdw_params)
     bdw.run_sim()
