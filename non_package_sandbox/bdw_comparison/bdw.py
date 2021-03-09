@@ -22,11 +22,8 @@ import os
 import time
 import multiprocessing
 import itertools
-try:
-    from scipy.ndimage import affine_transform
-    has_scipy = True
-except ImportError:
-    has_scipy = False
+from scipy.ndimage import affine_transform
+from bdw_focuser import BDW_Focuser
 
 class BDW(object):
 
@@ -70,12 +67,19 @@ class BDW(object):
             'num_occ_pts':      1000,           #Number of points in occulter (per petal edge if starshade)
             'is_illuminated':   False,          #Is illuminated by source? i.e., not completely in the geometric shadow?
             'is_connected':     False,          #Starshade petals are connected to each other. WFIRST = connected, LAB_SS = not connected
+            ### Focuser ###
+            'focus_point':     'source',        #Where the camera is focused. Options = ['source', 'occulter']
+            'focal_length':    0.5,             #Focal length [m]
+            'defocus':         0.,              #Amount of defocus (can be + or -)
+            'pixel_size':      13e-6,           #Width of square pixels
+            'image_size':      128,             #Width (# pixels) of square image
             ### Saving ###
             'verbose':          True,           #Print out status statements?
             'save_dir_base':    './',           #Base directory to save data
             'session':          '',             #Session name, i.e., subfolder to save data
             'save_ext':         '',             #Save extension to append to data
             'do_save':          True,           #Save data?
+            'skip_image':       False,          #Skip running focal image?
             ### Misc ###
             'xtras_dir':        './xtras',      #Location of extras (apodization function, pupil mask)
             'allow_parallel':   True,           #Allow to be run in parallel?
@@ -118,6 +122,10 @@ class BDW(object):
 
         #Load pupil mask
         self.load_pupil_mask()
+
+        #Load focuser
+        if not self.skip_image:
+            self.focuser = BDW_Focuser(self)
 
         #Get indices for pupil x,y values
         self.pupil_inds = [(i,j) for i,j in \
@@ -280,7 +288,7 @@ class BDW(object):
 
     def load_pupil_mask(self):
         #Load Roman Space Telescope pupil
-        if self.with_spiders and has_scipy:
+        if self.with_spiders:
             #Load Pupil Mask
             with h5py.File(f'{self.xtras_dir}/pupil_mask.h5', 'r') as f:
                 full_mask = f['mask'][()]
@@ -328,14 +336,28 @@ class BDW(object):
         #Calculate diffraction
         Emap = self.calculate_diffraction()
 
+        #Calculate image
+        Image = self.calculate_image(Emap)
+
         #Print out finish time
         if self.verbose:
             print(f'\nDone! Time: {time.perf_counter() - start:.2f} [s]\n')
 
         #Save data
-        self.save_data(Emap)
+        self.save_data(Emap, Image)
 
-        return Emap
+        return Emap, Image
+
+    def calculate_image(self, Emap):
+        if self.skip_image:
+            self.img_pts_x = None
+            return None
+
+        #Calculate single wavelength image only
+        Image, self.img_pts_x = self.focuser.calculate_image(np.array([Emap]))
+        Image = Image[0]
+
+        return Image
 
 ############################################
 ############################################
@@ -431,7 +453,7 @@ class BDW(object):
 ####   Save Data ####
 ############################################
 
-    def save_data(self, Emap):
+    def save_data(self, Emap, Image):
         if not self.do_save:
             return
 
@@ -443,6 +465,9 @@ class BDW(object):
             f.create_dataset('pupil_Ec', data = Emap)
             f.create_dataset('pupil_xx', data = self.tel_pts_x)
             f.create_dataset('pupil_yy', data = self.tel_pts_y)
+            if Image is not None:
+                f.create_dataset('image', data = Image)
+                f.create_dataset('image_xx', data = self.img_pts_x)
 
 ############################################
 ############################################

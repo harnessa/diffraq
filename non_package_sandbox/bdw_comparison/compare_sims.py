@@ -5,7 +5,7 @@ import diffraq
 
 session = ['wfirst', 'bb_2017', 'M12P2', 'M12P6'][-1]
 
-bdw_run = 'bdw'
+bdw_run = 'bdw_4x'
 dif_run = 'diffraq6'
 
 
@@ -15,10 +15,14 @@ load_dir_base = f'{diffraq.results_dir}/bdw_compare'
 with h5py.File(f'{load_dir_base}/{session}/pupil_{bdw_run}.h5', 'r') as f:
     bdw = f['pupil_Ec'][()]
     bxx = f['pupil_xx'][()]
+    if 'image' in f.keys():
+        bimg = f['image'][()]
+        bix = f['image_xx'][()]
 
 #FIXME: check coords
 #take transpose
 bdw = bdw.T
+bimg = bimg.T
 
 #DIFFRAQ
 dif_params = {
@@ -32,7 +36,7 @@ dxx = alz.pupil_xx
 
 print(np.abs(bdw - dfq).max()**2)
 
-# ifig, iaxes = plt.subplots(1,2)
+# ifig, iaxes = plt.subplots(1,2, sharex=True, sharey=True)
 # iaxes[0].imshow(np.abs(bdw)**2)
 # iaxes[1].imshow(np.abs(dfq)**2)
 # iaxes[0].set_title('BDW')
@@ -46,17 +50,17 @@ print(np.abs(bdw - dfq).max()**2)
 # axes[1].plot(bxx, np.angle(bdw)[len(bdw)//2])
 # axes[1].plot(dxx, np.angle(dfq)[len(dfq)//2], '--')
 
-plt.figure()
-# plt.imshow(np.log10(alz.image[0]))
-plt.imshow(alz.image[0])
-plt.plot(alz.image.shape[-1]//2, alz.image.shape[-1]//2,'r+')
-print(alz.image[0].max())
+ffig, faxes = plt.subplots(1,2, sharex=True, sharey=True)
+if [False,True][1]:
+    faxes[0].imshow(np.log10(bimg))
+    faxes[1].imshow(np.log10(alz.image[0]))
+else:
+    faxes[0].imshow(bimg)
+    faxes[1].imshow(alz.image[0])
+faxes[0].plot(bimg.shape[-1]//2, bimg.shape[-1]//2,'r+')
+faxes[1].plot(alz.image.shape[-1]//2, alz.image.shape[-1]//2,'r+')
+faxes[0].set_title('BDW')
+faxes[1].set_title('DIFFRAQ')
+print(alz.image[0].max(), bimg.max())
 
-util = diffraq.utils.image_util
-bdwi = util.pad_array(util.round_aperture(bdw.copy())[0], 2048)
-bdwi = np.fft.ifftshift(np.fft.fft2(np.fft.fftshift(bdwi)))
-bdwi = np.real(bdwi.conj()*bdwi)
-
-plt.figure()
-plt.imshow(bdwi)
 breakpoint()

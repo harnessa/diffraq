@@ -14,6 +14,7 @@ apod = 'M12P6'
 session = apod
 save_dir_base = f'{diffraq.results_dir}/bdw_compare'
 
+dec_ext = '_4x'
 bdw_params = {
         'wave':             wave,
         'z0':               z0,
@@ -24,11 +25,11 @@ bdw_params = {
         'num_occ_pts':      2000,
         'image_pad':        0,
         # 'apod_name':        apod,             #For bb_2017
-        'loci_file':        apod,
+        'loci_file':        apod + dec_ext,
         'do_save':          True,
         'save_dir_base':    save_dir_base,
         'session':          session,
-        'save_ext':         'bdw',
+        'save_ext':         'bdw' + dec_ext,
 }
 
 # mm = 4000
@@ -64,10 +65,10 @@ dif_params = {
     # 'skip_image':       True,
 }
 
-if [False, True][1]:
+if [False, True][0]:
     sim = diffraq.Simulator(dif_params)
     sim.run_sim()
 
-if [False, True][0]:
+if [False, True][1]:
     bdw = BDW(bdw_params)
     bdw.run_sim()
