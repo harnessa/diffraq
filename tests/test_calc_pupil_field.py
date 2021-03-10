@@ -47,7 +47,7 @@ class Test_calc_pupil_field(object):
             pupil, grid_pts = sim.calc_pupil_field()
 
             #Get 2D grid for theoretical calculation
-            grid_2D = np.tile(grid_pts, (ngrid,1)).T
+            grid_2D = np.tile(grid_pts, (ngrid,1))
 
             #Compare to theoretical value for each Fresnel number
             for i in range(len(fresnums)):

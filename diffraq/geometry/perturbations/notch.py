@@ -28,6 +28,7 @@ class Notch(object):
             - direction:    direction of notch. 1 = excess material, -1 = less material,
             - local_norm:   True = shift each part of original edge by its local normal,
                             False = shift entire edge by single direction (equal to normal in the middle),
+            - num_quad:     number of quadrature nodes in each direction,
         """
         #Point to parent [shape]
         self.parent = parent
@@ -37,7 +38,7 @@ class Notch(object):
 
         #Set Default parameters
         def_params = {'kind':'Notch', 'xy0':[0,0], 'height':0, 'width':0, \
-            'direction':1, 'local_norm':True}
+            'direction':1, 'local_norm':True, 'num_quad':None}
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
@@ -116,18 +117,21 @@ class Notch(object):
         #Get parameter to where the cart. distance between is equal to pert. width
         tf = self.outline.find_width_point(t0, self.width)
 
-        #Get number of radial nodes to match parent
-        drad = np.hypot(*self.outline.cart_func(tf)) - np.hypot(*self.outline.cart_func(t0))
-        m = max(100, int(drad / (self.parent.max_radius - self.parent.min_radius) * \
-            self.parent.radial_nodes))
+        #Get number of nodes
+        if self.num_quad is not None:
+            m, n = self.num_quad, self.num_quad
 
-        #Get number of theta nodes to match parent
-        dthe = np.abs(np.arctan2(*self.outline.cart_func(tf)[::-1]) - \
-            np.arctan2(*self.outline.cart_func(t0)[::-1]))
-        n = max(50, int(dthe / (2.*np.pi) * self.parent.theta_nodes))
+        else:
 
-        #(not used) Use many points #TODO: check if above is converged
-        # m, n = self.parent.radial_nodes, self.parent.theta_nodes
+            #Get number of radial nodes to match parent
+            drad = np.hypot(*self.outline.cart_func(tf)) - np.hypot(*self.outline.cart_func(t0))
+            m = max(100, int(drad / (self.parent.max_radius - self.parent.min_radius) * \
+                self.parent.radial_nodes))
+
+            #Get number of theta nodes to match parent
+            dthe = np.abs(np.arctan2(*self.outline.cart_func(tf)[::-1]) - \
+                np.arctan2(*self.outline.cart_func(t0)[::-1]))
+            n = max(50, int(dthe / (2.*np.pi) * self.parent.theta_nodes))
 
         return t0, tf, m, n
 

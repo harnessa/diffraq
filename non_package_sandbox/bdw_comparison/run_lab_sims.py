@@ -61,7 +61,7 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq7',
+    'save_ext':         f'diffraq9',
     # 'skip_image':       True,
 }
 

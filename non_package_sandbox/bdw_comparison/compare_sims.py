@@ -7,7 +7,7 @@ from scipy.ndimage import rotate
 session = ['wfirst', 'bb_2017', 'M12P2', 'M12P6'][-1]
 
 bdw_run = 'bdw_1x'
-dif_run = 'diffraq7'
+dif_run = 'diffraq9'
 
 
 load_dir_base = f'{diffraq.results_dir}/bdw_compare'
@@ -22,11 +22,11 @@ with h5py.File(f'{load_dir_base}/{session}/pupil_{bdw_run}.h5', 'r') as f:
 
 #FIXME: check coords
 #take transpose
-bdw = bdw[::-1]
-bimg = bimg.T
+# bdw = bdw[::-1]
+# bimg = bimg.T
 
-if session == 'M12P6':
-    bimg = rotate(bimg, -np.degrees(2*np.pi/12), reshape=False, order=5)
+# if session == 'M12P6':
+    # bimg = rotate(bimg, -np.degrees(2*np.pi/12), reshape=False, order=5)
 
 #DIFFRAQ
 dif_params = {
@@ -37,15 +37,16 @@ dif_params = {
 alz = diffraq.Analyzer(dif_params)
 dfq = alz.pupil[0]
 dxx = alz.pupil_xx
+dimg = alz.image[0]
 
 print(np.abs(bdw - dfq).max()**2)
 
-# ifig, iaxes = plt.subplots(1,2, sharex=True, sharey=True)
-# iaxes[0].imshow(np.abs(bdw)**2)
-# iaxes[1].imshow(np.abs(dfq)**2)
-# iaxes[0].set_title('BDW')
-# iaxes[1].set_title('DIFFRAQ')
-#
+ifig, iaxes = plt.subplots(1,2, sharex=True, sharey=True)
+iaxes[0].imshow(np.abs(bdw)**2)
+iaxes[1].imshow(np.abs(dfq)**2)
+iaxes[0].set_title('BDW')
+iaxes[1].set_title('DIFFRAQ')
+
 # fig, axes = plt.subplots(2, figsize=(9,9))
 # axes[0].semilogy(bxx, np.abs(bdw)[len(bdw)//2]**2, '-' , label='BDW')
 # axes[0].semilogy(dxx, np.abs(dfq)[len(dfq)//2]**2, '--', label='DIFFRAQ')
@@ -56,18 +57,18 @@ print(np.abs(bdw - dfq).max()**2)
 ffig, faxes = plt.subplots(1,2, sharex=True, sharey=True)
 if [False,True][0]:
     faxes[0].imshow(np.log10(bimg))
-    faxes[1].imshow(np.log10(alz.image[0]))
+    faxes[1].imshow(np.log10(dimg))
 else:
     faxes[0].imshow(bimg)
-    faxes[1].imshow(alz.image[0])
+    faxes[1].imshow(dimg)
 faxes[0].plot(bimg.shape[-1]//2, bimg.shape[-1]//2,'r+')
 faxes[1].plot(alz.image.shape[-1]//2, alz.image.shape[-1]//2,'r+')
 faxes[0].set_title('BDW')
 faxes[1].set_title('DIFFRAQ')
-print(alz.image[0].max(), bimg.max())
-print('Diff/BDW', alz.image[0].max()/bimg.max())
+print(dimg.max(), bimg.max())
+print('Diff/BDW', dimg.max()/bimg.max())
 
 plt.figure()
-plt.imshow(np.log10(np.abs(bimg - alz.image[0])))
+plt.imshow(np.log10(np.abs(bimg - dimg)))
 
 breakpoint()

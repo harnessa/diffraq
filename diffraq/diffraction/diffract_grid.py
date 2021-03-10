@@ -71,4 +71,7 @@ def diffract_grid(xq, yq, wq, lamzz, grid_pts, tol, is_babinet=False, lamz0=1e13
         #Subtract from inciden field
         uu = u0 - uu
 
+    #Transpose to match visual representation
+    uu = uu.T
+
     return uu

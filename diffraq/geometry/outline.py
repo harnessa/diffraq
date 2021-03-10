@@ -92,18 +92,14 @@ class Outline(object):
         #Build distance = width equation
         dist = lambda t: np.hypot(*(self.cart_func(t) - self.cart_func(t0))) - width
 
-        #Solve
-        out, msg = newton(dist, t0, full_output=True)
+        #Solve (guess with nudge towards positive theta)
+        t_guess = t0 - width/np.hypot(*self.cart_func(t0))/2
+        out, msg = newton(dist, t_guess, full_output=True)
 
         #Check
         if not msg.converged:
             print('\n!Closest point (width) not Converged!\n')
             breakpoint()
-
-        #Make sure it is going the right direction (CW)
-        if np.arctan2(*self.cart_func(out)[::-1]) > np.arctan2(*self.cart_func(t0)[::-1]):
-            #Go same distance, but opposite direction
-            out = 2*t0 - out
 
         return out
 

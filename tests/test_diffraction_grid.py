@@ -28,7 +28,7 @@ class Test_diffraction_grid(object):
 
         #Build grid
         grid_pts = diffraq.utils.image_util.get_grid_points(ngrid, grid_width)
-        grid_2D = np.tile(grid_pts, (ngrid,1)).T
+        grid_2D = np.tile(grid_pts, (ngrid,1))
 
         #Loop over Fresnel number
         for fresnum in [10, 100, 1000]:

@@ -35,6 +35,7 @@ class Logger(object):
             setattr(self, k, getattr(self.sim, k))
 
         self.save_dir = f"{self.sim.save_dir_base}/{self.sim.session}"
+        self.log_needs_dump = False
 
     def start_up(self):
         #Create save directory
