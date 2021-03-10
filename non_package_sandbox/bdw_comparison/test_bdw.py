@@ -47,6 +47,7 @@ class Test_BDW(object):
                 'with_mask':        True,
                 'do_save':          False,
                 'verbose':          False,
+                'skip_image':       True,
         }
 
         #Load BDW
@@ -65,7 +66,7 @@ class Test_BDW(object):
                 bdw.tel_shift = shift
 
                 #Run BDW simulation
-                bsol = bdw.run_sim()
+                bsol, dummy = bdw.run_sim()
 
                 #Get analytic solution
                 ss = np.hypot(bdw.tel_pts_x, bdw.tel_pts_y[:,None])
@@ -97,6 +98,7 @@ class Test_BDW(object):
             pms['verbose'] = False
             pms['image_pad'] = 0
             pms['with_mask'] = True
+            pms['skip_image'] = True
             waves = pms.pop('waves')
 
             #Loop over wavelengths and run sim
@@ -105,7 +107,7 @@ class Test_BDW(object):
                 #Run Sim
                 pms['wave'] = wave
                 bdw = BDW(pms)
-                emap = bdw.run_sim()
+                emap, dummy = bdw.run_sim()
 
                 #Compare to data
                 cmap = imgs[f'pupil_{wave*1e9:.0f}']

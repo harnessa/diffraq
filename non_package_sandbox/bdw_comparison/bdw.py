@@ -167,6 +167,10 @@ class BDW(object):
             #Get midpoint edge locations and edge segment lengths
             self.loci, self.dls = self.build_starshade()
 
+        #Flip x-axis loci define looking down on the occulter, but we are looking from the backside
+        self.loci[:,0] *= -1
+        self.dls[:,0] *= -1
+
     def get_midpoint_scheme(self, loci):
         #Rollover 1 point
         locr = np.concatenate((loci[1:], loci[:1]))
@@ -430,8 +434,8 @@ class BDW(object):
         Emap *= np.exp(1j*self.kk/2 * ap_opd)
         Emap *= np.exp(1j*self.kk * self.z1)
 
-        #Divide by numerical constants (negative sign to match lotus)
-        Emap /= -self.z1 * 4.*np.pi
+        #Divide by numerical constants
+        Emap /= self.z1 * 4.*np.pi
 
         return Emap
 
