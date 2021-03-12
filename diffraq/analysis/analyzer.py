@@ -107,9 +107,6 @@ class Analyzer(object):
         #Load image data
         self.image, self.image_xx = self.sim.logger.load_image_field()
 
-        #Flip image to match lab data
-        # self.image = np.swapaxes(self.image, -2, -1)[...,::-1]
-
         #Normalize with calibration data
         self.calibrate_image()
 

@@ -30,7 +30,7 @@ def lgwt(N, a, b):
         wq = numpy array of weights
     """
 
-    # return np.linspace(a, b, N), np.ones(N)
+    # return np.linspace(a, b, N), np.ones(N)/N
     #Use numpy legendre (isn't tested above 100, but agrees for me)
 
     #Get nodes, weights on [-1,1]

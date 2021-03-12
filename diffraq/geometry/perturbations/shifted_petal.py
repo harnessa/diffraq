@@ -76,10 +76,7 @@ class Shifted_Petal(object):
 
         #Get mean angle and width
         ang_avg = self.angles.mean()
-        ang_wid = np.abs(np.subtract(*self.angles))
-
-        # ox = xp.copy()
-        # oy = yp.copy()
+        ang_wid = np.abs(self.angles[1] - self.angles[0])
 
         #Shift petal along spine of petal tip
         xp[inds] += np.cos(ang_avg) * self.shift
@@ -88,25 +85,9 @@ class Shifted_Petal(object):
         #Build across the petal (quad or edge)
         if wp is not None:
             nx, ny, nw = self.get_gap_quad(ang_avg, ang_wid)
+
         else:
-            nx, ny = self.get_gap_edge(ang_avg, ang_wid)
-            nw = None
-
-
-        # r0 = self.parent.min_radius
-        # r1 = r0 + self.shift
-        # import matplotlib.pyplot as plt;plt.ion()
-        # plt.cla()
-        # plt.plot(ox, oy, 'x')
-        # plt.plot(xp, yp, '+')
-        # plt.plot(nx, ny, '*')
-        # plt.axis('equal')
-        # the = np.linspace(self.angles[0], self.angles[1],10000)
-        # plt.plot(r0*np.cos(the), r0*np.sin(the), 'k--')
-        # plt.plot(r1*np.cos(the), r1*np.sin(the), 'k')
-        # nx2, ny2 = self.get_gap_edge(ang_avg, ang_wid)
-        #
-        # breakpoint()
+            nx, ny, nw = self.get_gap_edge(ang_avg, ang_wid)
 
         #Add to petal
         xp = np.concatenate((xp, nx))
@@ -160,36 +141,34 @@ class Shifted_Petal(object):
         pr = pr[:,None]
 
         #Get polar coordinates of edges
-        oldt = np.arctan2(old_edge[:,1], old_edge[:,0])[:,None]
         oldr = np.hypot(*old_edge.T)
         newt = np.arctan2(new_edge[:,1], new_edge[:,0])
-        newr_tmp = np.hypot(*new_edge.T)
 
-        #Do we need to flip to increasing theta?
-        if newt[-1] < newt[0]:
-            dir_sign = -1
-        else:
-            dir_sign = 1
-
-        #Resample new edge onto theta nodes (need to flip b/c of decreasing rad)
-        newr = np.interp(pw[::dir_sign], \
-            newt[::dir_sign], newr_tmp[::dir_sign])[::dir_sign]
+        #Circle theta around
+        if newt[0] < -2*np.pi/self.parent.num_petals:
+            newt %= 2*np.pi
 
         #Center theta nodes to current angles
         pw = pw*ang_wid/2 + ang_avg
 
+        #Resample new edge onto theta nodes (flip pw to be increasing)
+        newr = np.interp(pw[::-1], newt, np.hypot(*new_edge.T))
+
         #Difference in radius
         dr = newr - oldr
 
-        #Get cartesian nodes
-        nx = ((oldr + pr*dr)*np.cos(pw)).ravel()
-        ny = ((oldr + pr*dr)*np.sin(pw)).ravel()
+        #Radial points
+        rr = oldr + pr*dr
 
-        #Get weights (radius change is absolute)
-        nw = (ww * ang_wid * pr * wr * np.abs(dr) * oldr).ravel()
+        #Get cartesian nodes
+        nx = (rr*np.cos(pw)).ravel()
+        ny = (rr*np.sin(pw)).ravel()
+
+        #Get weights (radius change is absolute) r*dr = rr *dr*wr, dtheta = ang_wid*ww/2
+        nw = (rr * wr * np.abs(dr) * ang_wid * ww/2).ravel()
 
         #Cleanup
-        del pw, ww, pr, wr, old_edge, new_edge, oldt, oldr, newt, newr_tmp, newr
+        del pw, ww, pr, wr, old_edge, new_edge, oldr, newt, newr, dr, rr
 
         return nx, ny, nw
 
@@ -212,22 +191,29 @@ class Shifted_Petal(object):
         #Get old/new edges
         old_edge, new_edge, r0, r1 = self.get_new_edge(ang_avg)
 
+        #Get angles of edges
+        old_angs = np.arctan2(*old_edge[:,::-1].T)
+        new_angs = np.arctan2(*new_edge[:,::-1].T)
+
         #Make lines between edges
         edge = np.empty((0,2))
         for i in range(2):
-            p0 = np.array([r0,r1])[:,None] * \
-                np.array([np.cos(self.angles[i]), np.sin(self.angles[i])])
-            edge = np.concatenate((edge, self.make_line(*p0, self.num_quad)))
+            #Get points closest to angle
+            old_pt = old_edge[np.argmin(np.abs(old_angs - self.angles[i]))]
+            new_pt = new_edge[np.argmin(np.abs(new_angs - self.angles[i]))]
+
+            #Build line between old and new
+            edge = np.concatenate((edge, self.make_line(old_pt, new_pt, self.num_quad)))
 
         #Cleanup
-        del old_edge, new_edge
+        del old_edge, new_edge, old_angs, new_angs
 
-        return edge.T
+        return edge[:,0], edge[:,1], None
 
     def make_line(self, r1, r2, num_pts):
         xline = np.linspace(r1[0], r2[0], num_pts)
         yline = np.linspace(r1[1], r2[1], num_pts)
-        return np.stack((xline,yline),1)[1:-1]
+        return np.stack((xline,yline),1)
 
 ############################################
 ############################################

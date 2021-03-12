@@ -140,7 +140,8 @@ class Notch(object):
         ts = np.linspace(t0, tf, npts)[:,None]
 
         #Get new / shifted edge
-        old_edge, new_edge = self.get_new_edge(ts, opq_sign)
+        old_edge, etch, normal = self.get_new_edge(ts, opq_sign)
+        new_edge = old_edge + etch*normal
 
         #Flip to continue CCW
         new_edge = new_edge[::-1]
@@ -175,9 +176,8 @@ class Notch(object):
 
         #Shift edge out by the normal vector
         etch = -self.height * np.array([1., -1]) * self.direction * opq_sign
-        new_edge = old_edge + etch * normal
 
-        return old_edge, new_edge
+        return old_edge, etch, normal
 
     def make_line(self, r1, r2, num_pts):
         xline = np.linspace(r1[0], r2[0], num_pts)
@@ -208,39 +208,75 @@ class Notch(object):
         #Turn into parameterize variable
         ts = self.outline.pack_param(pr, p0)
 
-        #Get old and new edge at radial points
-        old_edge, new_edge = self.get_new_edge(ts, opq_sign)
+        #Get old edge at radial node points, and etch and normal
+        old_edge, etch, normal = self.get_new_edge(ts, opq_sign)
+
+        new_dummy = old_edge + etch*normal  #TODO: remove
+
+        #Get parameters outside bounds of old edge
+        ts_big = np.linspace(ts.min()-ts.ptp()*.05, ts.max()+ts.ptp()*.05, \
+            int(len(ts)*1.1))[:,None]
+        #Sort to be same direction as ts
+        ts_big = ts_big[::int(np.sign(ts[1]-ts[0]))]
+        #Get new edge outside of bounds of old edge
+        old_big, dummy, normal_big = self.get_new_edge(ts_big, opq_sign)
+
+        #Create new edge
+        new_edge = old_big + etch*normal_big
 
         #Get polar coordinates of edges
         oldt = np.arctan2(old_edge[:,1], old_edge[:,0])[:,None]
+        oldr = np.hypot(*old_edge.T)
         newt_tmp = np.arctan2(new_edge[:,1], new_edge[:,0])
         newr = np.hypot(*new_edge.T)
 
-        #Do we need to flip to increasing radius?
-        if newr[-1] < newr[0]:
-            dir_sign = -1
-        else:
-            dir_sign = 1
+        #Do we need to flip to increasing radius? (for interpolation)
+        dir_sign = int(np.sign(newr[1] - newr[0]))
+        pr_sign = int(np.sign(pr[:,0][1] - pr[:,0][0]))
 
         #Resample new edge onto radial nodes (need to flip b/c of decreasing rad)
-        newt = np.interp(pr[:,0][::dir_sign], \
+        newt = np.interp(pr[:,0][::pr_sign], \
             newr[::dir_sign], newt_tmp[::dir_sign])[::dir_sign][:,None]
 
         #Difference in theta
         dt = newt - oldt
 
+        #Theta points
+        tt = oldt + pw*dt
+
         #Get cartesian nodes
-        xq = (pr*np.cos(oldt + pw*dt)).ravel()
-        yq = (pr*np.sin(oldt + pw*dt)).ravel()
+        xq = (pr*np.cos(tt)).ravel()
+        yq = (pr*np.sin(tt)).ravel()
 
         #Get quadrature sign depending if same opaqueness as parent
         qd_sign = -(opq_sign * self.direction)
 
-        #Get weights (theta change is absolute)
+        #Get weights (theta change is absolute) rdr = wr*pr, dtheta = ww*dt
         wq = qd_sign * (ww * pr * wr * np.abs(dt)).ravel()
 
+
+        import matplotlib.pyplot as plt;plt.ion()
+        plt.plot(oldr, oldt, 'x')
+        plt.plot(np.hypot(*new_dummy.T),  np.arctan2(*new_dummy[:,::-1].T), '+')
+        plt.plot(pr[:,0], oldt + dt, '*')
+
+        plt.figure()
+        plt.plot(*old_edge.T, 'x')
+        plt.plot(*new_dummy.T, '+')
+        plt.plot(*new_edge.T, '*')
+        # breakpoint()
+
+
+        tru_a = self.height*self.width
+        print((np.abs(wq.sum())-tru_a)/tru_a*100)
+
+        plt.figure()
+        plt.scatter(xq, yq, c=wq, s=1)
+
+        breakpoint()
         #Cleanup
-        del old_edge, new_edge, oldt, newt, pw, ww, pr, wr, ts, dt
+        del pw, ww, pr, wr, old_edge, new_edge, oldt, newt, ts, dt, tt, \
+            ts_big, old_big, normal_big,
 
         return xq, yq, wq
 

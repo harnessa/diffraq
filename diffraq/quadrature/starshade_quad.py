@@ -77,7 +77,7 @@ def starshade_quad(Afunc, num_pet, r0, r1, m, n, has_center=True):
     #Cleanup
     del pr, wr, tt
 
-    #Add Petal weights
+    #Add Petal weights (rdr * dtheta)
     wq = np.concatenate(( wq, (np.pi/num_pet) * \
         np.tile(wi * Aval * ww, (1, num_pet)).ravel() ))
 

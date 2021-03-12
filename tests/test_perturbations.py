@@ -20,7 +20,7 @@ class Test_Perturbations(object):
     tol = 1e-5
 
     def run_all_tests(self):
-        for dd in ['notch', 'shifted_petal'][1:]:
+        for dd in ['notch', 'shifted_petal']:
             getattr(self, f'test_{dd}')()
 
 ############################################
