@@ -18,7 +18,7 @@ mm = 6000
 nn = 300
 
 # for jnt in ['', '_joint'][:]:
-for jnt in ['', '_circle'][:]:
+for jnt in ['', '_circle'][1:]:
     params = {
 
         ### World ###
@@ -42,7 +42,7 @@ for jnt in ['', '_circle'][:]:
         'do_save':          True,
         'save_dir_base':    save_dir_base,
         'session':          apod,
-        'save_ext':         f'diffraq{jnt}',
+        'save_ext':         f'diffraq{jnt}2',
     }
 
     sim = diffraq.Simulator(params)

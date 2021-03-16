@@ -8,18 +8,20 @@ z1 = 50.
 z0 = 27.5
 num_pts = 256
 num_pet = 12
+focal_length = 0.498
 
-apod = 'M12P6'
+apod = 'M12P2'
 
 session = apod
-save_dir_base = f'{diffraq.results_dir}/bdw_compare'
+save_dir_base = f'{diffraq.results_dir}/bdw_compare_new'
 
-dec_ext = '_4x'
+dec_ext = '_1x'
 bdw_params = {
         'wave':             wave,
         'z0':               z0,
         'z1':               z1,
         'tel_diameter':     tel_diameter,
+        'focal_length':     focal_length,
         'num_tel_pts':      num_pts,
         'num_petals':       num_pet,
         'num_occ_pts':      2000,
@@ -35,9 +37,6 @@ bdw_params = {
 mm = 6000
 nn = 300
 
-# mm = 100
-# nn = 30
-
 dif_params = {
 
     ### World ###
@@ -46,7 +45,7 @@ dif_params = {
     'z0':               z0,
     'tel_diameter':     tel_diameter,
     'waves':            wave,
-    'focal_length':     0.498,
+    'focal_length':     focal_length,
     'image_size':       128,
 
     ### Numerics ###
@@ -61,8 +60,7 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq9',
-    # 'skip_image':       True,
+    'save_ext':         f'diffraq_5',
 }
 
 if [False, True][1]:

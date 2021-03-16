@@ -335,7 +335,8 @@ class BDW(object):
         #Start
         start = time.perf_counter()
         if self.verbose:
-            print(f"\nRunning '{self.apod_name}' on {self.num_pts} x {self.num_pts} grid...\n")
+            name = [self.apod_name, self.loci_file][int(self.loci_file is not None)]
+            print(f"\nRunning '{name}' on {self.num_pts} x {self.num_pts} grid...\n")
 
         #Calculate diffraction
         Emap = self.calculate_diffraction()

@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 
-inn_file = 'full_M12P6'
-out_file = 'M12P6_1x'
+inn_file = 'full_M12P6_dif'
+out_file = 'M12P6_dif'
 
 xtra_dir = './xtras'
 

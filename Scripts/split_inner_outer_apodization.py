@@ -33,7 +33,7 @@ rmin = rads.min()
 max_apod = apod.max()
 
 #Get index of end of inner starshade (subtract one to go from strut to starshade)
-inn_cut = np.where(apod >= max_apod)[0][0] - 1
+inn_cut = np.where(apod >= max_apod)[0][0] - 1 + 3   #3 matches Stuart's loci for M12P6
 ainn = 1 - apod[:inn_cut]   #Take inverse
 rinn = rads[:inn_cut]
 

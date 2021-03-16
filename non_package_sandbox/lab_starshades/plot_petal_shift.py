@@ -55,17 +55,17 @@ new_sml = shift(new_sml, [0, 2*np.pi/12], sml_dir, sml_shift, rad_inn)
 
 
 plt.plot(*nom.T)
-# plt.plot(*pet_big.T,'x-')
-# plt.plot(*new_big.T, '+--')
-plt.plot(*pet_sml.T, 'x')
-plt.plot(*new_sml.T, '+--')
+plt.plot(*pet_big.T,'x-')
+plt.plot(*new_big.T, '+--')
+# plt.plot(*pet_sml.T, 'x')
+# plt.plot(*new_sml.T, '+--')
 # plt.xlim([8.23e-3, 8.3e-3])
 # plt.ylim([-3e-5, 3e-5])
 
 the = np.linspace(0,2*np.pi/12 *4,20000) - 2*np.pi/12*2
 plt.plot(rad_inn*np.cos(the), rad_inn* np.sin(the),'k')
 plt.plot((rad_inn + big_shift)*np.cos(the), (rad_inn + big_shift)* np.sin(the),'k')
-# plt.xlim([12.185e-3, 12.2e-3])
-# plt.ylim([-2.9290e-3, -2.9250e-3])
+plt.xlim([12.185e-3, 12.2e-3])
+plt.ylim([-2.9290e-3, -2.9250e-3])
 plt.axis('equal')
 breakpoint()
