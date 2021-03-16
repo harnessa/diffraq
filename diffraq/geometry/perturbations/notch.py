@@ -33,9 +33,6 @@ class Notch(object):
         #Point to parent [shape]
         self.parent = parent
 
-        #Point to parent occulter's shape function (for quick access)
-        self.outline = self.parent.outline
-
         #Set Default parameters
         def_params = {'kind':'Notch', 'xy0':[0,0], 'height':0, 'width':0, \
             'direction':1, 'local_norm':True, 'num_quad':None}
@@ -68,7 +65,7 @@ class Notch(object):
         t0, tf, m, n = self.get_param_locs()
 
         #Get perturbation specifc quadrature
-        xq, yq, wq = getattr(self, f'get_quad_{self.outline.kind}')( \
+        xq, yq, wq = getattr(self, f'get_quad_{self.parent.kind}')( \
             t0, tf, m, n, self.parent.opq_sign)
 
         return xq, yq, wq
@@ -112,10 +109,10 @@ class Notch(object):
             xy0 = self.xy0.copy()
 
         #Get parameter of edge point closest to starting point
-        t0 = self.outline.find_closest_point(xy0)
+        t0 = self.parent.find_closest_point(xy0)
 
         #Get parameter to where the cart. distance between is equal to pert. width
-        tf = self.outline.find_width_point(t0, self.width)
+        tf = self.parent.find_width_point(t0, self.width)
 
         #Get number of nodes
         if self.num_quad is not None:
@@ -124,13 +121,13 @@ class Notch(object):
         else:
 
             #Get number of radial nodes to match parent
-            drad = np.hypot(*self.outline.cart_func(tf)) - np.hypot(*self.outline.cart_func(t0))
+            drad = np.hypot(*self.parent.cart_func(tf)) - np.hypot(*self.parent.cart_func(t0))
             m = max(100, int(drad / (self.parent.max_radius - self.parent.min_radius) * \
                 self.parent.radial_nodes))
 
             #Get number of theta nodes to match parent
-            dthe = np.abs(np.arctan2(*self.outline.cart_func(tf)[::-1]) - \
-                np.arctan2(*self.outline.cart_func(t0)[::-1]))
+            dthe = np.abs(np.arctan2(*self.parent.cart_func(tf)[::-1]) - \
+                np.arctan2(*self.parent.cart_func(t0)[::-1]))
             n = max(50, int(dthe / (2.*np.pi) * self.parent.theta_nodes))
 
         return t0, tf, m, n
@@ -162,16 +159,16 @@ class Notch(object):
     def get_new_edge(self, ts, opq_sign):
 
         #Get loci of edge across test region
-        old_edge = self.outline.cart_func(ts)
+        old_edge = self.parent.cart_func(ts)
 
         #Use one normal or local normals
         if self.local_norm:
             #Local normals
-            normal = self.outline.cart_diff(ts)[:,::-1]
+            normal = self.parent.cart_diff(ts)[:,::-1]
             normal /= np.hypot(*normal.T)[:,None]
         else:
             #Get normal vector of middle of old_edge
-            normal = self.outline.cart_diff(ts)[:,::-1][len(ts)//2]
+            normal = self.parent.cart_diff(ts)[:,::-1][len(ts)//2]
             normal /= np.hypot(*normal)
 
         #Shift edge out by the normal vector
@@ -194,8 +191,8 @@ class Notch(object):
     def get_quad_petal(self, t0, tf, m, n, opq_sign):
 
         #Get radius range
-        r0, p0 = self.outline.unpack_param(t0)[:2]
-        rf, pf = self.outline.unpack_param(tf)[:2]
+        r0, p0 = self.parent.unpack_param(t0)[:2]
+        rf, pf = self.parent.unpack_param(tf)[:2]
 
         #Get radial and theta nodes
         pw, ww = quad.lgwt(n, 0, 1)
@@ -206,12 +203,13 @@ class Notch(object):
         pr = pr[:,None]
 
         #Turn into parameterize variable
-        ts = self.outline.pack_param(pr, p0)
+        ts = self.parent.pack_param(pr, p0)
 
         #Get old edge at radial node points, and etch and normal
         old_edge, etch, normal = self.get_new_edge(ts, opq_sign)
 
-        new_dummy = old_edge + etch*normal  #TODO: remove
+        # new_dummy = old_edge + etch*normal  #TODO: remove
+
 
         #Get parameters outside bounds of old edge
         ts_big = np.linspace(ts.min()-ts.ptp()*.05, ts.max()+ts.ptp()*.05, \
@@ -255,25 +253,29 @@ class Notch(object):
         wq = qd_sign * (ww * pr * wr * np.abs(dt)).ravel()
 
 
-        import matplotlib.pyplot as plt;plt.ion()
-        plt.plot(oldr, oldt, 'x')
-        plt.plot(np.hypot(*new_dummy.T),  np.arctan2(*new_dummy[:,::-1].T), '+')
-        plt.plot(pr[:,0], oldt + dt, '*')
-
-        plt.figure()
-        plt.plot(*old_edge.T, 'x')
-        plt.plot(*new_dummy.T, '+')
-        plt.plot(*new_edge.T, '*')
+        # new_edge = pr*np.stack((np.cos(newt[:,0]), np.sin(newt[:,0])),1) #TODO: remove
+        # import matplotlib.pyplot as plt;plt.ion()
+        # plt.figure()
+        # plt.plot(oldr, oldt, 'x')
+        # plt.plot(np.hypot(*new_dummy.T),  np.arctan2(*new_dummy[:,::-1].T), '+')
+        # plt.plot(pr[:,0], oldt + dt, '*')
+        #
+        # plt.figure()
+        # plt.plot(*old_edge.T, 'x-')
+        # plt.plot(*new_dummy.T, '+-')
+        # plt.plot(*new_edge.T, '*-')
+        # plt.axis('equal')
+        # # breakpoint()
+        #
+        #
+        # tru_a = self.height*self.width
+        # print((np.abs(wq.sum())-tru_a)/tru_a*100)
+        #
+        # # plt.figure()
+        # # plt.scatter(xq, yq, c=wq, s=1)
+        #
         # breakpoint()
 
-
-        tru_a = self.height*self.width
-        print((np.abs(wq.sum())-tru_a)/tru_a*100)
-
-        plt.figure()
-        plt.scatter(xq, yq, c=wq, s=1)
-
-        breakpoint()
         #Cleanup
         del pw, ww, pr, wr, old_edge, new_edge, oldt, newt, ts, dt, tt, \
             ts_big, old_big, normal_big,

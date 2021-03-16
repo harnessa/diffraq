@@ -5,6 +5,7 @@ pytest test_quadrature.py
 pytest test_diffraction_grid.py
 pytest test_diffraction_points.py
 pytest test_outline.py
+pytest test_cartesian_transforms.py
 pytest test_occulter.py
 pytest test_occulter_configuration.py
 pytest test_calc_pupil_field.py

@@ -13,6 +13,7 @@ Description: Base class of an occulter shape, used to generate quadrature points
 
 import numpy as np
 import diffraq.geometry as geometry
+from scipy.optimize import fmin, newton
 
 class Shape(object):
 
@@ -22,8 +23,9 @@ class Shape(object):
             - kind:         kind of shape object
             - edge_func:    lambda function describing the shape's edge; f(theta)
             - edge_diff:    lambda function describing the derivative of the shapes edge; f'(theta)
+            - edge_file:    filename that holds numerical apodization function as a function of radius. Supercedes edge_func
+            - edge_data:    data that holds numerical apodization function as a function of radius. Supercedes edge_func and edge_file
             - loci_file:    filename that holds the (x,y) coordinates describing the occulter edge
-            - edge_file:    filename that holds numerical apodization function as a function of radius. Supercedes apod_func
             - is_opaque:    described shape is opaque?
             - num_petals:   number of petals
             - has_center:   has central disk? (for petal/starshade only)
@@ -32,6 +34,7 @@ class Shape(object):
             - is_clocked:   shape is clocked by half a petal (for petal/starshade only)
             - rotation:     angle to rotate individual shape by [radians]
             - perturbations: List of dictionaries describing perturbations to be added to the shape
+            - etch_error:   uniform edge etching error [m]. < 0: removal of material, > 0: extra material.
             - radial_nodes: number of radial quadrature nodes OR (if < 1) fraction of parent's nodes to use
             - theta_nodes:  number of azimuthal quadrature nodes OR (if < 1) fraction of parent's nodes to use
         """
@@ -41,14 +44,18 @@ class Shape(object):
 
         #Default parameters
         def_params = {'kind':'polar', 'edge_func':None, 'edge_diff':None, \
-            'loci_file':None, 'edge_file':None, 'is_opaque':False, \
+            'loci_file':None, 'edge_file':None, 'edge_data':None, 'is_opaque':False, \
             'num_petals':16, 'min_radius':0, 'max_radius':12, 'is_clocked':False, \
-            'has_center':True, 'perturbations':[], 'rotation': 0,\
+            'has_center':True, 'rotation':0, 'perturbations':[], 'etch_error':None, \
             'radial_nodes':self.parent.sim.radial_nodes, \
             'theta_nodes':self.parent.sim.theta_nodes,}
 
         #Set Default parameters
         for k,v in {**def_params, **kwargs}.items():
+            if k == 'kind':
+                #Don't set kind which would override class name
+                continue
+            #Set attribute to self
             setattr(self, k, v)
 
         #Set nodes if fraction
@@ -63,16 +70,35 @@ class Shape(object):
         self.clock_mat = self.build_rot_matrix(self.clock_angle)
 
         #Load outline and perturbations
-        self.load_outline_perturbations()
+        self.set_outline()
+        self.set_perturbations()
 
 ############################################
 #####  Outline and Perturbations #####
 ############################################
 
-    def load_outline_perturbations(self):
+    def set_outline(self):
+        #Set outline depending on input
+        if self.edge_data is None and self.edge_file is None:
+            #Use lambda functions
+            self.outline = geometry.LambdaOutline(self.edge_func, diff=self.edge_diff, \
+                etch_error=self.etch_error)
 
-        #Set outline function
-        self.set_outline()
+        else:
+            #Use interpolation data (specified or from file)
+            if self.edge_data is not None:
+                edge_data = self.edge_data
+            else:
+                edge_data = self.load_edge_file(self.edge_file)
+
+            #Build outline depending on if cartesian or not
+            if self.kind == 'cartesian':
+                Outline = geometry.Cart_InterpOutline
+            else:
+                Outline = geometry.InterpOutline
+            self.outline = Outline(edge_data, etch_error=self.etch_error)
+
+    def set_perturbations(self):
 
         #Sign for perturbation directions
         self.opq_sign = -(2*int(self.is_opaque) - 1)
@@ -145,8 +171,57 @@ class Shape(object):
 ############################################
 
 ############################################
+#####  Perturbation Functions #####
+############################################
+
+    def find_closest_point(self, point):
+        #Build minimizing function (derivative of distance equation)
+        min_diff = lambda t: np.sum((self.cart_func(t) - point)*\
+            self.cart_diff(np.array([t,t+1e-3])[:,None])[0])
+
+        #Get initial guess
+        x0 = np.arctan2(point[1], point[0])
+
+        #Find root
+        out, msg = newton(min_diff, x0, full_output=True)
+
+        #Check
+        if not msg.converged:
+            print('\n!Closest point not Converged!\n')
+
+        return out
+
+    def find_width_point(self, t0, width):
+        #Build distance = width equation
+        dist = lambda t: np.hypot(*(self.cart_func(t) - \
+            self.cart_func(t0))) - width
+
+        #Solve (guess with nudge towards positive theta)
+        t_guess = t0 - width/np.hypot(*self.cart_func(t0))/2
+        out, msg = newton(dist, t_guess, full_output=True)
+
+        #Check
+        if not msg.converged:
+            print('\n!Closest point (width) not Converged!\n')
+
+        return out
+
+############################################
+############################################
+
+############################################
 #####   Misc Functions #####
 ############################################
+
+    def load_edge_file(self, edge_file):
+        #Load file
+        data = np.genfromtxt(edge_file, delimiter=',')
+
+        #Replace min/max radius
+        self.min_radius = data[:,0].min()
+        self.max_radius = data[:,0].max()
+
+        return data
 
     def sort_edge_points(self, edge, num_petals):
         #Sort by angle across petals

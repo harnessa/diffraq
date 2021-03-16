@@ -13,19 +13,11 @@ Description: Derived class of occulter defined by loci of edge points.
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Shape, LociOutline
+from diffraq.geometry import Shape
 
 class LociShape(Shape):
 
-############################################
-#####  Startup #####
-############################################
-
-    def set_outline(self):
-        self.outline = LociOutline(self.get_loci, None)
-
-############################################
-############################################
+    kind = 'loci'
 
 ############################################
 #####  Main Shape #####

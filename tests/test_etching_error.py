@@ -20,8 +20,8 @@ class Test_Etching(object):
     tol = 1e-8
 
     num_pts = 256
-    radial_nodes = 400
-    theta_nodes = 400
+    radial_nodes = 40
+    theta_nodes = 40
     zz = 15e6
     z0 = 1e19
     tel_diameter = 2.4
@@ -35,13 +35,9 @@ class Test_Etching(object):
 
 ############################################
 
-    def run_calculation(self, is_babinet, etch_sign):
+    def run_calculation(self, is_opaque, etch_sign):
         #Load simulator
         params = {
-            'occulter_shape':   'circle',
-            'is_babinet':       is_babinet,
-            'circle_rad':       self.circle_rad,
-            'etching_error':    self.etch*etch_sign,
             'radial_nodes':     self.radial_nodes,
             'theta_nodes':      self.theta_nodes,
             'num_pts':          self.num_pts,
@@ -49,38 +45,64 @@ class Test_Etching(object):
             'zz':               self.zz,
             'z0':               self.z0,
             'skip_image':       True,
-            'apod_func':        lambda t: self.circle_rad*np.hstack(( np.cos(t), np.sin(t))),
-            'apod_diff':        lambda t: self.circle_rad*np.hstack((-np.sin(t), np.cos(t))),
-            'loci_file':        f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt',
         }
 
+        cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
+        cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
+        polar_func = lambda t: self.circle_rad * np.ones_like(t)
+        polar_diff = lambda t: np.zeros_like(t)
+
+        shape = {'is_opaque':is_opaque, 'max_radius':self.circle_rad, \
+            'loci_file':f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt', \
+            'etch_error':self.etch * etch_sign*0}
+
         #Loop over occulter types
-        for occ_shape in ['circle', 'cartesian', 'loci'][:-1]:
+        utru = None
+        for occ_shape in ['polar', 'cartesian', 'circle', 'loci'][1:]:
 
             #Set parameters
-            params['occulter_shape'] = occ_shape
+            shape['kind'] = occ_shape
 
-            #Generate sim
-            sim = diffraq.Simulator(params)
+            if occ_shape == 'cartesian':
+                shape['edge_func'] = cart_func
+                shape['edge_diff'] = cart_diff
+            elif occ_shape == 'polar':
+                shape['edge_func'] = polar_func
+                shape['edge_diff'] = polar_diff
 
-            #Get pupil field from sim
-            pupil, grid_pts = sim.calc_pupil_field()
-            pupil = pupil[0][len(pupil[0])//2]
+            #Load simulator
+            sim = diffraq.Simulator(params, shapes=shape)
 
-            #Calculate analytic solution (once)
-            # if occ_shape == 'circle':
-            if True:
-                utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
-                    sim.waves[0], sim.zz, sim.z0, \
-                    sim.circle_rad + sim.etching_error * sim.occulter.opq_sign, is_babinet)
+            #Build quad
+            sim.occulter.build_quadrature()
 
+            #Compare area
+            area = sim.occulter.wq.sum()
+            tru_area = np.pi*(self.circle_rad + self.etch*etch_sign)**2
+
+            print(area, tru_area)
             import matplotlib.pyplot as plt;plt.ion()
-            plt.cla()
-            plt.plot(np.abs(pupil))
-            plt.plot(np.abs(utru), '--')
+            plt.scatter(sim.occulter.xq, sim.occulter.yq, c=sim.occulter.wq, s=1)
             breakpoint()
-            #Compare
-            # assert(np.abs(pupil - utru).max() < self.tol)
+
+            # #Get pupil field from sim
+            # pupil, grid_pts = sim.calc_pupil_field()
+            # pupil = pupil[0][len(pupil[0])//2]
+            #
+            # #Calculate analytic solution (once)
+            # # if occ_shape == 'circle':
+            # if True:
+            #     utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
+            #         sim.waves[0], sim.zz, sim.z0, \
+            #         sim.circle_rad + sim.etching_error * sim.occulter.opq_sign, is_babinet)
+            #
+            # import matplotlib.pyplot as plt;plt.ion()
+            # plt.cla()
+            # plt.plot(np.abs(pupil))
+            # plt.plot(np.abs(utru), '--')
+            # breakpoint()
+            # #Compare
+            # # assert(np.abs(pupil - utru).max() < self.tol)
 
         #Clean up
         del pupil, grid_pts, sim, utru

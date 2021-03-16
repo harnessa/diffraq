@@ -13,16 +13,15 @@ Description: Derived class of occulter with shape parameterized in cartesian coo
 
 import numpy as np
 import diffraq.quadrature as quad
-from diffraq.geometry import Shape, CartesianOutline
+from diffraq.geometry import Shape
 
 class CartesianShape(Shape):
+
+    kind = 'cartesian'
 
 ############################################
 #####  Main Shape #####
 ############################################
-
-    def set_outline(self):
-        self.outline = CartesianOutline(self.edge_func, self.edge_diff)
 
     def build_local_shape_quad(self):
         #Calculate quadrature
@@ -40,6 +39,22 @@ class CartesianShape(Shape):
         edge = quad.cartesian_edge(self.outline.func, npts)
 
         return edge
+
+############################################
+############################################
+
+############################################
+#####  Wrappers for Cartesian coordinate systems #####
+############################################
+
+    def cart_func(self, t):
+        return self.outline.func(t)
+
+    def cart_diff(self, t):
+        return self.outline.diff(t)
+
+    def cart_diff_2nd(self, t):
+        return self.outline.diff_2nd(t)
 
 ############################################
 ############################################

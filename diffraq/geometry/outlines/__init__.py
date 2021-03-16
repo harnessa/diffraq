@@ -11,7 +11,6 @@ Description: __init__ package for the GEOMETRY.OUTLINES module.
 
 """
 
-from diffraq.geometry.outlines.cartesian_outline import CartesianOutline
-from diffraq.geometry.outlines.polar_outline import PolarOutline
-from diffraq.geometry.outlines.petal_outline import PetalOutline
-from diffraq.geometry.outlines.loci_outline import LociOutline
+from diffraq.geometry.outlines.lambda_outline import LambdaOutline
+from diffraq.geometry.outlines.interp_outline import InterpOutline
+from diffraq.geometry.outlines.cart_interp_outline import Cart_InterpOutline

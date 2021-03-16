@@ -12,7 +12,6 @@ Description: Class of the etching error perturbation.
 """
 
 import numpy as np
-from diffraq.geometry import Perturbation
 from scipy.misc import derivative
 
 def add_polar_etching(fr, dr, etch):
@@ -39,7 +38,7 @@ def add_polar_etching(fr, dr, etch):
 
     breakpoint()
 
-def add_cartesian_etching(fxy, dxy, etch):
+def add_cartesian_etching(fxy, dxy, ddxy, etch):
 
     #Build new functions that use normal vector to point to new shape (flipped etch, so positive etch points outward)
     nfxy = lambda t: \
@@ -48,7 +47,10 @@ def add_cartesian_etching(fxy, dxy, etch):
     #Build new derivative function
     def ndxy(t):
         fp = dxy(t)
-        fpp = derivative(fxy, t, dx=t[1]-t[0], n=2) #Second derivative
+        if ddxy == -1:
+            fpp = derivative(fxy, t, dx=t[1]-t[0], n=2) #Second derivative
+        else:
+            fpp = ddxy(t)
         norm = np.hypot(fp[:,0], fp[:,1])
         return fp + etch*np.array([1, -1])*(fpp[:,::-1] - \
             fp[:,::-1]*(np.sum(fp*fpp,1)/norm**2)[:,None])/norm[:,None]
