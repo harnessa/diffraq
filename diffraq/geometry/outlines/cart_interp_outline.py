@@ -17,22 +17,24 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 class Cart_InterpOutline(object):
 
-    def __init__(self, data, diff=None, with_2nd=False, etch_error=None):
+    def __init__(self, parent, data, with_2nd=False, etch_error=None):
 
-        #TODO: add etch error
-
-        #Store data
+        self.parent = parent   #Shape
         self._data = data
 
         #Use second order interpolant
-        k = 2
+        self.k = 2
 
         #Interpolate data for both dimensions and store
         self._func = [InterpolatedUnivariateSpline(data[:,0], data[:,1+i], \
-            k=k, ext=3) for i in range(2)]
+            k=self.k, ext=3) for i in range(2)]
 
         #Store derivative functions
         self._diff = [self._func[i].derivative(1) for i in range(2)]
+
+        #Add etch error
+        if etch_error is not None:
+            self.add_etch_error(etch_error)
 
         #Sometimes we wont use 2nd derivative
         if with_2nd:
@@ -40,7 +42,6 @@ class Cart_InterpOutline(object):
         else:
             self._diff_2nd = [lambda t:np.zeros_like(t), lambda t:np.zeros_like(t)]
 
-    ############################################
     ############################################
 
     def func(self, t):
@@ -52,5 +53,40 @@ class Cart_InterpOutline(object):
     def diff_2nd(self, t):
         return np.hstack((self._diff_2nd[0](t), self._diff_2nd[1](t)))
 
-    ############################################
-    ############################################
+############################################
+############################################
+
+############################################
+#####  Etch Error #####
+############################################
+
+    def add_etch_error(self, etch):
+        #Return if etch is 0
+        if np.abs(etch) < 1e-9:
+            return
+
+        #Get old function
+        func = self.func(self._data[:,:1])
+
+        #Create normal from derivative
+        normal = self.diff(self._data[:,:1])[:,::-1]
+        normal /= np.hypot(*normal.T)[:,None]
+
+        #Get proper etch direction
+        etch = etch * np.array([1, -1])
+
+        #Build new data
+        new_func = func + etch*normal
+
+        #Reinterpolate data
+        self._func = [InterpolatedUnivariateSpline(self._data[:,0], new_func[:,i], \
+            k=self.k, ext=3) for i in range(2)]
+
+        #Remake derivative
+        self._diff = [self._func[i].derivative(1) for i in range(2)]
+
+        #Cleanup
+        del func, normal, etch, new_func
+
+############################################
+############################################

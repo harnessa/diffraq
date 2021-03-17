@@ -69,6 +69,9 @@ class Shape(object):
         self.clock_angle = np.pi/self.num_petals
         self.clock_mat = self.build_rot_matrix(self.clock_angle)
 
+        #Sign for perturbation and etch directions
+        self.opq_sign = -(2*int(self.is_opaque) - 1)
+
         #Load outline and perturbations
         self.set_outline()
         self.set_perturbations()
@@ -81,8 +84,8 @@ class Shape(object):
         #Set outline depending on input
         if self.edge_data is None and self.edge_file is None:
             #Use lambda functions
-            self.outline = geometry.LambdaOutline(self.edge_func, diff=self.edge_diff, \
-                etch_error=self.etch_error)
+            self.outline = geometry.LambdaOutline(self, self.edge_func, \
+                diff=self.edge_diff, etch_error=self.etch_error)
 
         else:
             #Use interpolation data (specified or from file)
@@ -96,12 +99,9 @@ class Shape(object):
                 Outline = geometry.Cart_InterpOutline
             else:
                 Outline = geometry.InterpOutline
-            self.outline = Outline(edge_data, etch_error=self.etch_error)
+            self.outline = Outline(self, edge_data, etch_error=self.etch_error)
 
     def set_perturbations(self):
-
-        #Sign for perturbation directions
-        self.opq_sign = -(2*int(self.is_opaque) - 1)
 
         #Turn perturbations into list
         if not isinstance(self.perturbations, list):

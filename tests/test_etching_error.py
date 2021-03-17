@@ -17,7 +17,7 @@ import numpy as np
 
 class Test_Etching(object):
 
-    tol = 1e-8
+    tol = 1e-6
 
     num_pts = 256
     radial_nodes = 40
@@ -51,58 +51,74 @@ class Test_Etching(object):
         cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
         polar_func = lambda t: self.circle_rad * np.ones_like(t)
         polar_diff = lambda t: np.zeros_like(t)
+        alp, gam = 10, self.circle_rad*6
+        petal_func = lambda r: alp*np.exp(-r**2/gam)
+        petal_diff = lambda r: alp*-2*r/gam * np.exp(-r**2/gam)
 
-        shape = {'is_opaque':is_opaque, 'max_radius':self.circle_rad, \
-            'loci_file':f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt', \
-            'etch_error':self.etch * etch_sign*0}
+        shape = {'is_opaque':is_opaque, 'max_radius':self.circle_rad}
 
-        #Loop over occulter types
         utru = None
-        for occ_shape in ['polar', 'cartesian', 'circle', 'loci'][1:]:
 
-            #Set parameters
-            shape['kind'] = occ_shape
+        #Loop over occulter types (petal is only for visual checking, no area calculation)
+        for occ_shape in ['polar', 'cartesian', 'petal'][:2]:
+            #Loop over function vs interpolation (don't reun function for now)
+            for is_func in [False, True][:1]:
 
-            if occ_shape == 'cartesian':
-                shape['edge_func'] = cart_func
-                shape['edge_diff'] = cart_diff
-            elif occ_shape == 'polar':
-                shape['edge_func'] = polar_func
-                shape['edge_diff'] = polar_diff
+                #Only do function for cartesian
+                if is_func and occ_shape != 'cartesian':
+                    continue
 
-            #Load simulator
-            sim = diffraq.Simulator(params, shapes=shape)
+                #Set parameters
+                shape['kind'] = occ_shape
 
-            #Build quad
-            sim.occulter.build_quadrature()
+                if occ_shape == 'cartesian':
+                    shape['edge_func'] = cart_func
+                    shape['edge_diff'] = cart_diff
+                    shape['etch_error'] = self.etch * etch_sign
+                elif occ_shape == 'polar':
+                    shape['edge_func'] = polar_func
+                    shape['edge_diff'] = polar_diff
+                    shape['etch_error'] = self.etch * etch_sign
+                elif occ_shape == 'petal':
+                    shape['edge_func'] = petal_func
+                    shape['edge_diff'] = petal_diff
+                    shape['etch_error'] = self.etch / 5 * etch_sign
 
-            #Compare area
-            area = sim.occulter.wq.sum()
-            tru_area = np.pi*(self.circle_rad + self.etch*etch_sign)**2
+                #Add data points if not function
+                if is_func:
+                    shape['edge_data'] = None
+                else:
+                    npts = self.radial_nodes * self.theta_nodes
+                    if occ_shape == 'petal':
+                        tt = np.linspace(self.circle_rad/2, self.circle_rad, npts)[:,None]
+                    else:
+                        tt = np.linspace(0, 2*np.pi, npts)[:,None]
+                    shape['edge_data'] = np.hstack((tt, shape['edge_func'](tt)))
 
-            print(area, tru_area)
-            import matplotlib.pyplot as plt;plt.ion()
-            plt.scatter(sim.occulter.xq, sim.occulter.yq, c=sim.occulter.wq, s=1)
-            breakpoint()
+                #Load simulator
+                sim = diffraq.Simulator(params, shapes=shape)
 
-            # #Get pupil field from sim
-            # pupil, grid_pts = sim.calc_pupil_field()
-            # pupil = pupil[0][len(pupil[0])//2]
-            #
-            # #Calculate analytic solution (once)
-            # # if occ_shape == 'circle':
-            # if True:
-            #     utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
-            #         sim.waves[0], sim.zz, sim.z0, \
-            #         sim.circle_rad + sim.etching_error * sim.occulter.opq_sign, is_babinet)
-            #
-            # import matplotlib.pyplot as plt;plt.ion()
-            # plt.cla()
-            # plt.plot(np.abs(pupil))
-            # plt.plot(np.abs(utru), '--')
-            # breakpoint()
-            # #Compare
-            # # assert(np.abs(pupil - utru).max() < self.tol)
+                #Build quad
+                sim.occulter.build_quadrature()
+
+                #Compare area
+                area = sim.occulter.wq.sum()
+                tru_area = np.pi*(self.circle_rad + self.etch*etch_sign)**2
+
+                assert(np.isclose(area, tru_area))
+
+                #Get pupil field from sim
+                pupil, grid_pts = sim.calc_pupil_field()
+                pupil = pupil[0][len(pupil[0])//2]
+
+                #Calculate analytic solution (once)
+                if utru is None:
+                    utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
+                        sim.waves[0], sim.zz, sim.z0, \
+                        self.circle_rad + self.etch*etch_sign, is_opaque)
+
+                #Compare
+                assert(np.abs(pupil - utru).max() < self.tol)
 
         #Clean up
         del pupil, grid_pts, sim, utru

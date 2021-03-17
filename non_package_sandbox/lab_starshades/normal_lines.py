@@ -50,8 +50,8 @@ if [False, True][1]:
 
     if [False, True][0]:
         #Circle
-        fr = lambda t: rr
-        df = lambda t: 0.
+        fr = lambda t: rr*np.ones_like(t)
+        df = lambda t: np.zeros_like(t)
     else:
         #Boomerang
         a=0.3
@@ -72,23 +72,72 @@ if [False, True][1]:
     y2 = yc(the) + dy(the)
 
     #Polar equations
-    nf = lambda t: fr(t) - etch*fr(t)/np.sqrt(df(t)**2 + fr(t)**2)
-    nt = lambda t: t + etch*df(t)/np.sqrt(df(t)**2 + fr(t)**2)
+    # nf = lambda t: fr(t) - etch*fr(t)/np.sqrt(df(t)**2 + fr(t)**2)
+    # nt = lambda t: t + etch*df(t)/np.sqrt(df(t)**2 + fr(t)**2)
+
+    # nf = lambda t: np.sqrt(fr(t)**2 + etch**2 - 2*etch*fr(t)/np.sqrt(1 + (df(t)/fr(t))**2))
+    # nt = lambda t:-(1 - np.tan(t)**2)/(1 - etch**2/(fr(t)**2 + df(t)**2)*(1 + df(t)/fr(t)*np.tan(t))**2)
+
+    #THIS works
+    # nf = lambda t: np.sqrt(fr(t)**2 + etch**2 - 2*etch*fr(t)**2/np.sqrt(df(t)**2 + fr(t)**2))
+    # nt = lambda t: np.arctan2(fr(t)*np.sin(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) + etch*df(t)*np.cos(t), \
+                              # fr(t)*np.cos(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) - etch*df(t)*np.sin(t))
+
+    # def newt(t):
+        # return np.arctan2(fr(t)*np.sin(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) + etch*df(t)*np.cos(t), \
+                          # fr(t)*np.cos(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) - etch*df(t)*np.sin(t))
+
+    def newt(t):
+        return np.arctan2((np.tan(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) + etch*df(t)/fr(t))*np.cos(t), \
+                         (np.sqrt(df(t)**2 + fr(t)**2) - etch - etch*df(t)/fr(t)*np.tan(t))*np.cos(t))
+
+    def invt(t):
+        # return np.arctan2((np.tan(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) - etch*df(t)/fr(t))*np.cos(t), \
+                         # (np.sqrt(df(t)**2 + fr(t)**2) - etch + etch*df(t)/fr(t)*np.tan(t))*np.cos(t))
+        return np.arctan2(fr(t)*np.sin(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) - etch*df(t)*np.cos(t), \
+                          fr(t)*np.cos(t)*(np.sqrt(df(t)**2 + fr(t)**2) - etch) + etch*df(t)*np.sin(t))
+
+    def newr(t):
+        # t = newt(t)
+        # t = invt(t)
+        return np.sqrt(fr(t)**2 + etch**2 - 2*etch*fr(t)**2/np.sqrt(df(t)**2 + fr(t)**2))
 
     nxc = lambda t: fr(t) * np.cos(t) * (1. - etch/np.sqrt(df(t)**2 + fr(t)**2)*(1. + df(t)/fr(t)*np.tan(t)))
     nyc = lambda t: fr(t) * np.sin(t) * (1. - etch/np.sqrt(df(t)**2 + fr(t)**2)*(1. - df(t)/fr(t)/np.tan(t)))
 
-    # xr2, yr2 = nf(nt(the))*np.cos(nt(the)),  nf(nt(the))*np.sin(nt(the))
     # xr2, yr2 = nf(the)*np.cos(nt(the)),  nf(the)*np.sin(nt(the))
-    xr2, yr2 = nxc(the), nyc(the)
+    xr2, yr2 = newr(the)*np.cos(newt(the)),  newr(the)*np.sin(newt(the))
+    # xr2, yr2 = newr(the)*np.cos(the),  newr(the)*np.sin(the)
+    # xr2, yr2 = nf(the)*np.cos(the),  nf(the)*np.sin(the)
+    # xr2, yr2 = nxc(the), nyc(the)
+
+    #Reinterpolate
+
 
     print(np.nanmax(np.hypot(xr2-x2, yr2-y2)))
+    # print(np.nanmax(np.hypot(xr2-x1, yr2-y1)))
+    #
+    # plt.figure()
+    # plt.plot(x1, y1)
+    # plt.plot(x2, y2)
+    #
+    # plt.plot(xr2, yr2, '--')
+    # plt.axis('equal')
 
     plt.figure()
-    plt.plot(x1, y1)
-    plt.plot(x2, y2)
+    plt.plot(newt(the) % (2*np.pi), newr(the))
+    plt.plot(the, newr(invt(the)), '--')
+    plt.plot(the, newr(the), '-.')
+    plt.plot(the, newr(newt(the)), ':')
 
-    plt.plot(xr2, yr2, '--')
-    plt.axis('equal')
+    # plt.figure()
+    # # plt.plot(the)
+    # plt.plot(invt(newt(the)) %(2*np.pi)- the)
+    #
+    # plt.figure()
+    # plt.plot(np.cos(the))
+    # plt.plot(np.cos(newt(the)), '--')
+    # plt.plot(np.sin(the))
+    # plt.plot(np.sin(newt(the)), '--')
 
 breakpoint()

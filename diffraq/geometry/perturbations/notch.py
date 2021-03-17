@@ -66,7 +66,7 @@ class Notch(object):
 
         #Get perturbation specifc quadrature
         xq, yq, wq = getattr(self, f'get_quad_{self.parent.kind}')( \
-            t0, tf, m, n, self.parent.opq_sign)
+            t0, tf, m, n)
 
         return xq, yq, wq
 
@@ -90,7 +90,7 @@ class Notch(object):
         t0, tf, m, n = self.get_param_locs()
 
         #Get perturbation specifc edge points
-        xy = self.get_pert_edge(t0, tf, m, self.parent.opq_sign)
+        xy = self.get_pert_edge(t0, tf, m)
 
         return xy
 
@@ -132,12 +132,12 @@ class Notch(object):
 
         return t0, tf, m, n
 
-    def get_pert_edge(self, t0, tf, npts, opq_sign):
+    def get_pert_edge(self, t0, tf, npts):
         #Get parameters of test region
         ts = np.linspace(t0, tf, npts)[:,None]
 
         #Get new / shifted edge
-        old_edge, etch, normal = self.get_new_edge(ts, opq_sign)
+        old_edge, etch, normal = self.get_new_edge(ts)
         new_edge = old_edge + etch*normal
 
         #Flip to continue CCW
@@ -156,7 +156,7 @@ class Notch(object):
 
         return loci
 
-    def get_new_edge(self, ts, opq_sign):
+    def get_new_edge(self, ts):
 
         #Get loci of edge across test region
         old_edge = self.parent.cart_func(ts)
@@ -172,7 +172,7 @@ class Notch(object):
             normal /= np.hypot(*normal)
 
         #Shift edge out by the normal vector
-        etch = -self.height * np.array([1., -1]) * self.direction * opq_sign
+        etch = -self.height * np.array([1., -1]) * self.direction * self.parent.opq_sign
 
         return old_edge, etch, normal
 
@@ -188,7 +188,7 @@ class Notch(object):
 #####  Petal Specific Quad #####
 ############################################
 
-    def get_quad_petal(self, t0, tf, m, n, opq_sign):
+    def get_quad_petal(self, t0, tf, m, n):
 
         #Get radius range
         r0, p0 = self.parent.unpack_param(t0)[:2]
@@ -206,7 +206,7 @@ class Notch(object):
         ts = self.parent.pack_param(pr, p0)
 
         #Get old edge at radial node points, and etch and normal
-        old_edge, etch, normal = self.get_new_edge(ts, opq_sign)
+        old_edge, etch, normal = self.get_new_edge(ts)
 
         # new_dummy = old_edge + etch*normal  #TODO: remove
 
@@ -217,7 +217,7 @@ class Notch(object):
         #Sort to be same direction as ts
         ts_big = ts_big[::int(np.sign(ts[1]-ts[0]))]
         #Get new edge outside of bounds of old edge
-        old_big, dummy, normal_big = self.get_new_edge(ts_big, opq_sign)
+        old_big, dummy, normal_big = self.get_new_edge(ts_big)
 
         #Create new edge
         new_edge = old_big + etch*normal_big
@@ -247,7 +247,7 @@ class Notch(object):
         yq = (pr*np.sin(tt)).ravel()
 
         #Get quadrature sign depending if same opaqueness as parent
-        qd_sign = -(opq_sign * self.direction)
+        qd_sign = -(self.parent.opq_sign * self.direction)
 
         #Get weights (theta change is absolute) rdr = wr*pr, dtheta = ww*dt
         wq = qd_sign * (ww * pr * wr * np.abs(dt)).ravel()
@@ -289,10 +289,10 @@ class Notch(object):
 #####  Polar Specific Quad #####
 ############################################
 
-    def get_quad_polar(self, t0, tf, m, n, opq_sign):
+    def get_quad_polar(self, t0, tf, m, n):
 
         #Get edge loci
-        loci = self.get_pert_edge(t0, tf, m, opq_sign)
+        loci = self.get_pert_edge(t0, tf, m)
 
         #Shift to center
         loci_shift = loci.mean(0)

@@ -34,12 +34,12 @@ class Test_Outline(object):
         points = np.hstack((tt, func(tt)))
 
         #Get different outlines
-        sf1 = diffraq.geometry.LambdaOutline(func, diff=diff)
-        sf2 = diffraq.geometry.LambdaOutline(func, diff=None)
+        sf1 = diffraq.geometry.LambdaOutline(None, func, diff=diff)
+        sf2 = diffraq.geometry.LambdaOutline(None, func, diff=None)
         if kind == 'cartesian':
-            sf3 = diffraq.geometry.Cart_InterpOutline(points, with_2nd=True)
+            sf3 = diffraq.geometry.Cart_InterpOutline(None, points, with_2nd=True)
         else:
-            sf3 = diffraq.geometry.InterpOutline(points, with_2nd=True)
+            sf3 = diffraq.geometry.InterpOutline(None, points, with_2nd=True)
 
         #Check all values are the same
         for val in ['func', 'diff', 'diff_2nd']:
