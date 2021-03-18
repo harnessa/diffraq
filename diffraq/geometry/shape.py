@@ -21,8 +21,8 @@ class Shape(object):
         """
         Keyword arguments (all not used by every shape):
             - kind:         kind of shape object
-            - edge_func:    lambda function describing the shape's edge; f(theta)
-            - edge_diff:    lambda function describing the derivative of the shapes edge; f'(theta)
+            - edge_func:    lambda function describing the shape's edge; f(theta) [polar, cart] or f(r) [petal]
+            - edge_diff:    lambda function describing the derivative of the shapes edge; f'(theta) [polar, cart] or f'(r) [petal]
             - edge_file:    filename that holds numerical apodization function as a function of radius. Supercedes edge_func
             - edge_data:    data that holds numerical apodization function as a function of radius. Supercedes edge_func and edge_file
             - loci_file:    filename that holds the (x,y) coordinates describing the occulter edge

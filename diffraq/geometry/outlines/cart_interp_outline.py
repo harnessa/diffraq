@@ -19,8 +19,8 @@ class Cart_InterpOutline(object):
 
     def __init__(self, parent, data, with_2nd=False, etch_error=None):
 
-        self.parent = parent   #Shape
-        self._data = data
+        self.parent = parent    #Shape
+        self._data = data       #(theta, x, y)
 
         #Use second order interpolant
         self.k = 2

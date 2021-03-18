@@ -19,8 +19,8 @@ class InterpOutline(object):
 
     def __init__(self, parent, data, with_2nd=False, etch_error=None):
 
-        self.parent = parent   #Shape
-        self._data = data
+        self.parent = parent    #Shape
+        self._data = data       #polar parent - (theta, apod), petal parent - (radius, apod)
 
         #Use second order interpolant
         self.k = 2
@@ -57,12 +57,9 @@ class InterpOutline(object):
         func = self.func(self._data[:,:1])
         diff = self.diff(self._data[:,:1])
 
-        old = func.copy()
-
-        #Get cartesian coordinates and derivative depending on parent
-        kind = self.parent.kind
-        cart_func = getattr(self, f'{kind}_cart_func')(func, self._data[:,:1])
-        cart_diff = getattr(self, f'{kind}_cart_diff')(func, diff, self._data[:,:1])
+        #Get cartesian coordinates and derivative from parent
+        cart_func = self.parent.etch_cart_func(func, self._data[:,:1])
+        cart_diff = self.parent.etch_cart_diff(func, diff, self._data[:,:1])
 
         #Create normal from derivative
         normal = cart_diff[:,::-1]
@@ -75,7 +72,7 @@ class InterpOutline(object):
         new_cart_func = cart_func + etch*normal
 
         #Turn back to coordinates
-        new_func = getattr(self, f'{kind}_inv_cart')(new_cart_func)
+        new_func = self.parent.etch_inv_cart(new_cart_func)
 
         #Reinterpolate new function
         self.func = InterpolatedUnivariateSpline(self._data[:,0], new_func, k=self.k, ext=3)
@@ -85,37 +82,6 @@ class InterpOutline(object):
 
         #Cleanup
         del func, diff, cart_func, cart_diff, normal, etch, new_cart_func, new_func
-
-    ##########################################
-
-    def polar_cart_func(self, func, t):
-        return func * np.hstack((np.cos(t), np.sin(t)))
-
-    def polar_cart_diff(self, func, diff, t):
-        ct = np.cos(t)
-        st = np.sin(t)
-        ans = np.hstack((diff*ct - func*st, diff*st + func*ct))
-        del ct, st
-        return ans
-
-    def polar_inv_cart(self, xy):
-        return np.hypot(*xy.T)
-
-    def petal_cart_func(self, func, r):
-        pet_mul = np.pi/self.parent.num_petals
-        return r * np.hstack((np.cos(func*pet_mul), np.sin(func*pet_mul)))
-
-    def petal_cart_diff(self, func, diff, r):
-        pet_mul = np.pi/self.parent.num_petals
-        cf = np.cos(func*pet_mul)
-        sf = np.sin(func*pet_mul)
-        #Derivative has negative for trailing petal
-        ans = -1 * np.hstack((cf - r*sf*diff*pet_mul, sf + r*cf*diff*pet_mul))
-        del cf, sf
-        return ans
-
-    def petal_inv_cart(self, xy):
-        return np.arctan2(*xy[:,::-1].T) * self.parent.num_petals/np.pi
 
 ############################################
 ############################################

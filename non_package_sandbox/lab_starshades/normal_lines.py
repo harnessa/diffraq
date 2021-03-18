@@ -141,3 +141,10 @@ if [False, True][1]:
     # plt.plot(np.sin(newt(the)), '--')
 
 breakpoint()
+
+if [False, True][0]:
+
+    #TODO: add petal overetch
+
+
+    breakpoint()

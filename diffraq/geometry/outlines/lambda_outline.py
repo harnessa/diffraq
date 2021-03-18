@@ -115,7 +115,8 @@ class LambdaOutline(object):
     def polar_etch_func(self, t):
         func = self._func(t)
 
-        #TODO: add this for polar coords -- lots of calculus!
+        #TODO: add this for polar coords -- lots of calculus! esp. in derivative
+        #see non_package_sandbox/lab_starshades/normal_lines.py for working function
         breakpoint()
         return func - self.etch * func / np.hypot(func, self._diff(t))
 

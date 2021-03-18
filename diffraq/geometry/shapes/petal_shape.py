@@ -100,6 +100,29 @@ class PetalShape(Shape):
 ############################################
 
 ############################################
+#####  Wrappers for ETCHED Cartesian coords #####
+############################################
+
+    def etch_cart_func(self, func, r):
+        pet_mul = np.pi/self.num_petals
+        return r * np.hstack((np.cos(func*pet_mul), np.sin(func*pet_mul)))
+
+    def etch_cart_diff(self, func, diff, r):
+        pet_mul = np.pi/self.num_petals
+        cf = np.cos(func*pet_mul)
+        sf = np.sin(func*pet_mul)
+        #Derivative has negative for trailing petal
+        ans = -1 * np.hstack((cf - r*sf*diff*pet_mul, sf + r*cf*diff*pet_mul))
+        del cf, sf
+        return ans
+
+    def etch_inv_cart(self, xy):
+        return np.arctan2(*xy[:,::-1].T) * self.num_petals/np.pi
+
+############################################
+############################################
+
+############################################
 #####  Overwritten Perturbation Functions #####
 ############################################
 

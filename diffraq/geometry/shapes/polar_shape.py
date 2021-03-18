@@ -74,6 +74,28 @@ class PolarShape(Shape):
 ############################################
 
 ############################################
+#####  Wrappers for ETCHED Cartesian coords #####
+############################################
+
+    #TODO: add 2nd derivative change for etch
+
+    def etch_cart_func(self, func, t):
+        return func * np.hstack((np.cos(t), np.sin(t)))
+
+    def etch_cart_diff(self, func, diff, t):
+        ct = np.cos(t)
+        st = np.sin(t)
+        ans = np.hstack((diff*ct - func*st, diff*st + func*ct))
+        del ct, st
+        return ans
+
+    def etch_inv_cart(self, xy):
+        return np.hypot(*xy.T)
+
+############################################
+############################################
+
+############################################
 #####  Circle Occulter #####
 ############################################
 
