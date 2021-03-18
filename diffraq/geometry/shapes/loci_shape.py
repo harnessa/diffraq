@@ -1,5 +1,5 @@
 """
-loci_occulter.py
+loci_shape.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -7,7 +7,7 @@ Created on: 02-08-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Derived class of occulter defined by loci of edge points.
+Description: Derived class of Shape defined by loci of edge points.
 
 """
 

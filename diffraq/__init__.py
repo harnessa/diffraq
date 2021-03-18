@@ -47,3 +47,4 @@ from diffraq.analysis import Analyzer
 import diffraq.quadrature
 import diffraq.diffraction
 import diffraq.geometry
+import diffraq.polarization

@@ -1,5 +1,5 @@
 """
-test_lgwt.py
+test_quadrature.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -7,7 +7,7 @@ Created on: 01-08-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Test of LGWT algorithm.
+Description: Test of building areal quadrature.
 
 """
 
@@ -130,7 +130,7 @@ class Test_Quadrature(object):
 ############################################
 
     def test_loci(self):
-        
+
         #Load loci
         loci = np.genfromtxt(f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt', delimiter=',')
 

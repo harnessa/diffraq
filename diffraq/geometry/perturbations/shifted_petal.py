@@ -164,8 +164,8 @@ class Shifted_Petal(object):
         nx = (rr*np.cos(pw)).ravel()
         ny = (rr*np.sin(pw)).ravel()
 
-        #Get weights (radius change is absolute) r*dr = rr *dr*wr, dtheta = ang_wid*ww/2
-        nw = (rr * wr * np.abs(dr) * ang_wid * ww/2).ravel()
+        #Get weights (radius change is absolute) r*dr = rr *dr*wr, dtheta = ang_wid/2*ww
+        nw = (rr * wr * np.abs(dr) * ww * ang_wid/2).ravel()
 
         #Cleanup
         del pw, ww, pr, wr, old_edge, new_edge, oldr, newt, newr, dr, rr

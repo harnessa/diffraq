@@ -7,7 +7,7 @@ Created on: 02-08-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Derived class of occulter with shape parameterized in cartesian coordinates.
+Description: Derived class of Shape with outline parameterized in cartesian coordinates.
 
 """
 

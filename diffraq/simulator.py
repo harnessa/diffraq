@@ -163,11 +163,30 @@ class Simulator(object):
     ###########################
 
     def calc_pupil_field(self):
+
         #Build target
         grid_pts = diffraq.utils.image_util.get_grid_points(self.num_pts, self.tel_diameter)
 
+        #Run scalar diffraction calculation over the occulter
+        pupil = self.diffraction_calculation(self.occulter, grid_pts)
+
+        #If vector calculation, calculate diffraction over Braunbek seam
+        if self.do_run_vector:
+            #Run calculation
+            pupil_seam = self.diffraction_calculation(self.occulter.vector, grid_pts)
+
+            #Add to extra dimension of pupil
+
+            breakpoint()
+
+        return pupil, grid_pts
+
+    def diffraction_calculation(self, domain, grid_pts):
+        """Calculate the diffraction of the supplied domain:
+            quadrature x+y and quadrature weights, over the supplied grid. """
+
         #Build Area Quadrature
-        self.occulter.build_quadrature()
+        domain.build_quadrature()
 
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
@@ -180,9 +199,9 @@ class Simulator(object):
             lamz0 = self.waves[iw] * self.z0
 
             #Calculate diffraction
-            uu = diffraq.diffraction.diffract_grid(self.occulter.xq, \
-                self.occulter.yq, self.occulter.wq, lamzz, grid_pts, self.fft_tol,
-                is_babinet=self.occulter.is_babinet, lamz0=lamz0)
+            uu = diffraq.diffraction.diffract_grid(domain.xq, domain.yq, \
+                domain.wq, lamzz, grid_pts, self.fft_tol, \
+                    is_babinet=domain.is_babinet, lamz0=lamz0)
 
             #Multiply by plane wave
             uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
@@ -190,7 +209,7 @@ class Simulator(object):
             #Store
             pupil[iw] = uu
 
-        return pupil, grid_pts
+        return pupil
 
 ############################################
 ############################################

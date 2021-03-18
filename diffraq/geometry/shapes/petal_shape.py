@@ -7,7 +7,7 @@ Created on: 02-08-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Derived class of starshade occulter.
+Description: Derived class of Shape with outline parameterized in radial coordinates.
 
 """
 
@@ -20,6 +20,8 @@ class PetalShape(Shape):
 
     kind = 'petal'
     param_code = 1000
+
+    #TODO: rename 'petal' to 'radial' ?
 
 ############################################
 #####  Main Shape #####

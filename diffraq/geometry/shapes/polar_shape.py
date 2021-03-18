@@ -1,5 +1,5 @@
 """
-polar_occulter.py
+polar_shape.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -7,7 +7,7 @@ Created on: 02-08-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Derived class of occulter with shape parameterized in polar coordinates.
+Description: Derived class of Shape with outline parameterized in polar coordinates.
 
 """
 

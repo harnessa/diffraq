@@ -23,6 +23,7 @@ def_sim_params = {
     'skip_image':           False,      #Skip image calculation?
     'do_load_pupil':        False,      #Load pupil instead of calculating?
     'pupil_load_ext':       None,       #Extension to load pupil field from (if different from saving ext)
+    'do_run_vector':        False,      #Will also run non-scalar calculation via Braunbek method
 
     ### Saving ###
     'do_save':              False,      #Save data?
@@ -57,6 +58,8 @@ def_sim_params = {
     'theta_nodes':          50,         #Number of azimuthal quadrature nodes
     'fft_tol':              1e-9,       #Tolerance to feed to NUFFT
 
+    ### Polarization ###
+    'seam_width':           5e-6,      #Half-width of Braunbek seam 
 }
 
 ############################################

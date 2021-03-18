@@ -16,6 +16,7 @@ import numpy as np
 import imp
 import diffraq.geometry as geometry
 from diffraq.quadrature import lgwt
+from diffraq.polarization import VectorSeam
 
 class Occulter(object):
 
@@ -24,6 +25,12 @@ class Occulter(object):
 
         #Load shapes
         self.load_shapes(shapes)
+
+        #Load seam
+        if self.sim.do_run_vector:
+            self.vector = VectorSeam(self, self.shapes, self.sim.seam_width)
+        else:
+            self.vector = None
 
 ############################################
 #####  Shapes #####
@@ -116,7 +123,7 @@ class Occulter(object):
         #Initialize
         self.edge = np.empty((0,2))
 
-        #Loop through shape list and add quadratures
+        #Loop through shape list and build edges
         for shape in self.shapes:
 
             #Build edge
@@ -145,7 +152,7 @@ class Occulter(object):
         pass
         #Spin edge
 
-
+        #Also move seam!
 
 ############################################
 ############################################
