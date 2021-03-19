@@ -1,5 +1,5 @@
 """
-test_seam.py
+test_vector.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -7,14 +7,14 @@ Created on: 03-18-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Test of building narrow seam around edges for non-scalar diffraction.
+Description: Test of vector diffraction via Braunbek method.
 
 """
 
 import diffraq
 import numpy as np
 
-class Test_Seam(object):
+class Test_Vector(object):
 
     tol = 5e-4
 
@@ -38,56 +38,57 @@ class Test_Seam(object):
 ############################################
 ############################################
 
-    def do_test_quadrature(self, edge_func, edge_diff):
+    def do_test_quadrature(self, kind, edge_func, edge_diff):
 
         #Maxwell functions
         maxwell_func = [lambda d, w: np.heaviside(d, 1)+0j for i in range(2)]
 
         #Simulation parameters
-        params = {'radial_nodes':100, 'theta_nodes':50, 'do_run_vector':True,\
+        params = {'radial_nodes':100, 'theta_nodes':100, 'do_run_vector':True,\
             'seam_width':self.seam_width, 'maxwell_func':maxwell_func}
 
         #Loop over opacity
         for is_opaque in [False, True]:
 
             #Simulated shapes
-            shapes = {'kind':'polar', 'edge_func':edge_func, \
+            shapes = {'kind':kind, 'edge_func':edge_func, \
                 'edge_diff':edge_diff, 'is_opaque':is_opaque}
 
-            #Should get same answer over multiple angles
-            for ang in [0, 128]:
+            #Build simulator
+            sim = diffraq.Simulator(params, shapes)
 
-                #Polarization angle
-                params['polarization_angle'] = ang
+            #Build polar seam
+            xs, ys, ws, ds, ns = \
+                sim.vector.seams[0].build_seam_quadrature(self.seam_width)
 
-                #Build simulator
-                sim = diffraq.Simulator(params, shapes)
+            #Get area of open seam (in aperture)
+            area = (ws * maxwell_func[0](ds,0).real).sum()
 
-                #Build polar seam
-                xs, ys, ws, ds, ns = \
-                    sim.vector.seams[0].build_seam_quadrature(self.seam_width)
+            #True area
+            if is_opaque:
+                tru_area = np.pi*((self.circle_rad + self.seam_width)**2 - \
+                    self.circle_rad**2)
+            else:
+                tru_area = np.pi*(self.circle_rad**2 - \
+                    (self.circle_rad - self.seam_width)**2)
 
-                #Get area of open seam (in aperture)
-                area = (ws * maxwell_func[0](ds,0).real).sum()
+            #Compare quadrature area
+            # assert(np.isclose(area, tru_area))
+            print(is_opaque, area, tru_area)
 
-                #True area
-                if is_opaque:
-                    tru_area = np.pi*((self.circle_rad + self.seam_width)**2 - \
-                        self.circle_rad**2)
-                else:
-                    tru_area = np.pi*(self.circle_rad**2 - \
-                        (self.circle_rad - self.seam_width)**2)
+            #Build quadrature
+            sim.vector.build_quadrature()
 
-                #Compare quadrature area
-                assert(np.isclose(area, tru_area))
+            #Average field sould be 1/2 (seem is half on screen, half off)
+            avg_fld = np.hypot(*sim.vector.vec_UU.real.mean((2,0)))
 
-                #Build quadrature
-                sim.vector.build_quadrature()
+            # assert(np.isclose(avg_fld, 0.5))
 
-                #Average field sould be 1/2 (seem is half on screen, half off)
-                avg_fld = np.hypot(*sim.vector.vec_UU.real.mean((2,0)))
+            import matplotlib.pyplot as plt;plt.ion()
+            plt.figure()
+            plt.colorbar(plt.scatter(xs, ys, c=np.sign(ds), s=1))
 
-                assert(np.isclose(avg_fld, 0.5))
+            breakpoint()
 
         #Cleanup
         sim.clean_up()
@@ -95,7 +96,7 @@ class Test_Seam(object):
 
 ############################################
 
-    def do_test_diffraction(self, edge_func, edge_diff):
+    def do_test_diffraction(self, kind, edge_func, edge_diff):
         #Loop over opacity
         for is_opaque in [False, True]:
 
@@ -121,7 +122,7 @@ class Test_Seam(object):
             for ang in [0, 186]:
 
                 #Simulated shapes
-                shapes = {'kind':'polar', 'edge_func':edge_func, \
+                shapes = {'kind':kind, 'edge_func':edge_func, \
                     'edge_diff':edge_diff, 'is_opaque':is_opaque}
 
                 #Polarization angle
@@ -150,13 +151,13 @@ class Test_Seam(object):
                     utru = np.abs(utru)**2
 
                 #Assert they match
-                assert(np.abs(pupil - utru).max() < self.tol)
+                # assert(np.abs(pupil - utru).max() < self.tol)
 
-                # import matplotlib.pyplot as plt;plt.ion()
-                # plt.figure()
-                # plt.plot(pupil)
-                # plt.plot(utru, '--')
-                # breakpoint()
+                import matplotlib.pyplot as plt;plt.ion()
+                plt.figure()
+                plt.plot(pupil)
+                plt.plot(utru, '--')
+                breakpoint()
 
 
         #Cleanup
@@ -166,36 +167,36 @@ class Test_Seam(object):
 ############################################
 ############################################
 
-    def test_polar_quad(self):
+    def test_polar_quadrature(self):
         polar_func = lambda t: self.circle_rad * np.ones_like(t)
         polar_diff = lambda t: np.zeros_like(t)
 
-        self.do_test_quadrature(polar_func, polar_diff)
+        self.do_test_quadrature('polar', polar_func, polar_diff)
 
-    def test_polar_diff(self):
+    def test_polar_diffraction(self):
         polar_func = lambda t: self.circle_rad * np.ones_like(t)
         polar_diff = lambda t: np.zeros_like(t)
 
-        self.do_test_diffraction(polar_func, polar_diff)
+        self.do_test_diffraction('polar', polar_func, polar_diff)
 
     ############################################
 
-    def _test_cart_quadrature(self):
+    def test_cartesian_quadrature(self):
         cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
         cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
 
-        self.do_test_quadrature(cart_func, cart_diff)
+        self.do_test_quadrature('cartesian', cart_func, cart_diff)
 
-    def _test_cart_diffraction(self):
+    def test_cartesian_diffraction(self):
         cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
         cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
 
-        self.do_test_diffraction(cart_func, cart_diff)
+        self.do_test_diffraction('cartesian', cart_func, cart_diff)
 
 ############################################
 ############################################
 
 if __name__ == '__main__':
 
-    ts = Test_Seam()
-    ts.run_all_tests()
+    tv = Test_Vector()
+    tv.run_all_tests()

@@ -1,5 +1,5 @@
 """
-vector_seam.py
+vector_sim.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -7,17 +7,15 @@ Created on: 03-18-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Class representing the narrow seam around the edge of an occulter/aperture
-    that holds the area quadrature allowing the calculation of
-    non-scalar diffraction via the Braunbek method.
+Description: Main class that handles all dealing of vector diffraction
+    calculations via the Braunbek method.
 
 """
 
 import numpy as np
-import diffraq.geometry as geometry
-from diffraq.polarization import ThickScreen
+import diffraq.polarization as polar
 
-class VectorSeam(object):
+class VectorSim(object):
 
     def __init__(self, sim, shapes):
         self.sim = sim
@@ -31,7 +29,7 @@ class VectorSeam(object):
         self.load_seams()
 
         #Load screen
-        self.screen = ThickScreen(**scrn_pms)
+        self.screen = polar.ThickScreen(**scrn_pms)
 
         #Get incident polarization state
         self.get_polarization_state()
@@ -46,7 +44,7 @@ class VectorSeam(object):
         for shape in self.shapes:
 
             #Build seam for given shape
-            seam = getattr(geometry, f'{shape.kind.capitalize()}Seam')(shape)
+            seam = polar.Seam(shape)
 
             #Save seam
             self.seams.append(seam)

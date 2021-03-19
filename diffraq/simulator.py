@@ -48,7 +48,7 @@ class Simulator(object):
 
         #Braunbek seam for vector calculation
         if self.do_run_vector:
-            self.vector = diffraq.polarization.VectorSeam(self, self.occulter.shapes)
+            self.vector = diffraq.polarization.VectorSim(self, self.occulter.shapes)
         else:
             self.vector = None
 
@@ -176,7 +176,7 @@ class Simulator(object):
         grid_pts = diffraq.utils.image_util.get_grid_points(self.num_pts, self.tel_diameter)
 
         #Run scalar diffraction calculation over the occulter
-        pupil = self.diffraction_calculation(grid_pts)
+        pupil = self.scalar_diffraction_calculation(grid_pts)
 
         #If vector calculation, calculate diffraction over Braunbek seam
         if self.do_run_vector:
@@ -198,7 +198,7 @@ class Simulator(object):
 ####	Diffraction Calculations  ####
 ############################################
 
-    def diffraction_calculation(self, grid_pts):
+    def scalar_diffraction_calculation(self, grid_pts):
         """Calculate the scalar diffraction of the occulter's quadrature x+y and
             quadrature weights, over the supplied grid. """
 

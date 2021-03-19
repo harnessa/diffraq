@@ -11,5 +11,6 @@ Description: __init__ package for the POLARIZATION module.
 
 """
 
+from diffraq.polarization.seam import Seam
 from diffraq.polarization.thick_screen import ThickScreen
-from diffraq.polarization.vector_seam import VectorSeam
+from diffraq.polarization.vector_sim import VectorSim

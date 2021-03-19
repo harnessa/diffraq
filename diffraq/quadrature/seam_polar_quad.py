@@ -80,7 +80,7 @@ def seam_polar_edge(g, n, seam_width):
     pt = 2.*np.pi/n * (np.arange(n) + 1)
 
     #Radial edges of seam
-    gtpr = (g(pt) + seam_width/2*np.array([1,-1]))[:,None]
+    gtpr = (g(pt) + seam_width*np.array([1,-1]))[:,None]
 
     #Boundary points
     xy = gtpr * np.stack((np.cos(pt), np.sin(pt)), 1)

@@ -16,4 +16,3 @@ from diffraq.geometry.occulter import Occulter
 from diffraq.geometry.outlines import *
 from diffraq.geometry.shapes import *
 from diffraq.geometry.perturbations import *
-from diffraq.geometry.seams import *

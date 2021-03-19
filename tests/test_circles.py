@@ -21,8 +21,8 @@ class Test_Circles(object):
     loci_tol = 1e-5
 
     num_pts = 256
-    radial_nodes = 400
-    theta_nodes = 400
+    radial_nodes = 600
+    theta_nodes = 600
     zz = 15e6
     z0 = 1e19
     circle_rad = 12
@@ -40,7 +40,7 @@ class Test_Circles(object):
             'radial_nodes':     self.radial_nodes,
             'theta_nodes':      self.theta_nodes,
             'num_pts':          self.num_pts,
-            'tel_diameter':     3*self.circle_rad*(self.zz + z0)/z0,
+            'tel_diameter':     1.5*self.circle_rad*(self.zz + z0)/z0,
             'zz':               self.zz,
             'z0':               z0,
             'skip_image':       True,
@@ -50,13 +50,17 @@ class Test_Circles(object):
         cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
         polar_func = lambda t: self.circle_rad * np.ones_like(t)
         polar_diff = lambda t: np.zeros_like(t)
+        petal_func = lambda r: (1 - r/self.circle_rad)*2*np.pi
+        petal_diff = lambda r: -2*np.pi/self.circle_rad
 
-        shape = {'is_opaque':is_opaque, 'max_radius':self.circle_rad, \
-            'loci_file':f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt'}
+        loci_file = f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt'
+
+        shape = {'is_opaque':is_opaque, 'min_radius':self.circle_rad-1e-12, \
+            'max_radius':self.circle_rad, 'loci_file':loci_file, 'num_petals':1}
 
         #Loop over occulter types
         utru = None
-        for occ_shape in ['polar', 'cartesian', 'circle', 'loci']:
+        for occ_shape in ['petal', 'polar', 'cartesian', 'circle', 'loci']:
 
             #Set parameters
             shape['kind'] = occ_shape
@@ -67,6 +71,9 @@ class Test_Circles(object):
             elif occ_shape == 'polar':
                 shape['edge_func'] = polar_func
                 shape['edge_diff'] = polar_diff
+            elif occ_shape == 'petal':
+                shape['edge_func'] = petal_func
+                shape['edge_diff'] = petal_diff
 
             #Load simulator
             sim = diffraq.Simulator(params, shapes=shape)
@@ -81,7 +88,7 @@ class Test_Circles(object):
                     sim.waves[0], sim.zz, sim.z0, self.circle_rad, is_opaque)
 
             #Get tolerance
-            if occ_shape == 'loci':
+            if occ_shape in ['loci', 'petal']:
                 tol = self.loci_tol
             else:
                 tol = self.tol
