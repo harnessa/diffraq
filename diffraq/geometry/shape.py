@@ -13,45 +13,17 @@ Description: Base class of an occulter shape, used to generate quadrature points
 
 import numpy as np
 import diffraq.geometry as geometry
+from diffraq.utils import def_shape_params
 from scipy.optimize import fmin, newton
 
 class Shape(object):
 
     def __init__(self, parent, **kwargs):
-        """
-        Keyword arguments (all not used by every shape):
-            - kind:         kind of shape object
-            - edge_func:    lambda function describing the shape's edge; f(theta) [polar, cart] or f(r) [petal]
-            - edge_diff:    lambda function describing the derivative of the shapes edge; f'(theta) [polar, cart] or f'(r) [petal]
-            - edge_file:    filename that holds numerical apodization function as a function of radius. Supercedes edge_func
-            - edge_data:    data that holds numerical apodization function as a function of radius. Supercedes edge_func and edge_file
-            - loci_file:    filename that holds the (x,y) coordinates describing the occulter edge
-            - is_opaque:    described shape is opaque?
-            - num_petals:   number of petals
-            - has_center:   has central disk? (for petal/starshade only)
-            - min_radius:   minimum radius
-            - max_radius:   maximum radius
-            - is_clocked:   shape is clocked by half a petal (for petal/starshade only)
-            - rotation:     angle to rotate individual shape by [radians]
-            - perturbations: List of dictionaries describing perturbations to be added to the shape
-            - etch_error:   uniform edge etching error [m]. < 0: removal of material, > 0: extra material.
-            - radial_nodes: number of radial quadrature nodes OR (if < 1) fraction of parent's nodes to use
-            - theta_nodes:  number of azimuthal quadrature nodes OR (if < 1) fraction of parent's nodes to use
-        """
-
-        #Point to parent [occulter]
+        #Point to parent [Occulter]
         self.parent = parent
 
-        #Default parameters
-        def_params = {'kind':'polar', 'edge_func':None, 'edge_diff':None, \
-            'loci_file':None, 'edge_file':None, 'edge_data':None, 'is_opaque':False, \
-            'num_petals':16, 'min_radius':0, 'max_radius':12, 'is_clocked':False, \
-            'has_center':True, 'rotation':0, 'perturbations':[], 'etch_error':None, \
-            'radial_nodes':self.parent.sim.radial_nodes, \
-            'theta_nodes':self.parent.sim.theta_nodes,}
-
         #Set Default parameters
-        for k,v in {**def_params, **kwargs}.items():
+        for k,v in {**def_shape_params, **kwargs}.items():
             if k == 'kind':
                 #Don't set kind which would override class name
                 continue
@@ -59,10 +31,14 @@ class Shape(object):
             setattr(self, k, v)
 
         #Set nodes if fraction
-        if self.radial_nodes < 1:
+        if self.radial_nodes is None:
+            self.radial_nodes = self.parent.sim.radial_nodes
+        elif self.radial_nodes < 1:
             self.radial_nodes = int(self.radial_nodes * self.parent.sim.radial_nodes)
 
-        if self.theta_nodes < 1:
+        if self.theta_nodes is None:
+            self.theta_nodes = self.parent.sim.theta_nodes
+        elif self.theta_nodes < 1:
             self.theta_nodes = int(self.theta_nodes * self.parent.sim.theta_nodes)
 
         #Clocking matrix

@@ -18,8 +18,7 @@ class PolarSeam(object):
 
     kind = 'polar'
 
-    def __init__(self, parent, shape):
-        self.parent = parent    #Seam
+    def __init__(self, shape):
         self.shape = shape
 
         #TODO: should this inherit a base class? how much is similar to others?
@@ -28,10 +27,10 @@ class PolarSeam(object):
 #####  Main Seam Shape #####
 ############################################
 
-    def build_seam_quadrature(self):
+    def build_seam_quadrature(self, seam_width):
         #Calculate quadrature and get radial nodes and theta values
         xq, yq, wq, pr, pt = quad.seam_polar_quad(self.shape.outline.func, \
-            self.shape.radial_nodes, self.shape.theta_nodes, self.parent.seam_width)
+            self.shape.radial_nodes, self.shape.theta_nodes, seam_width)
 
         #Calculate angle between normal and position vector
         func = self.shape.cart_func(pt)
@@ -40,10 +39,15 @@ class PolarSeam(object):
             (np.hypot(*func.T) * np.hypot(*diff.T))
 
         #Build edge distances
-        dq = self.parent.seam_width * pr * angle[:,None]
+        dq = seam_width * (pr * angle[:,None]).ravel()
 
         #Build normal angle
-        nq = np.arctan2(diff[:,0], -diff[:,1])
+        nq = (np.ones_like(pr) * np.arctan2(diff[:,0], -diff[:,1])[:,None]).ravel()
+
+        #Flip sign of distance and rotate normal angle by pi if opaque
+        if self.shape.is_opaque:
+            dq *= -1
+            nq += np.pi
 
         #Cleanup
         del func, diff, angle, pr, pt
@@ -53,7 +57,7 @@ class PolarSeam(object):
     def build_seam_edge(self, npts=None):
         #Theta nodes
         if npts is None:
-            npts = self.theta_nodes
+            npts = self.shape.theta_nodes
 
         #Get polar edge
         edge = quad.seam_polar_edge(self.shape.outline.func, npts)

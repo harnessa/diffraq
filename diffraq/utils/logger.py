@@ -149,15 +149,23 @@ class Logger(object):
 
     ###########################
 
-    def save_pupil_field(self, pupil, grid_pts):
+    def save_pupil_field(self, pupil, grid_pts, vec_pupil, vec_comps):
         #Return immediately if not saving
         if not self.do_save:
             return
+
+        #Are we polarized?
+        is_polarized = vec_pupil is not None
 
         #Save to HDF5
         with h5py.File(self.filename('pupil','h5'), 'w') as f:
             f.create_dataset('field', data=pupil)
             f.create_dataset('grid_pts', data=grid_pts)
+            #Save vector pupil
+            f.create_dataset('is_polarized', data=is_polarized)
+            if is_polarized:
+                f.create_dataset('vector_field', data=vec_pupil)
+                f.create_dataset('vector_comps', data=vec_comps)
 
     ###########################
 
@@ -205,8 +213,14 @@ class Logger(object):
         with h5py.File(filename, 'r') as f:
             pupil = f['field'][()]
             grid_pts = f['grid_pts'][()]
+            is_polarized = f['is_polarized'][()]
+            if is_polarized:
+                vec_pupil = f['vector_field'][()]
+                vec_comps = f['vector_comps'][()]
+            else:
+                vec_pupil, vec_comps = None, None
 
-        return pupil, grid_pts
+        return pupil, grid_pts, vec_pupil, vec_comps
 
     ###########################
 

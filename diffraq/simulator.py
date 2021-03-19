@@ -46,6 +46,12 @@ class Simulator(object):
         #Occulter
         self.occulter = diffraq.geometry.Occulter(self, shapes)
 
+        #Braunbek seam for vector calculation
+        if self.do_run_vector:
+            self.vector = diffraq.polarization.VectorSeam(self, self.occulter.shapes)
+        else:
+            self.vector = None
+
         #Open flag
         self.shop_is_open = False
 
@@ -91,15 +97,16 @@ class Simulator(object):
         if not self.free_on_end:
             return
 
-        #Names
-        trash_dict = {self:['pupil', 'image'], self.occulter:['xq', 'yq', 'wq']}
+        #Delete trash
+        trash_list = ['pupil' 'image', 'vec_pupil']
+        for att in trash_list:
+            if hasattr(self, att):
+                delattr(self, att)
 
-        #Loop through objects and attributes and delete
-        for obj, att_list in trash_dict.items():
-            for att in att_list:
-                #Delete if object has attribute
-                if hasattr(obj, att):
-                    delattr(obj, att)
+        #Cleanup children
+        self.occulter.clean_up()
+        if self.vector is not None:
+            self.vector.clean_up()
 
 ############################################
 ############################################
@@ -141,7 +148,7 @@ class Simulator(object):
         self.pupil, grid_pts = self.calc_pupil_field()
 
         #Save pupil field
-        self.logger.save_pupil_field(self.pupil, grid_pts)
+        self.logger.save_pupil_field(self.pupil, grid_pts, self.vec_pupil, self.vec_comps)
 
     ###########################
 
@@ -155,7 +162,8 @@ class Simulator(object):
             return False
 
         #Load pupil
-        self.pupil, grid_pts = self.logger.load_pupil_field()
+        self.pupil, grid_pts, self.vec_pupil, self.vec_comps = \
+            self.logger.load_pupil_field()
 
         #Return True
         return True
@@ -168,25 +176,34 @@ class Simulator(object):
         grid_pts = diffraq.utils.image_util.get_grid_points(self.num_pts, self.tel_diameter)
 
         #Run scalar diffraction calculation over the occulter
-        pupil = self.diffraction_calculation(self.occulter, grid_pts)
+        pupil = self.diffraction_calculation(grid_pts)
 
         #If vector calculation, calculate diffraction over Braunbek seam
         if self.do_run_vector:
-            #Run calculation
-            pupil_seam = self.diffraction_calculation(self.occulter.vector, grid_pts)
+            #Run calculation (Save, but don't return)
+            self.vec_pupil = self.vector_diffraction_calculation(grid_pts)
 
-            #Add to extra dimension of pupil
+            #Get incident polarization components
+            self.vec_comps = np.array([self.vector.Ex_comp, self.vector.Ey_comp])
 
-            breakpoint()
+        else:
+            self.vec_pupil, self.vec_comps = None, None
 
         return pupil, grid_pts
 
-    def diffraction_calculation(self, domain, grid_pts):
-        """Calculate the diffraction of the supplied domain:
-            quadrature x+y and quadrature weights, over the supplied grid. """
+############################################
+############################################
+
+############################################
+####	Diffraction Calculations  ####
+############################################
+
+    def diffraction_calculation(self, grid_pts):
+        """Calculate the scalar diffraction of the occulter's quadrature x+y and
+            quadrature weights, over the supplied grid. """
 
         #Build Area Quadrature
-        domain.build_quadrature()
+        self.occulter.build_quadrature()
 
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
@@ -199,15 +216,51 @@ class Simulator(object):
             lamz0 = self.waves[iw] * self.z0
 
             #Calculate diffraction
-            uu = diffraq.diffraction.diffract_grid(domain.xq, domain.yq, \
-                domain.wq, lamzz, grid_pts, self.fft_tol, \
-                    is_babinet=domain.is_babinet, lamz0=lamz0)
+            uu = diffraq.diffraction.diffract_grid(self.occulter.xq, self.occulter.yq, \
+                self.occulter.wq, lamzz, grid_pts, self.fft_tol, \
+                is_babinet=self.occulter.is_babinet, lamz0=lamz0)
 
             #Multiply by plane wave
             uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
 
             #Store
             pupil[iw] = uu
+
+        return pupil
+
+    def vector_diffraction_calculation(self, grid_pts):
+        """Calculate the scalar diffraction of the vector seam's quadrature x+y,
+            quadrature weights, and additive vector field, over the supplied grid. """
+
+        #Build Area Quadrature
+        self.vector.build_quadrature()
+
+        #Create empty pupil field array
+        pupil = np.empty((len(self.waves), 2, self.num_pts, self.num_pts)) + 0j
+
+        #Run diffraction calculation over wavelength
+        for iw in range(len(self.waves)):
+
+            #lambda * z
+            lamzz = self.waves[iw] * self.zz
+            lamz0 = self.waves[iw] * self.z0
+
+            #Loop over horizontal and vertical polarizations
+            for ip in range(2):
+
+                #Build quadrature weights * incident field
+                wu0 = self.vector.wq * self.vector.vec_UU[iw,ip]
+
+                #Calculate diffraction
+                uu = diffraq.diffraction.diffract_grid(self.vector.xq, self.vector.yq, \
+                    wu0, lamzz, grid_pts, self.fft_tol, \
+                    is_babinet=False, lamz0=lamz0)
+
+                #Multiply by plane wave
+                uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+
+                #Store
+                pupil[iw,ip] = uu
 
         return pupil
 
@@ -226,6 +279,7 @@ class Simulator(object):
         #Load focuser child
         self.load_focuser()
 
+        breakpoint()
         #Calculate image
         self.image, grid_pts = self.focuser.calculate_image(self.pupil)
 

@@ -11,7 +11,8 @@ Description: __init__ package for the UTILS module.
 
 """
 
-from diffraq.utils.default_parameters import def_sim_params, def_alz_params
+from diffraq.utils.default_parameters import def_sim_params, def_shape_params, \
+    def_screen_params, def_alz_params 
 from diffraq.utils.logger import Logger
 import diffraq.utils.image_util
 import diffraq.utils.misc_util
