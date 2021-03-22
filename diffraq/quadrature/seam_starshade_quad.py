@@ -55,23 +55,23 @@ def seam_starshade_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
     wi = (r1 - r0) * wr * pr
 
     #thetas
-    tt = np.tile((np.pi/num_pet) * Aval * pw, (1, num_pet)) + \
+    tt = np.tile((np.pi/num_pet) * (Aval + pw*seam_width), (1, num_pet)) + \
          np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), n)
 
-    #Add Petal nodes
-    xq = np.concatenate(( xq, (pr * np.cos(tt)).ravel() ))
-    yq = np.concatenate(( yq, (pr * np.sin(tt)).ravel() ))
+    #Build nodes
+    xq = (pr * np.cos(tt)).ravel()
+    yq = (pr * np.sin(tt)).ravel()
 
     #Cleanup
-    del pr, wr, tt
+    # del pr, wr, tt
 
-    #Add Petal weights (rdr * dtheta)
-    wq = np.concatenate(( wq, (np.pi/num_pet) * \
-        np.tile(wi * Aval * ww, (1, num_pet)).ravel() ))
+    #Build Petal weights (rdr * dtheta)
+    wq = (np.pi/num_pet) * np.tile(wi * Aval * ww, (1, num_pet)).ravel()
 
     import matplotlib.pyplot as plt;plt.ion()
+    plt.scatter(xq, yq, c=wq, s=1)
     breakpoint()
-    
+
     #Cleanup
     del pw, ww, Aval, wi
 

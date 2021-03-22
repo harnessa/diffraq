@@ -45,6 +45,3 @@ with open(f'{xtra_dir}/{out_file}.dat', 'w') as f:
         for j in range(len(data[i])):
             f.write(f'{data[i][j][0]}, {data[i][j][1]}\n')
         f.write('**,**\n')
-
-
-# breakpoint()

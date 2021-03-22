@@ -12,6 +12,7 @@ Description: Base class of an occulter shape, used to generate quadrature points
 """
 
 import numpy as np
+from diffraq.utils import misc_util
 import diffraq.geometry as geometry
 from diffraq.utils import def_shape_params
 from scipy.optimize import fmin, newton
@@ -23,12 +24,7 @@ class Shape(object):
         self.parent = parent
 
         #Set Default parameters
-        for k,v in {**def_shape_params, **kwargs}.items():
-            if k == 'kind':
-                #Don't set kind which would override class name
-                continue
-            #Set attribute to self
-            setattr(self, k, v)
+        misc_util.set_default_params(self, {**kwargs}, def_shape_params, skip_keys=['kind'])
 
         #Set nodes if fraction
         if self.radial_nodes is None:
@@ -200,6 +196,18 @@ class Shape(object):
         return data
 
     def sort_edge_points(self, edge, num_petals):
+
+        #FIXME: get better sort for lab occulter
+
+        #Get angles
+        angles = np.arctan2(edge[:,1] - edge[:,1].mean(), \
+            edge[:,0] - edge[:,0].mean()) % (2.*np.pi)
+
+        #Sort by angles
+        edge = edge[np.argsort(angles)]
+
+        return edge
+
         #Sort by angle across petals
         new_edge = np.empty((0,2))
         for i in range(num_petals):

@@ -65,23 +65,24 @@ class InterpOutline(object):
         normal = cart_diff[:,::-1]
         normal /= np.hypot(*normal.T)[:,None]
 
-        #Get proper etch direction
-        etch = etch * np.array([1, -1])
+        #Build new data (multiply by -1 to get proper etch direction)
+        new_cart_func = cart_func + etch*normal*np.array([1,-1])
 
-        #Build new data
-        new_cart_func = cart_func + etch*normal
+        #Turn back to coordinates (parameter and function value)
+        new_para, new_func = self.parent.etch_inv_cart(new_cart_func)
 
-        #Turn back to coordinates
-        new_func = self.parent.etch_inv_cart(new_cart_func)
+        #Sort by parameter
+        new_func = new_func[np.argsort(new_para)]
+        new_para = new_para[np.argsort(new_para)]
 
         #Reinterpolate new function
-        self.func = InterpolatedUnivariateSpline(self._data[:,0], new_func, k=self.k, ext=3)
+        self.func = InterpolatedUnivariateSpline(new_para, new_func, k=self.k, ext=3)
 
         #Derivatives are easy
         self.diff = self.func.derivative(1)
 
         #Cleanup
-        del func, diff, cart_func, cart_diff, normal, etch, new_cart_func, new_func
+        del func, diff, cart_func, cart_diff, normal, etch, new_cart_func, new_para, new_func
 
 ############################################
 ############################################

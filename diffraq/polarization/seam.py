@@ -42,15 +42,8 @@ class Seam(object):
         #Build normal angle
         nq = (np.ones_like(prim_nodes) * np.arctan2(diff[:,0], -diff[:,1])[:,None]).ravel()
 
-
-        import matplotlib.pyplot as plt;plt.ion()
-        # print(self.shape.is_opaque)
-        # #FIXME: cartesian has opposite sign on normal than polar
-        breakpoint()
-
         #Flip sign of distance and rotate normal angle by pi if opaque
         if self.shape.is_opaque:
-            print('flip')
             dq *= -1
             nq += np.pi
 
@@ -67,14 +60,17 @@ class Seam(object):
 ############################################
 
     def get_quad_polar(self, seam_width):
-        #Calculate quadrature and get radial nodes and theta values
         return quad.seam_polar_quad(self.shape.outline.func, \
             self.shape.radial_nodes, self.shape.theta_nodes, seam_width)
 
     def get_quad_cartesian(self, seam_width):
-        #Calculate quadrature and get radial nodes and theta values
         return quad.seam_cartesian_quad(self.shape.outline.func,
             self.shape.outline.diff, self.shape.radial_nodes, \
+            self.shape.theta_nodes, seam_width)
+
+    def get_quad_petal(self, seam_width):
+        return quad.seam_starshade_quad(self.shape.outline.func, self.shape.num_petals, \
+            self.shape.min_radius, self.shape.max_radius, self.shape.radial_nodes, \
             self.shape.theta_nodes, seam_width)
 
 ############################################

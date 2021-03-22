@@ -19,3 +19,4 @@ from diffraq.quadrature.starshade_quad import starshade_quad, starshade_edge
 #Seams
 from diffraq.quadrature.seam_polar_quad import seam_polar_quad, seam_polar_edge
 from diffraq.quadrature.seam_cartesian_quad import seam_cartesian_quad, seam_cartesian_edge
+from diffraq.quadrature.seam_starshade_quad import seam_starshade_quad, seam_starshade_edge

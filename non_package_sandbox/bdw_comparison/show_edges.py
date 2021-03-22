@@ -7,12 +7,18 @@ def get_dif_edge(apod):
     params = {
         'radial_nodes':     1000,
         'theta_nodes':      20,
-        'occulter_config':   f'{diffraq.occulter_dir}/{apod}.cfg',
+        # 'occulter_config':   f'{diffraq.occulter_dir}/{apod}.cfg',
     }
 
+    num_pet = 12
+    etch = 1e-6
+    apod_dir = '/home/aharness/repos/diffraq/External_Data/Apodization_Profiles'
+    shape = {'kind':'starshade', 'is_opaque':False, 'num_petals':num_pet, \
+        'edge_file':f'{apod_dir}/{apod}.txt', 'has_center':False, 'etch_error':etch}
+
+
     #Load simulator + build edge
-    sim = diffraq.Simulator(params)
-    # sim.occulter.build_quadrature()
+    sim = diffraq.Simulator(params, shape)
     sim.occulter.build_edge()
 
     #Get edge
@@ -23,7 +29,7 @@ def get_dif_edge(apod):
 
     return edge, sim
 
-bdw_ext = ['1x' ,'new'][0]
+bdw_ext = '_etch_p1'
 def get_bdw_edge(apod):
     edges = np.genfromtxt(f'./xtras/{apod}_{bdw_ext}.dat', delimiter=',', comments='%')
     edges = edges[~np.isnan(edges[:,0])]
@@ -32,7 +38,7 @@ def get_bdw_edge(apod):
                                  # [-np.sin(angle), np.cos(angle)]]) )
     return edges
 
-apod = 'M12P2'
+apod = 'bb_2017'
 
 dedg, sim = get_dif_edge(apod)
 bedg = get_bdw_edge(apod)
@@ -40,8 +46,8 @@ bedg = get_bdw_edge(apod)
 plt.plot(*bedg.T, 'x-')
 plt.plot(*dedg.T, '+--')
 
-sim.occulter.build_quadrature()
-plt.plot(sim.occulter.xq, sim.occulter.yq, '*')
+# sim.occulter.build_quadrature()
+# plt.plot(sim.occulter.xq, sim.occulter.yq, '*')
 
 if apod.startswith('M12P6'):
 

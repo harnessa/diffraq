@@ -119,7 +119,10 @@ class PetalShape(Shape):
         return ans
 
     def etch_inv_cart(self, xy):
-        return np.arctan2(*xy[:,::-1].T) * self.num_petals/np.pi
+        #Inverse to go from cartesian to parameter, function
+        rad = np.hypot(*xy.T)
+        the = np.arctan2(*xy[:,::-1].T) * self.num_petals/np.pi
+        return rad, the
 
 ############################################
 ############################################

@@ -61,7 +61,7 @@ def get_filename(dir_name,base_name,ext,file_type):
 #####   Parameter Functions    #####
 ############################################
 
-def set_default_params(parent, params, def_pms):
+def set_default_params(parent, params, def_pms, skip_keys=[]):
     bad_str = color_string('!*!', bad_color)
 
     #Get difference in keywords
@@ -79,6 +79,10 @@ def set_default_params(parent, params, def_pms):
 
     #Set parameters
     for k,v in use_params.items():
+        #Skip over some keys
+        if k in skip_keys:
+            continue
+        #Set as attribute to parent
         setattr(parent, k, v)
 
 ############################################

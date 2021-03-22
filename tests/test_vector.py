@@ -25,15 +25,13 @@ class Test_Vector(object):
     z0 = 1e19
     tel_diameter = 2.4
 
-    seam_width = 1e-1
+    seam_width = 0.1
     circle_rad = 1
 
     def run_all_tests(self):
-        funs = ['polar', 'cartesian', 'petal'][1:]
-        tsts = ['quadrature', 'diffraction']
+        funs = ['polar', 'cartesian']
         for f in funs:
-            for t in tsts:
-                getattr(self, f'test_{f}_{t}')()
+            getattr(self, f'test_{f}')()
 
 ############################################
 ############################################
@@ -45,7 +43,7 @@ class Test_Vector(object):
 
         #Simulation parameters
         params = {'radial_nodes':100, 'theta_nodes':100, 'do_run_vector':True,\
-            'seam_width':self.seam_width, 'maxwell_func':maxwell_func}
+            'seam_width':self.seam_width, 'maxwell_func':maxwell_func, }
 
         #Loop over opacity
         for is_opaque in [False, True]:
@@ -73,22 +71,14 @@ class Test_Vector(object):
                     (self.circle_rad - self.seam_width)**2)
 
             #Compare quadrature area
-            # assert(np.isclose(area, tru_area))
-            print(is_opaque, area, tru_area)
+            assert(np.isclose(area, tru_area))
 
             #Build quadrature
             sim.vector.build_quadrature()
 
             #Average field sould be 1/2 (seem is half on screen, half off)
             avg_fld = np.hypot(*sim.vector.vec_UU.real.mean((2,0)))
-
-            # assert(np.isclose(avg_fld, 0.5))
-
-            import matplotlib.pyplot as plt;plt.ion()
-            plt.figure()
-            plt.colorbar(plt.scatter(xs, ys, c=np.sign(ds), s=1))
-
-            breakpoint()
+            assert(np.isclose(avg_fld, 0.5))
 
         #Cleanup
         sim.clean_up()
@@ -119,7 +109,7 @@ class Test_Vector(object):
             }
 
             utru = None
-            for ang in [0, 186]:
+            for ang in [0, 136]:
 
                 #Simulated shapes
                 shapes = {'kind':kind, 'edge_func':edge_func, \
@@ -151,14 +141,7 @@ class Test_Vector(object):
                     utru = np.abs(utru)**2
 
                 #Assert they match
-                # assert(np.abs(pupil - utru).max() < self.tol)
-
-                import matplotlib.pyplot as plt;plt.ion()
-                plt.figure()
-                plt.plot(pupil)
-                plt.plot(utru, '--')
-                breakpoint()
-
+                assert(np.abs(pupil - utru).max() < self.tol)
 
         #Cleanup
         sim.clean_up()
@@ -167,31 +150,31 @@ class Test_Vector(object):
 ############################################
 ############################################
 
-    def test_polar_quadrature(self):
+    def test_polar(self):
         polar_func = lambda t: self.circle_rad * np.ones_like(t)
         polar_diff = lambda t: np.zeros_like(t)
 
         self.do_test_quadrature('polar', polar_func, polar_diff)
-
-    def test_polar_diffraction(self):
-        polar_func = lambda t: self.circle_rad * np.ones_like(t)
-        polar_diff = lambda t: np.zeros_like(t)
-
         self.do_test_diffraction('polar', polar_func, polar_diff)
 
     ############################################
 
-    def test_cartesian_quadrature(self):
+    def test_cartesian(self):
         cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
         cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
 
         self.do_test_quadrature('cartesian', cart_func, cart_diff)
+        self.do_test_diffraction('cartesian', cart_func, cart_diff)
 
-    def test_cartesian_diffraction(self):
+    ############################################
+
+    def test_petal(self):
         cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
         cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
 
+        self.do_test_quadrature('cartesian', cart_func, cart_diff)
         self.do_test_diffraction('cartesian', cart_func, cart_diff)
+
 
 ############################################
 ############################################

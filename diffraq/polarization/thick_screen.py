@@ -86,49 +86,41 @@ class ThickScreen(object):
 
     def load_sommerfeld(self, waves):
 
-        breakpoint()
         def F_func(s):
             S,C = fresnel(np.sqrt(2./np.pi)*s)
             return np.sqrt(np.pi/2.)*( 0.5*(1. + 1j) - (C + 1j*S))
 
         G_func = lambda s: np.exp(-1j*s**2.)*F_func(s)
 
-        def Uz(rho,phi,kk,is_E=True):
-            phi0 = np.pi/2.
-            uu = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi - phi0))
-            vv = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi + phi0))
+        def Uz(rho, phi, kk, EH_sign):
+            uu = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi - np.pi/2.))
+            vv = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi + np.pi/2.))
             pre = np.exp(-1j*np.pi/4.) / np.sqrt(np.pi) * np.exp(1j*kk*rho)
-            return pre * (G_func(uu) - [-1,1][is_E]*G_func(vv))
+            return pre * (G_func(uu) - EH_sign*G_func(vv))
 
-        #Edge coords
-        kk = 2.*np.pi/self.parent.world.waves[0]
-        npts = 2000
-        xx = np.linspace(-self.BL_width, self.BL_width, npts)
-        phiE = np.ones(npts)*np.pi
-        phiH = np.ones(npts)*np.pi
-        phiE[xx < 0.] = 0.
-        phiH[xx < 0.] = 2.*np.pi
-        rho = np.abs(xx)
-        xx = rho*np.cos(phiE+np.pi)
+        def sommerfeld(xx, wave, EH_sign):
+            #Incident field
+            U0 = np.heaviside(xx, 1)
 
-        # #Need to convert distance into pixel units
-        # xx *= self.dp
-        #
-        # #Get fields
-        # sfld = Uz(rho, phiE, kk, is_E=True)
-        # pfld = Uz(rho, phiH, kk, is_E=False)
-        #
-        # #Subtract incident field
-        # sfld -= np.heaviside(xx, 1)
-        # pfld -= np.heaviside(xx, 1)
-        #
-        # #Store data
-        # self.edge_xx_s = xx.copy()
-        # self.edge_xx_p = xx.copy()
-        # self.edge_fld_s = sfld
-        # self.edge_fld_p = pfld
+            #Polar coordinates
+            rho = abs(xx)
+            phi = (1 + EH_sign*(U0 - 1))*np.pi
 
-        breakpoint()
+            #Wavelength
+            kk = 2.*np.pi/wave
+
+            #Get field solution (minus incident field)
+            uu = Uz(rho, phi, kk, EH_sign) - U0
+
+            return uu
+
+        #Build Sommerfeld solution for different wavelengths
+        vfunc_s, vfunc_p = [], []
+        for wav in waves:
+            vfunc_s.append(lambda d: sommerfeld(d, wav,  1))
+            vfunc_p.append(lambda d: sommerfeld(d, wav, -1))
+
+        return vfunc_s, vfunc_p
 
 ############################################
 ############################################
@@ -138,6 +130,7 @@ class ThickScreen(object):
 ############################################
 
     def load_vector_file(self):
+        #Load data from file and build interpolation function
 
         breakpoint()
 

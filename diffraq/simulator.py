@@ -279,9 +279,16 @@ class Simulator(object):
         #Load focuser child
         self.load_focuser()
 
-        breakpoint()
-        #Calculate image
-        self.image, grid_pts = self.focuser.calculate_image(self.pupil)
+        #If vector calculation, calculate image for each polarization component
+        if self.do_run_vector:
+
+            pupil = self.vector.build_total_field(self.pupil, self.vec_pupil, self.vec_comps)
+            
+            breakpoint()
+
+        else:
+            #Calculate scalar image
+            self.image, grid_pts = self.focuser.calculate_image(self.pupil)
 
         #Save image
         self.logger.save_image_field(self.image, grid_pts)

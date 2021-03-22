@@ -90,7 +90,8 @@ class Analyzer(object):
             return
 
         #Load pupil data
-        self.pupil, self.pupil_xx = self.sim.logger.load_pupil_field()
+        self.pupil, self.pupil_xx, self.vec_pupil, self.vec_comps = \
+            self.sim.logger.load_pupil_field()
 
         #Normalize with calibration data
         # self.calibrate_pupil()
