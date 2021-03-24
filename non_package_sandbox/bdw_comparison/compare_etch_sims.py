@@ -5,8 +5,8 @@ import diffraq
 
 session = 'etch'
 
-bdw_ext = 'p1'
-dif_ext = 'p1'
+bdw_ext = 'n1'
+dif_ext = 'n1'
 
 bdw_run = f'bdw__etch_{bdw_ext}'
 dif_run = f'diffraq__etch_{dif_ext}'

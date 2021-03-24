@@ -126,7 +126,8 @@ class Test_Vector(object):
                 scl_pupil, grid_pts = sim.calc_pupil_field()
 
                 #Build total field
-                pupil = sim.vector.build_total_field(scl_pupil, sim.vec_pupil, sim.vec_comps)
+                pupil = sim.vector.build_polarized_field(scl_pupil, sim.vec_pupil, \
+                    sim.vec_comps, 0)
 
                 #Turn into unpolarized intensity (no analyzer)
                 pupil = np.abs(pupil[0][0])**2 + np.abs(pupil[0][1])**2

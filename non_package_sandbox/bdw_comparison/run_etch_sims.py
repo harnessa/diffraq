@@ -11,7 +11,7 @@ num_pet = 12
 focal_length = 0.498
 
 apod = 'bb_2017'
-etch = -1e-6
+etch = 1e-6
 
 session = 'etch'
 save_dir_base = f'{diffraq.results_dir}/bdw_compare_new'

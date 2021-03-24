@@ -174,10 +174,14 @@ class Logger(object):
         if not self.do_save:
             return
 
+        #Are we polarized
+        is_polarized = image.ndim == 4
+
         #Save to HDF5
         with h5py.File(self.filename('image','h5'), 'w') as f:
             f.create_dataset('intensity', data=image)
             f.create_dataset('grid_pts', data=grid_pts)
+            f.create_dataset('is_polarized', data=is_polarized)
 
 ############################################
 ############################################
@@ -229,8 +233,9 @@ class Logger(object):
         with h5py.File(self.filename('image','h5'), 'r') as f:
             image = f['intensity'][()]
             grid_pts = f['grid_pts'][()]
+            is_polarized = f['is_polarized'][()]
 
-        return image, grid_pts
+        return image, grid_pts, is_polarized
 
 ############################################
 ############################################

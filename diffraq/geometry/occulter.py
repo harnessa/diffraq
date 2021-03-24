@@ -34,7 +34,12 @@ class Occulter(object):
         #If pointed to, get shapes from occulter file (takes presedence over given shapes list)
         if self.sim.occulter_config is not None:
             mod = imp.load_source('mask', self.sim.occulter_config)
+            #Load shape
             shapes = mod.shapes
+            #Overwrite finite parameter
+            if hasattr(mod, 'is_finite'):
+                self.sim.is_finite = mod.is_finite
+
 
         #Turn into list
         if not isinstance(shapes, list):

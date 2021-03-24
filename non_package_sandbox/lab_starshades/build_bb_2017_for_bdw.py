@@ -5,11 +5,11 @@ from utilities import util
 
 num_pet = 12
 max_apod = 0.9
-etch = 1e-6
+etch = -1e-6
 apod_dir = '/home/aharness/repos/diffraq/External_Data/Apodization_Profiles'
 
 sgn = {1:'p', -1:'n'}[np.sign(etch)]
-ext = f'__newetch_{sgn}{abs(etch*1e6):.0f}'
+ext = f'__etch_{sgn}{abs(etch*1e6):.0f}'
 out_file = f'bb_2017{ext}'
 
 def rot_mat(angle):
@@ -26,10 +26,8 @@ apod *= np.pi/num_pet
 xy = rads[:,None] * np.stack((np.cos(apod), np.sin(apod)), 1)
 
 #Get normals
-# normal = util.compute_derivative(xy)
-# normal = np.vstack((-normal[:,1], normal[:,0])).T
-# normal /= np.hypot(*normal.T)[:,None]
-normal = (np.roll(xy, 1, axis=0) - xy)[:,::-1] * np.array([-1,1])
+normal = util.compute_derivative(xy)
+normal = np.vstack((-normal[:,1], normal[:,0])).T
 normal /= np.hypot(*normal.T)[:,None]
 
 #Add etch

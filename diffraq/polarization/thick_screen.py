@@ -13,8 +13,8 @@ Description: Class representing the thick screen edge of an occulter/aperture
 """
 
 import numpy as np
-from diffraq.utils import def_screen_params
 from scipy.special import fresnel
+import h5py
 
 class ThickScreen(object):
 

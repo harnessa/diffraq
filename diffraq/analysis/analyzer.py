@@ -74,8 +74,8 @@ class Analyzer(object):
         #Loop through attributes and delete
         for att in att_list:
             #Delete if self has attribute
-            if hasattr(obj, att):
-                delattr(obj, att)
+            if hasattr(self, att):
+                delattr(self, att)
 
 ############################################
 ############################################
@@ -106,7 +106,13 @@ class Analyzer(object):
             return
 
         #Load image data
-        self.image, self.image_xx = self.sim.logger.load_image_field()
+        image, self.image_xx, is_polarized = self.sim.logger.load_image_field()
+
+        #If polarized, apply camera analyzer
+        if is_polarized:
+            self.image = self.apply_cam_analyzer(image)
+        else:
+            self.image = image
 
         #Normalize with calibration data
         self.calibrate_image()
@@ -138,6 +144,10 @@ class Analyzer(object):
         #
         # #Convert to contrast by dividing by blocked apodization area
         # self.image /= self.max_apod**2.
+
+        #Take first wavelength only
+        self.image = self.image[0]
+
         return
 
 ############################################
@@ -153,6 +163,24 @@ class Analyzer(object):
         plt.imshow(self.image[0])
         print(self.image[0].max())
         breakpoint()
+
+############################################
+############################################
+
+############################################
+####	Polarization ####
+############################################
+
+    def apply_cam_analyzer(self, image):
+        #Unpolarized
+        if self.cam_analyzer is None:
+            image = image.sum(1)
+        elif self.cam_analyzer.startswith('p'):
+            image = image[:,0]
+        elif self.cam_analyzer.startswith('o'):
+            image = image[:,1]
+
+        return image
 
 ############################################
 ############################################

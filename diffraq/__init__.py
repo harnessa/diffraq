@@ -33,6 +33,7 @@ int_data_dir = f"{pkg_home_dir}/Internal_Data"
 apod_dir = f"{ext_data_dir}/Apodization_Profiles"
 loci_dir = f"{ext_data_dir}/Shape_Loci"
 occulter_dir = f"{ext_data_dir}/Occulter_Configurations"
+vector_dir = f"{ext_data_dir}/Vector_Edges"
 
 #Mine only
 results_dir = "/home/aharness/Research/Optics_Modeling/Diffraq_Results"

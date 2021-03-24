@@ -282,9 +282,14 @@ class Simulator(object):
         #If vector calculation, calculate image for each polarization component
         if self.do_run_vector:
 
-            pupil = self.vector.build_total_field(self.pupil, self.vec_pupil, self.vec_comps)
-            
-            breakpoint()
+            #Build total field for each polarization component
+            pupil = self.vector.build_polarized_field(self.pupil, self.vec_pupil, \
+                self.vec_comps, self.analyzer_angle)
+
+            #Calculate image for each polarization component
+            self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
+            for i in range(2):
+                self.image[:,i], grid_pts = self.focuser.calculate_image(pupil[:,i])
 
         else:
             #Calculate scalar image

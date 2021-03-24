@@ -170,16 +170,31 @@ class VectorSim(object):
 ############################################
 
 ############################################
-#####  Building Total Field #####
+#####  Building Total Polarized Field #####
 ############################################
 
-    def build_total_field(self, scl_pupil, vec_pupil, vec_comps):
+    def build_polarized_field(self, scl_pupil, vec_pupil, vec_comps, analyzer_angle):
         #Add scalar field to vector field to create total field in horiz./vert. direction
         pupil = vec_pupil.copy()
         for i in range(len(vec_comps)):
             pupil[:,i] += scl_pupil * vec_comps[i]
 
-        return pupil
+        #Convert to radians
+        ang = np.radians(analyzer_angle)
+
+        #Apply analyzer angle to get primary and orthogonal polarization fields
+        U_prim =  pupil[:,0]*np.cos(ang) + pupil[:,1]*np.sin(ang)
+        U_orth = -pupil[:,0]*np.sin(ang) + pupil[:,1]*np.cos(ang)
+
+        #Copy over
+        new_pupil = np.empty_like(pupil)
+        new_pupil[:,0] = U_prim.copy()
+        new_pupil[:,1] = U_orth.copy()
+
+        #Cleanup
+        del pupil, U_prim, U_orth
+
+        return new_pupil
 
 ############################################
 ############################################
