@@ -56,6 +56,7 @@ def seam_polar_quad(g, m, n, seam_width):
     #Cleanup
     del wr, gtpr
 
+    #Return nodes along primary axis (radius) and values along orthogonal axis (theta)
     return xq, yq, wq, pr, pt
 
 ############################################

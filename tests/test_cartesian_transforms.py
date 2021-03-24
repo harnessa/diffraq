@@ -79,12 +79,15 @@ class Test_Cart_Transforms(object):
         petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
         petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-        petal_func_p = lambda r: petal_func(r) * np.pi/num_pet
-        petal_diff_p = lambda r: petal_diff(r) * np.pi/num_pet
-        cart_func = lambda r: r * np.hstack((np.cos(petal_func_p(r)), np.sin(petal_func_p(r))))
+        #As angle function, not apodization
+        petal_func_t = lambda r: petal_func(r) * np.pi/num_pet
+        petal_diff_t = lambda r: petal_diff(r) * np.pi/num_pet
+
+        #Cartesian
+        cart_func = lambda r: r * np.hstack((np.cos(petal_func_t(r)), np.sin(petal_func_t(r))))
         cart_diff = lambda r: np.hstack(( \
-            np.cos(petal_func_p(r)) - r*np.sin(petal_func_p(r))*petal_diff_p(r),
-            np.sin(petal_func_p(r)) + r*np.cos(petal_func_p(r))*petal_diff_p(r) ))
+            np.cos(petal_func_t(r)) - r*np.sin(petal_func_t(r))*petal_diff_t(r),
+            np.sin(petal_func_t(r)) + r*np.cos(petal_func_t(r))*petal_diff_t(r) ))
 
         #Build sim
         sim = diffraq.Simulator()
@@ -137,12 +140,15 @@ class Test_Cart_Transforms(object):
         petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
         petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-        petal_func_p = lambda r: petal_func(r) * np.pi/num_pet
-        petal_diff_p = lambda r: petal_diff(r) * np.pi/num_pet
-        cart_rfunc = lambda r: r * np.hstack((np.cos(petal_func_p(r)), np.sin(petal_func_p(r))))
+        #As angle function, not apodization
+        petal_func_t = lambda r: petal_func(r) * np.pi/num_pet
+        petal_diff_t = lambda r: petal_diff(r) * np.pi/num_pet
+
+        #Cartesian
+        cart_rfunc = lambda r: r * np.hstack((np.cos(petal_func_t(r)), np.sin(petal_func_t(r))))
         cart_rdiff = lambda r: np.hstack(( \
-            np.cos(petal_func_p(r)) - r*np.sin(petal_func_p(r))*petal_diff_p(r),
-            np.sin(petal_func_p(r)) + r*np.cos(petal_func_p(r))*petal_diff_p(r) ))
+            np.cos(petal_func_t(r)) - r*np.sin(petal_func_t(r))*petal_diff_t(r),
+            np.sin(petal_func_t(r)) + r*np.cos(petal_func_t(r))*petal_diff_t(r) ))
 
         #Build sim
         sim = diffraq.Simulator()

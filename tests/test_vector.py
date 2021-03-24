@@ -29,7 +29,7 @@ class Test_Vector(object):
     circle_rad = 1
 
     def run_all_tests(self):
-        funs = ['polar', 'cartesian']
+        funs = ['polar', 'cartesian', 'petal']
         for f in funs:
             getattr(self, f'test_{f}')()
 
@@ -42,8 +42,9 @@ class Test_Vector(object):
         maxwell_func = [lambda d, w: np.heaviside(d, 1)+0j for i in range(2)]
 
         #Simulation parameters
-        params = {'radial_nodes':100, 'theta_nodes':100, 'do_run_vector':True,\
-            'seam_width':self.seam_width, 'maxwell_func':maxwell_func, }
+        params = {'radial_nodes':self.radial_nodes, 'theta_nodes':self.theta_nodes, \
+            'do_run_vector':True, 'seam_width':self.seam_width, \
+            'maxwell_func':maxwell_func, }
 
         #Loop over opacity
         for is_opaque in [False, True]:
@@ -166,15 +167,72 @@ class Test_Vector(object):
         self.do_test_quadrature('cartesian', cart_func, cart_diff)
         self.do_test_diffraction('cartesian', cart_func, cart_diff)
 
-    ############################################
+############################################
+############################################
 
     def test_petal(self):
-        cart_func = lambda t: self.circle_rad * np.hstack((np.cos(t), np.sin(t)))
-        cart_diff = lambda t: self.circle_rad * np.hstack((-np.sin(t), np.cos(t)))
+        #Test HG
+        r0, r1 = 11, 14
+        hga, hgb, hgn = 8,5, 6
+        num_pet = 12
+        petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
+        petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-        self.do_test_quadrature('cartesian', cart_func, cart_diff)
-        self.do_test_diffraction('cartesian', cart_func, cart_diff)
+        etch = 0.01
+        seam_width = 2*etch             #run larger than etch b/c not normal to edge
 
+        #Sim params
+        params = {
+            'radial_nodes':     self.radial_nodes,
+            'theta_nodes':      self.theta_nodes*2,
+            'num_pts':          self.num_pts,
+            'tel_diameter':     self.tel_diameter,
+            'zz':               self.zz,
+            'z0':               self.z0,
+            'skip_image':       True,
+            'seam_width':       seam_width,
+        }
+
+        #Build etched shape
+        etch_shape = {'kind':'petal', 'is_opaque':True, 'num_petals':num_pet, \
+            'min_radius':r0, 'max_radius':r1, 'etch_error':etch}
+        npts = self.radial_nodes * self.theta_nodes
+        rr = np.linspace(r0, r1, npts)[:,None]
+        etch_shape['edge_data'] = np.hstack((rr, petal_func(rr)))
+
+        #Build etch simulation
+        etch_sim = diffraq.Simulator(params, shapes=etch_shape)
+
+        #Get etched starshade area
+        etch_sim.occulter.build_quadrature()
+        etch_area = etch_sim.occulter.wq.sum()
+
+        #Build vector shape
+        vec_shape = etch_shape
+        vec_shape['etch_error'] = None
+
+        #Build vector sim
+        params['do_run_vector'] = True
+        vec_sim = diffraq.Simulator(params, shapes=vec_shape)
+
+        #Get vector starshade area
+        vec_sim.occulter.build_quadrature()
+        vec_area = vec_sim.occulter.wq.sum()
+
+        #Build polar seam
+        xs, ys, ws, ds, ns = \
+            vec_sim.vector.seams[0].build_seam_quadrature(seam_width)
+
+        #Build function that simulates overetch by truncating at certain distance normal to edge
+        #Doesn't match etch_error exactly b/c seam is not normal to edge, but normal to radius
+        area_func = lambda d: np.heaviside(-d, 1)*np.heaviside(etch+d,1)
+
+        #Get area of open seam (in aperture)
+        seam_area = (ws * area_func(ds)).sum()
+
+        #Compare areas
+        varea = vec_area + seam_area
+        assert(np.abs(varea - etch_area) < 1e-3)
 
 ############################################
 ############################################

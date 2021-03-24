@@ -68,6 +68,7 @@ def seam_cartesian_quad(fxy, dxy, m, n, seam_width):
     #Cleanup
     del wr, ft, dt, norm, nx, ny
 
+    #Return nodes along primary axis (radius) and values along orthogonal axis (theta)
     return xq, yq, wq, pr, pt
 
 ############################################
@@ -89,7 +90,7 @@ def seam_cartesian_edge(fxy, n, seam_width):
     """
 
     #Theta nodes
-    pt = 2.*np.pi/n * (np.arange(n) + 1)
+    pt = 2.*np.pi/n * (np.arange(n) + 1)[:,None]
 
     #Get function and derivative values
     edge = fxy(pt)

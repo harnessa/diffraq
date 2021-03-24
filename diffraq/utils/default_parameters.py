@@ -88,7 +88,7 @@ def_shape_params = {
 
     ### Shape Details ###
     'is_opaque':            False,      #Shape is opaque?
-    'num_petals':           16,         #Number of petals
+    'num_petals':           1,          #Number of petals
     'min_radius':           0,          #Minimum radius
     'max_radius':           12,         #Maximum radius
     'is_clocked':           False,      #Shape is clocked by half a petal (for petal/starshade only)

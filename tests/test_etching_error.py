@@ -156,11 +156,9 @@ class Test_Etching(object):
         for etch_sign in [-1, 1]:
 
             shape = {'kind':'petal', 'is_opaque':is_opaque, 'num_petals':num_pet, \
-                'edge_func':petal_func, 'edge_diff':petal_diff, 'min_radius':r0, 'max_radius':r1, \
-                'etch_error':etch*etch_sign}
+                'min_radius':r0, 'max_radius':r1, 'etch_error':etch*etch_sign}
 
             #Radii
-            npts = self.radial_nodes * self.theta_nodes
             npts = self.radial_nodes
             rr = np.linspace(r0, r1, npts)[:,None]
 
@@ -186,8 +184,7 @@ class Test_Etching(object):
                 mask = np.concatenate((mask, (truxy * np.array([1,-1])).dot(rot_mat(ang))))
                 mask = np.concatenate((mask, truxy.dot(rot_mat(ang))[::-1]))
 
-
-            shape['edge_data'] = np.hstack((rr, shape['edge_func'](rr)))
+            shape['edge_data'] = np.hstack((rr, petal_func(rr)))
 
             #Load simulator
             sim = diffraq.Simulator(params, shapes=shape)

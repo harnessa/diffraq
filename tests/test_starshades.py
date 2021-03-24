@@ -38,7 +38,7 @@ class Test_Starshades(object):
             'min_radius':rmin, 'max_radius':rmax, 'num_petals':num_petals}
 
         #Simulator parameters
-        params = {'radial_nodes':100, 'theta_nodes':100}
+        params = {'radial_nodes':100, 'theta_nodes':90}
         sim = diffraq.Simulator(params)
 
         #Build target

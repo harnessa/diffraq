@@ -78,7 +78,7 @@ def cartesian_edge(fxy, n):
     """
 
     #Theta nodes
-    pt = 2.*np.pi/n * (np.arange(n) + 1)
+    pt = 2.*np.pi/n * (np.arange(n) + 1)[:,None]
 
     #Boundary points
     return fxy(pt)

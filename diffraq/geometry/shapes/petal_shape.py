@@ -54,13 +54,15 @@ class PetalShape(Shape):
 ############################################
 
     #Parameter t has radius and petal number packed in it.
-    #Petal can be positive or negative, depending on if trailing or leading
+    #Petal can be positive or negative, depending on if trailing (+) or leading (-)
+    #Petals = [1, num_petals], but don't rotate at 1 position
 
     def unpack_param(self, t):
         r = t % self.param_code
         pet = t//self.param_code
-        pet_mul = np.pi/self.num_petals*(np.sign(pet)+(pet==0))
-        pet_add = 2*np.abs(pet)*np.pi/self.num_petals
+        pet = pet + (pet == 0)          #Don't allow to be zero (used without parameterization)
+        pet_mul = np.pi/self.num_petals*np.sign(pet)
+        pet_add = (np.abs(pet)-1)*2*np.pi/self.num_petals
         return r, pet, pet_mul, pet_add
 
     def pack_param(self, r, pet):
@@ -71,7 +73,7 @@ class PetalShape(Shape):
     def cart_func(self, t):
         r, pet, pet_mul, pet_add = self.unpack_param(t)
         func = self.outline.func(r)*pet_mul + pet_add
-        return r * np.hstack((np.cos(func), np.sin(func)))
+        return r * np.stack((np.cos(func), np.sin(func)), func.ndim).squeeze()
 
     def cart_diff(self, t):
         r, pet, pet_mul, pet_add = self.unpack_param(t)
@@ -79,10 +81,7 @@ class PetalShape(Shape):
         diff = self.outline.diff(r)*pet_mul
         cf = np.cos(func)
         sf = np.sin(func)
-        #Derivative has sign from if trailing or leading
-        tl_sgn = -int(np.sign(pet[0]))
-        tl_sgn = 2*(tl_sgn >= 0) - 1        #Make sure never zero
-        ans = tl_sgn * np.hstack((cf - r*sf*diff, sf + r*cf*diff))
+        ans = np.stack((cf - r*sf*diff, sf + r*cf*diff), diff.ndim).squeeze()
         del func, diff, cf, sf
         return ans
 
@@ -93,9 +92,9 @@ class PetalShape(Shape):
         dif2 = self.outline.diff_2nd(r)*pet_mul
         cf = np.cos(func)
         sf = np.sin(func)
-        ans = np.hstack((-sf*diff - ((sf + r*cf*diff)*diff + r*sf*dif2), \
-                          cf*diff + ((cf - r*sf*diff)*diff + r*cf*dif2)))
-        del func, diff, dif2, cf, sf
+        shr = 2*diff + r*dif2
+        ans = np.stack((-diff**2*r*cf - sf*shr, -diff**2*r*sf + cf*shr), func.ndim).squeeze()
+        del func, diff, dif2, cf, sf, shr
         return ans
 
 ############################################
@@ -172,7 +171,9 @@ class PetalShape(Shape):
     def minimize_over_petals(self, min_eqn, x0):
         #Loop over petals and find roots
         fits = np.empty((0,3))
-        for i in range(-self.num_petals, self.num_petals):
+        pets = np.arange(1, 1 + self.num_petals)
+        pets = np.concatenate((pets, -pets[::-1]))
+        for i in pets:
             out = fmin(min_eqn, x0, args=(i,), disp=0, xtol=1e-8, ftol=1e-8)[0]
             fits = np.concatenate((fits, [[out, i, min_eqn(out, i)]]))
 
