@@ -80,8 +80,8 @@ class Seam(object):
         #Get petal signs and angle to rotate
         ones = np.ones(self.shape.theta_nodes, dtype=int)
         pet_mul = np.tile(np.concatenate((ones, -ones)), self.shape.num_petals)
-        pet_add = np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
-            2*self.shape.theta_nodes)
+        pet_add = 2*(np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
+            2*self.shape.theta_nodes) - 1)
 
         #Get function and derivative values at the parameter values
         func = self.shape.outline.func(indt_values)*pet_mul + pet_add

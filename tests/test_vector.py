@@ -173,13 +173,13 @@ class Test_Vector(object):
 
     def test_petal(self):
         #Test HG
-        r0, r1 = 12, 16
+        r0, r1 = 11, 14
         hga, hgb, hgn = 8,5, 6
         num_pet = 12
         petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
         petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-        etch = 0.005
+        etch = 0.01
         seam_width = 2.*abs(etch)             #run larger than etch b/c not normal to edge
 
         #Sim params
@@ -236,6 +236,11 @@ class Test_Vector(object):
         #Compare areas
         varea = vec_area + seam_area
         assert(np.abs(varea - etch_area) < 5e-3)
+
+        # import matplotlib.pyplot as plt;plt.ion()
+        # fs = area_func(ds)
+        # plt.colorbar(plt.scatter(xs, ys, c=fs, s=1))
+        # breakpoint()
 
 ############################################
 ############################################

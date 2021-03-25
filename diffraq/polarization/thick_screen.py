@@ -108,8 +108,8 @@ class ThickScreen(object):
             Gv = pre*np.exp(-1j*vv**2.)*F_func(vv)
 
             #Get field solution (minus incident field) for s,p polarization
-            Us = Umid - Gv
-            Up = Umid + Gv
+            Us = Umid + Gv
+            Up = Umid - Gv
 
             #Cleanup
             del U0, rho, phi, uu, vv, pre, Umid, Gv
