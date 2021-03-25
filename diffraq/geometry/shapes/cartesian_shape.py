@@ -56,5 +56,19 @@ class CartesianShape(Shape):
     def cart_diff_2nd(self, t):
         return self.outline.diff_2nd(t)
 
+    ############################################
+
+    def cart_func_diffs(self, t, func=None, diff=None, diff_2nd=None, with_2nd=False):
+        """Same functions as above, just calculate all at once to save time"""
+
+        func_ans = self.outline.func(t)
+        diff_ans = self.outline.diff(t)
+
+        if with_2nd:
+            diff_2nd_ans = self.outline.diff_2nd(t)
+            return func_ans, diff_ans, diff_2nd_ans
+        else:
+            return func_ans, diff_ans
+
 ############################################
 ############################################

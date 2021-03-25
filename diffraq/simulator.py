@@ -180,6 +180,9 @@ class Simulator(object):
 
         #If vector calculation, calculate diffraction over Braunbek seam
         if self.do_run_vector:
+            #Cleanup occulter to free memory
+            self.occulter.clean_up()
+
             #Run calculation (Save, but don't return)
             self.vec_pupil = self.vector_diffraction_calculation(grid_pts)
 

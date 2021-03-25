@@ -76,39 +76,53 @@ class Seam(object):
 ############################################
 
     def get_normal_angles_petal(self, indt_values):
-        #We need to pack the indt_values into a parameter, to account for petals
-        pets = np.roll(np.arange(self.shape.num_petals) + 1, -1)
-        sgns = np.stack((np.ones(self.shape.theta_nodes), \
-                        -np.ones(self.shape.theta_nodes)), 1)[...,None]
-        petals = (pets*sgns).T.ravel()
-        indt_values = self.shape.pack_param(indt_values, petals)[...,None]
+
+        #Get petal signs and angle to rotate
+        ones = np.ones(self.shape.theta_nodes, dtype=int)
+        pet_mul = np.tile(np.concatenate((ones, -ones)), self.shape.num_petals)
+        pet_add = np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
+            2*self.shape.theta_nodes)
 
         #Get function and derivative values at the parameter values
-        func = self.shape.cart_func(indt_values)
-        diff = self.shape.cart_diff(indt_values)
-        diff_2nd = self.shape.cart_diff_2nd(indt_values)
+        func = self.shape.outline.func(indt_values)*pet_mul + pet_add
+        diff = self.shape.outline.diff(indt_values)*pet_mul
+        diff_2nd = self.shape.outline.diff_2nd(indt_values)*pet_mul
 
-        #Calculate angle between normal and theta vector (orthogonal to position vector)
-        pos_angle = -(func[...,0]*diff[...,0] + func[...,1]*diff[...,1]) / \
-            (np.hypot(func[...,0], func[...,1]) * np.hypot(diff[...,0], diff[...,1]))
-
-        #Build normal angle (get sign from second derivatives)
-        beta = np.sign(diff[...,0]*diff_2nd[...,1] - diff[...,1]*diff_2nd[...,0])
-        nq = np.arctan2(beta*diff[...,0], -beta*diff[...,1]).ravel()
+        #Get cartesian function and derivative values at the parameter values
+        cart_func, cart_diff, cart_diff_2nd = self.shape.cart_func_diffs(\
+            indt_values, func=func, diff=diff, diff_2nd=diff_2nd, with_2nd=True)
 
         #Cleanup
-        del pets, sgns, petals, indt_values, func, diff, diff_2nd, beta
+        del func, diff, diff_2nd
+
+        #Flatten
+        orig_shape = cart_func.shape[:2]
+        cart_func = cart_func.reshape((-1, 2))
+        cart_diff = cart_diff.reshape((-1, 2))
+        cart_diff_2nd = cart_diff_2nd.reshape((-1, 2))
+
+        #Calculate angle between normal and theta vector (orthogonal to position vector)
+        pos_angle = -(cart_func[:,0]*cart_diff[:,0] + cart_func[:,1]*cart_diff[:,1]) / \
+            (np.hypot(cart_func[:,0], cart_func[:,1]) * np.hypot(cart_diff[:,0], cart_diff[:,1]))
+
+        pos_angle = pos_angle.reshape(orig_shape)
+
+        #Build normal angle (get sign from second derivatives)
+        beta = np.sign(cart_diff[:,0]*cart_diff_2nd[:,1] - cart_diff[:,1]*cart_diff_2nd[:,0])
+        nq = np.arctan2(beta*cart_diff[:,0], -beta*cart_diff[:,1])
+
+        #Cleanup
+        del indt_values, cart_func, cart_diff, cart_diff_2nd, beta
 
         return pos_angle, nq
 
     def get_normal_angles_polar(self, indt_values):
         #Get function and derivative values at the parameter values
-        func = self.shape.cart_func(indt_values)
-        diff = self.shape.cart_diff(indt_values)
+        func, diff = self.shape.cart_func_diffs(indt_values)
 
         #Calculate angle between normal and radius vector (position vector)
         pos_angle = ((-func[:,0]*diff[:,1] + func[:,1]*diff[:,0]) / \
-            (np.hypot(*func.T) * np.hypot(*diff.T)))[:,None]
+            (np.hypot(func[:,0],func[:,1]) * np.hypot(diff[:,0],diff[:,1])))[:,None]
 
         #Build normal angles
         nq = (np.ones(self.shape.radial_nodes) * \

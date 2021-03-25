@@ -21,8 +21,6 @@ class PetalShape(Shape):
     kind = 'petal'
     param_code = 1000
 
-    #TODO: rename 'petal' to 'radial' ?
-
 ############################################
 #####  Main Shape #####
 ############################################
@@ -60,9 +58,10 @@ class PetalShape(Shape):
     def unpack_param(self, t):
         r = t % self.param_code
         pet = t//self.param_code
-        pet = pet + (pet == 0)          #Don't allow to be zero (used without parameterization)
-        pet_mul = np.pi/self.num_petals*np.sign(pet)
-        pet_add = (np.abs(pet)-1)*2*np.pi/self.num_petals
+        pet += (pet == 0)               #Don't allow to be zero (used without parameterization)
+        pet_mul = np.sign(pet)
+        pet_add = 2*(np.abs(pet) - 1)
+
         return r, pet, pet_mul, pet_add
 
     def pack_param(self, r, pet):
@@ -75,10 +74,9 @@ class PetalShape(Shape):
         if func is None:
             r, pet, pet_mul, pet_add = self.unpack_param(r)
             func = self.outline.func(r)*pet_mul + pet_add
-        else:
-            func *= np.pi/self.num_petals
 
-        return r * np.stack((np.cos(func), np.sin(func)), func.ndim).squeeze()
+        pang = np.pi/self.num_petals
+        return r * np.stack((np.cos(func*pang), np.sin(func*pang)), func.ndim).squeeze()
 
     def cart_diff(self, r, func=None, diff=None):
         #Grab function and derivative if not specified (usually by etch_error)
@@ -86,12 +84,11 @@ class PetalShape(Shape):
             r, pet, pet_mul, pet_add = self.unpack_param(r)
             func = self.outline.func(r)*pet_mul + pet_add
             diff = self.outline.diff(r)*pet_mul
-        else:
-            func *= np.pi/self.num_petals
-            diff *= np.pi/self.num_petals
-        cf = np.cos(func)
-        sf = np.sin(func)
-        ans = np.stack((cf - r*sf*diff, sf + r*cf*diff), diff.ndim).squeeze()
+
+        pang = np.pi/self.num_petals
+        cf = np.cos(func*pang)
+        sf = np.sin(func*pang)
+        ans = np.stack((cf - r*sf*diff*pang, sf + r*cf*diff*pang), diff.ndim).squeeze()
         del func, diff, cf, sf
         return ans
 
@@ -101,16 +98,56 @@ class PetalShape(Shape):
             func = self.outline.func(r)*pet_mul + pet_add
             diff = self.outline.diff(r)*pet_mul
             diff_2nd = self.outline.diff_2nd(r)*pet_mul
-        else:
-            func *= np.pi/self.num_petals
-            diff *= np.pi/self.num_petals
-            diff_2nd *= np.pi/self.num_petals
-        cf = np.cos(func)
-        sf = np.sin(func)
-        shr = 2*diff + r*diff_2nd
-        ans = np.stack((-diff**2*r*cf - sf*shr, -diff**2*r*sf + cf*shr), func.ndim).squeeze()
+
+        pang = np.pi/self.num_petals
+        cf = np.cos(func*pang)
+        sf = np.sin(func*pang)
+        shr = (2*diff + r*diff_2nd)*pang
+        ans = np.stack((-(diff*pang)**2*r*cf - sf*shr, -(diff*pang)**2*r*sf + cf*shr), func.ndim).squeeze()
         del func, diff, diff_2nd, cf, sf, shr
         return ans
+
+    ############################################
+
+    def cart_func_diffs(self, r, func=None, diff=None, diff_2nd=None, with_2nd=False):
+        """Same functions as above, just calculate all at once to save time"""
+        if func is None:
+            r, pet, pet_mul, pet_add = self.unpack_param(r)
+            func = self.outline.func(r)*pet_mul + pet_add
+            diff = self.outline.diff(r)*pet_mul
+            if with_2nd:
+                diff_2nd = self.outline.diff_2nd(r)*pet_mul
+
+        #Calculate intermediaries
+        pang = np.pi/self.num_petals
+        cf = np.cos(func*pang)
+        sf = np.sin(func*pang)
+
+        #Function
+        func_ans = r[:,None]*np.stack((cf, sf), func.ndim).squeeze()
+
+        #Derivative
+        diff_ans = np.stack((cf - r*sf*diff*pang, sf + r*cf*diff*pang), diff.ndim).squeeze()
+
+        #Second derivative
+        if with_2nd:
+            shr1 = -(diff*pang)**2*r
+            shr2 = (2*diff + r*diff_2nd)*pang
+            diff_2nd_ans = np.stack((shr1*cf - sf*shr2, shr2*sf + cf*shr2), func.ndim).squeeze()
+
+            #Cleanup
+            del func, diff, cf, sf, diff_2nd, shr1, shr2
+
+            return func_ans, diff_ans, diff_2nd_ans
+
+        else:
+
+            #Cleanup
+            del func, diff, cf, sf
+
+            return func_ans, diff_ans
+
+    ############################################
 
     def inv_cart(self, xy):
         #Inverse to go from cartesian to parameter, function

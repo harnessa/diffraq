@@ -76,6 +76,43 @@ class PolarShape(Shape):
         del func, diff, diff_2nd, ct, st
         return ans
 
+    ############################################
+
+    def cart_func_diffs(self, t, func=None, diff=None, diff_2nd=None, with_2nd=False):
+        """Same functions as above, just calculate all at once to save time"""
+        if func is None:
+            func = self.outline.func(t)
+            diff = self.outline.diff(t)
+            if with_2nd:
+                diff_2nd = self.outline.diff_2nd(t)
+
+        #Calculate intermediaries
+        ct = np.cos(t)
+        st = np.sin(t)
+
+        #Function
+        func_ans = func[:,None] * np.stack((ct, st), 1)
+
+        #Derivative
+        diff_ans = np.stack((diff*ct - func*st, diff*st + func*ct),1)
+
+        #Second derivative
+        if with_2nd:
+            diff_2nd_ans = np.hstack((diff_2nd*ct - 2.*diff*st - func*ct,
+                                      diff_2nd*st + 2.*diff*ct - func*st))
+            #Cleanup
+            del func, diff, ct, st, diff_2nd
+
+            return func_ans, diff_ans, diff_2nd_ans
+
+        else:
+            #Cleanup
+            del func, diff, ct, st
+
+            return func_ans, diff_ans
+
+    ############################################
+
     def inv_cart(self, xy):
         #Inverse to go from cartesian to parameter, function
         rad = np.hypot(*xy.T)

@@ -158,17 +158,17 @@ class Notch(object):
 
     def get_new_edge(self, ts):
 
-        #Get loci of edge across test region
-        old_edge = self.parent.cart_func(ts)
+        #Get loci of edge across test region and normals
+        old_edge, normal = self.parent.cart_func_diffs(ts[:,0])
 
         #Use one normal or local normals
         if self.local_norm:
             #Local normals
-            normal = self.parent.cart_diff(ts)[:,::-1]
+            normal = normal[:,::-1]
             normal /= np.hypot(*normal.T)[:,None]
         else:
             #Get normal vector of middle of old_edge
-            normal = self.parent.cart_diff(ts)[:,::-1][len(ts)//2]
+            normal = normal[:,::-1][len(ts)//2]
             normal /= np.hypot(*normal)
 
         #Shift edge out by the normal vector

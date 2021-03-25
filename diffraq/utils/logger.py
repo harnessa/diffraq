@@ -59,9 +59,9 @@ class Logger(object):
         if self.do_save:
             self.write(f'Saved at: {self.save_dir}', is_time=False)
             self.write(f'Save ext: {self.save_ext}', is_time=False)
+        self.write(is_brk=True)
 
     def print_end_message(self):
-        self.write(is_brk=True)
         self.write(f'Completed in: {time.perf_counter() - self.start_time:.2f} seconds')
         self.write(is_brk=True)
 

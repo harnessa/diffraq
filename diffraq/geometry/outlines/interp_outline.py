@@ -17,7 +17,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 class InterpOutline(object):
 
-    def __init__(self, parent, data, with_2nd=False, etch_error=None):
+    def __init__(self, parent, data, with_2nd=True, etch_error=None):
 
         self.parent = parent    #Shape
         self._data = data       #polar parent - (theta, apod), petal parent - (radius, apod)
@@ -54,12 +54,11 @@ class InterpOutline(object):
             return
 
         #Get old function and diff (radius if polar parent, apodization if petal parent)
-        func = self.func(self._data[:,:1])
-        diff = self.diff(self._data[:,:1])
+        func = self.func(self._data[:,0])
+        diff = self.diff(self._data[:,0])
 
         #Get cartesian coordinates and derivative from parent
-        cart_func = self.parent.cart_func(self._data[:,:1], func=func)
-        cart_diff = self.parent.cart_diff(self._data[:,:1], func=func, diff=diff)
+        cart_func, cart_diff = self.parent.cart_func_diffs(self._data[:,0], func=func, diff=diff)
 
         #Create normal from derivative
         normal = cart_diff[:,::-1]

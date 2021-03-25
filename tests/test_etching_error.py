@@ -224,5 +224,5 @@ class Test_Etching(object):
 if __name__ == '__main__':
 
     te = Test_Etching()
-    # te.run_all_tests()
+    te.run_all_tests()
     te.run_petal_calculation()

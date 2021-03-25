@@ -39,7 +39,7 @@ class Test_Vector(object):
     def do_test_quadrature(self, kind, edge_func, edge_diff):
 
         #Maxwell functions
-        maxwell_func = [lambda d, w: np.heaviside(d, 1)+0j for i in range(2)]
+        maxwell_func = lambda d, w: [np.heaviside(d, 1)+0j]*2
 
         #Simulation parameters
         params = {'radial_nodes':self.radial_nodes, 'theta_nodes':self.theta_nodes, \
@@ -61,7 +61,7 @@ class Test_Vector(object):
                 sim.vector.seams[0].build_seam_quadrature(self.seam_width)
 
             #Get area of open seam (in aperture)
-            area = (ws * maxwell_func[0](ds,0).real).sum()
+            area = (ws * maxwell_func(ds,0)[0].real).sum()
 
             #True area
             if is_opaque:
@@ -93,7 +93,7 @@ class Test_Vector(object):
 
             #Maxwell functions (add opaque screen into aperture, or aperture into screen)
             val = [1, 0][int(is_opaque)]
-            maxwell_func = [lambda d, w: np.heaviside(-d, val)+0j for i in range(2)]
+            maxwell_func = lambda d, w: [np.heaviside(-d, val)+0j]*2
 
             #Simulation parameters
             params = {
