@@ -145,7 +145,7 @@ class Test_Occulter(object):
             sim.occulter.build_quadrature()
 
             #Get quadrature for comparison
-            xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, num_petals, \
+            xq, yq, wq = diffraq.quadrature.petal_quad(ss_Afunc, num_petals, \
                 rmin, rmax, sim.radial_nodes, sim.theta_nodes)
 
             #Check they are all the same

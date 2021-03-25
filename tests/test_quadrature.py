@@ -102,7 +102,7 @@ class Test_Quadrature(object):
 
                 ### Test DISK ###
                 #Get quad
-                xq, yq, wq = diffraq.quadrature.starshade_quad(disk_Afunc, 1, \
+                xq, yq, wq = diffraq.quadrature.petal_quad(disk_Afunc, 1, \
                     disk_r0, disk_r1, m, n)
 
                 #Assert all are the same shape
@@ -114,7 +114,7 @@ class Test_Quadrature(object):
 
                 ## Test STARSHADE ###
                 #Get quad
-                xq, yq, wq = diffraq.quadrature.starshade_quad(ss_Afunc, num_pet, \
+                xq, yq, wq = diffraq.quadrature.petal_quad(ss_Afunc, num_pet, \
                     ss_r0, ss_r1, m, n)
 
                 #Assert all are the same shape

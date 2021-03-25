@@ -28,8 +28,8 @@ class PetalShape(Shape):
 ############################################
 
     def build_local_shape_quad(self):
-        #Calculate starshade quadrature
-        xq, yq, wq = quad.starshade_quad(self.outline.func, self.num_petals, \
+        #Calculate petal quadrature
+        xq, yq, wq = quad.petal_quad(self.outline.func, self.num_petals, \
             self.min_radius, self.max_radius, self.radial_nodes, self.theta_nodes, \
             has_center=self.has_center)
 
@@ -40,8 +40,8 @@ class PetalShape(Shape):
         if npts is None:
             npts = self.radial_nodes
 
-        #Calculate starshade edge
-        edge = quad.starshade_edge(self.outline.func, self.num_petals, \
+        #Calculate petal edge
+        edge = quad.petal_edge(self.outline.func, self.num_petals, \
             self.min_radius, self.max_radius, npts)
 
         return edge
