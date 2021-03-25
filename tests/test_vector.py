@@ -173,19 +173,19 @@ class Test_Vector(object):
 
     def test_petal(self):
         #Test HG
-        r0, r1 = 11, 14
+        r0, r1 = 12, 16
         hga, hgb, hgn = 8,5, 6
         num_pet = 12
         petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
         petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
-        etch = 0.01
-        seam_width = 2*etch             #run larger than etch b/c not normal to edge
+        etch = 0.005
+        seam_width = 2.*abs(etch)             #run larger than etch b/c not normal to edge
 
         #Sim params
         params = {
-            'radial_nodes':     self.radial_nodes,
-            'theta_nodes':      self.theta_nodes*2,
+            'radial_nodes':     self.radial_nodes//2,
+            'theta_nodes':      self.theta_nodes//2,
             'num_pts':          self.num_pts,
             'tel_diameter':     self.tel_diameter,
             'zz':               self.zz,
@@ -214,6 +214,8 @@ class Test_Vector(object):
 
         #Build vector sim
         params['do_run_vector'] = True
+        params['theta_nodes'] *= 2
+        params['radial_nodes'] *= 2
         vec_sim = diffraq.Simulator(params, shapes=vec_shape)
 
         #Get vector starshade area
@@ -233,7 +235,7 @@ class Test_Vector(object):
 
         #Compare areas
         varea = vec_area + seam_area
-        assert(np.abs(varea - etch_area) < 1e-3)
+        assert(np.abs(varea - etch_area) < 5e-3)
 
 ############################################
 ############################################
@@ -241,4 +243,5 @@ class Test_Vector(object):
 if __name__ == '__main__':
 
     tv = Test_Vector()
-    tv.run_all_tests()
+    # tv.run_all_tests()
+    tv.test_petal()

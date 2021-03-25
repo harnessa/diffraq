@@ -58,18 +58,18 @@ class InterpOutline(object):
         diff = self.diff(self._data[:,:1])
 
         #Get cartesian coordinates and derivative from parent
-        cart_func = self.parent.etch_cart_func(func, self._data[:,:1])
-        cart_diff = self.parent.etch_cart_diff(func, diff, self._data[:,:1])
+        cart_func = self.parent.cart_func(self._data[:,:1], func=func)
+        cart_diff = self.parent.cart_diff(self._data[:,:1], func=func, diff=diff)
 
         #Create normal from derivative
         normal = cart_diff[:,::-1]
         normal /= np.hypot(*normal.T)[:,None]
 
-        #Build new data (multiply by -1 to get proper etch direction)
-        new_cart_func = cart_func + etch*normal*np.array([1,-1])
+        #Build new data (negative etch adds more material)
+        new_cart_func = cart_func + etch*normal*np.array([1,-1])*self.parent.opq_sign
 
         #Turn back to coordinates (parameter and function value)
-        new_para, new_func = self.parent.etch_inv_cart(new_cart_func)
+        new_para, new_func = self.parent.inv_cart(new_cart_func)
 
         #Sort by parameter
         new_func = new_func[np.argsort(new_para)]

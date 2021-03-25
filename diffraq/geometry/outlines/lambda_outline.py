@@ -75,8 +75,8 @@ class LambdaOutline(object):
         tt = np.linspace(0, 2*np.pi, 1000)[:,None]
         old = self.func(tt).copy()
 
-        #Store etch
-        self.etch = etch * np.array([1., -1])
+        #Store etch (negative etch adds more material)
+        self.etch = etch * np.array([1., -1]) * self.parent.opq_sign
 
         #Point to new functions depending on parent's kind (ignore 2nd for now)
         self.func = getattr(self, f'{self.parent.kind}_etch_func')

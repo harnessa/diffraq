@@ -19,12 +19,12 @@ import os
 #####   Directories #####
 #########################
 
+#Grab Environment Variable. If you don't want to set one, point pkg_home_dir to the right place.
 pkg_home_dir = os.getenv("DIFFRAQ")
 
 if pkg_home_dir is None:
-    if zero_rank:
-        print("\n*** Cannot Find Environment Variable pointing to DIFFRAQ home! ***\n")
-        print("* Please set environment variable $DIFFRAQ pointing to directory where diffraq/setup.py is located *")
+    print("\n*** Cannot Find Environment Variable pointing to DIFFRAQ home! ***\n")
+    print("* Please set environment variable $DIFFRAQ pointing to directory where diffraq/setup.py is located *")
     import sys
     sys.exit()
 

@@ -72,8 +72,8 @@ class Cart_InterpOutline(object):
         normal = self.diff(self._data[:,:1])[:,::-1]
         normal /= np.hypot(*normal.T)[:,None]
 
-        #Get proper etch direction
-        etch = etch * np.array([1, -1])
+        #Get proper etch direction (negative etch adds more material)
+        etch = etch * np.array([1, -1]) * self.parent.opq_sign
 
         #Build new data
         new_func = func + etch*normal

@@ -91,10 +91,14 @@ class Test_Etching(object):
                 #Build quad
                 sim.occulter.build_quadrature()
 
-                #Compare area
+                #Calculate area
                 area = sim.occulter.wq.sum()
-                tru_area = np.pi*(self.circle_rad + self.etch*etch_sign)**2
 
+                #Get true area
+                opq_sign = -(2*int(is_opaque) - 1)
+                tru_area = np.pi*(self.circle_rad + self.etch*etch_sign*opq_sign)**2
+
+                #Compare areas
                 assert(np.isclose(area, tru_area))
 
                 #Get pupil field from sim
@@ -105,7 +109,7 @@ class Test_Etching(object):
                 if utru is None:
                     utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
                         sim.waves[0], sim.zz, sim.z0, \
-                        self.circle_rad + self.etch*etch_sign, is_opaque)
+                        self.circle_rad + self.etch*etch_sign*opq_sign, is_opaque)
 
                 #Compare
                 assert(np.abs(pupil - utru).max() < self.tol)
@@ -151,6 +155,7 @@ class Test_Etching(object):
         petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
         is_opaque = True
+        opq_sign = -(2*int(is_opaque) - 1)
 
         #Don't test, just visually inspect
         for etch_sign in [-1, 1]:
@@ -173,8 +178,8 @@ class Test_Etching(object):
 
             old = truxy.copy()
 
-            #Add etch (opposite sign)
-            truxy += -normal * etch*etch_sign
+            #Add etch
+            truxy += normal * etch*etch_sign*opq_sign
 
             #Build full mask
             mask = np.empty((0,2))

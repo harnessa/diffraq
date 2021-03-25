@@ -70,54 +70,49 @@ class PetalShape(Shape):
 
     ################################
 
-    def cart_func(self, t):
-        r, pet, pet_mul, pet_add = self.unpack_param(t)
-        func = self.outline.func(r)*pet_mul + pet_add
+    def cart_func(self, r, func=None):
+        #Grab function if not specified (usually by etch_error)
+        if func is None:
+            r, pet, pet_mul, pet_add = self.unpack_param(r)
+            func = self.outline.func(r)*pet_mul + pet_add
+        else:
+            func *= np.pi/self.num_petals
+
         return r * np.stack((np.cos(func), np.sin(func)), func.ndim).squeeze()
 
-    def cart_diff(self, t):
-        r, pet, pet_mul, pet_add = self.unpack_param(t)
-        func = self.outline.func(r)*pet_mul + pet_add
-        diff = self.outline.diff(r)*pet_mul
+    def cart_diff(self, r, func=None, diff=None):
+        #Grab function and derivative if not specified (usually by etch_error)
+        if func is None or diff is None:
+            r, pet, pet_mul, pet_add = self.unpack_param(r)
+            func = self.outline.func(r)*pet_mul + pet_add
+            diff = self.outline.diff(r)*pet_mul
+        else:
+            func *= np.pi/self.num_petals
+            diff *= np.pi/self.num_petals
         cf = np.cos(func)
         sf = np.sin(func)
         ans = np.stack((cf - r*sf*diff, sf + r*cf*diff), diff.ndim).squeeze()
         del func, diff, cf, sf
         return ans
 
-    def cart_diff_2nd(self, t):
-        r, pet, pet_mul, pet_add = self.unpack_param(t)
-        func = self.outline.func(r)*pet_mul + pet_add
-        diff = self.outline.diff(r)*pet_mul
-        dif2 = self.outline.diff_2nd(r)*pet_mul
+    def cart_diff_2nd(self, t, func=None, diff=None, diff_2nd=None):
+        if func is None or diff is None:
+            r, pet, pet_mul, pet_add = self.unpack_param(t)
+            func = self.outline.func(r)*pet_mul + pet_add
+            diff = self.outline.diff(r)*pet_mul
+            diff_2nd = self.outline.diff_2nd(r)*pet_mul
+        else:
+            func *= np.pi/self.num_petals
+            diff *= np.pi/self.num_petals
+            diff_2nd *= np.pi/self.num_petals
         cf = np.cos(func)
         sf = np.sin(func)
-        shr = 2*diff + r*dif2
+        shr = 2*diff + r*diff_2nd
         ans = np.stack((-diff**2*r*cf - sf*shr, -diff**2*r*sf + cf*shr), func.ndim).squeeze()
-        del func, diff, dif2, cf, sf, shr
+        del func, diff, diff_2nd, cf, sf, shr
         return ans
 
-############################################
-############################################
-
-############################################
-#####  Wrappers for ETCHED Cartesian coords #####
-############################################
-
-    def etch_cart_func(self, func, r):
-        pet_mul = np.pi/self.num_petals
-        return r * np.hstack((np.cos(func*pet_mul), np.sin(func*pet_mul)))
-
-    def etch_cart_diff(self, func, diff, r):
-        pet_mul = np.pi/self.num_petals
-        cf = np.cos(func*pet_mul)
-        sf = np.sin(func*pet_mul)
-        #Derivative has negative for trailing petal
-        ans = -1 * np.hstack((cf - r*sf*diff*pet_mul, sf + r*cf*diff*pet_mul))
-        del cf, sf
-        return ans
-
-    def etch_inv_cart(self, xy):
+    def inv_cart(self, xy):
         #Inverse to go from cartesian to parameter, function
         rad = np.hypot(*xy.T)
         the = np.arctan2(*xy[:,::-1].T) * self.num_petals/np.pi

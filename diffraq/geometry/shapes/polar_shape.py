@@ -47,52 +47,39 @@ class PolarShape(Shape):
 #####  Wrappers for Cartesian coordinate systems #####
 ############################################
 
-    def cart_func(self, t):
-        return self.outline.func(t) * np.hstack((np.cos(t), np.sin(t)))
+    def cart_func(self, t, func=None):
+        #Grab function if not specified (usually by etch_error)
+        if func is None:
+            func = self.outline.func(t)
+        return func * np.hstack((np.cos(t), np.sin(t)))
 
-    def cart_diff(self, t):
-        func = self.outline.func(t)
-        diff = self.outline.diff(t)
+    def cart_diff(self, t, func=None, diff=None):
+        #Grab function and derivative if not specified (usually by etch_error)
+        if func is None or diff is None:
+            func = self.outline.func(t)
+            diff = self.outline.diff(t)
         ct = np.cos(t)
         st = np.sin(t)
         ans = np.hstack((diff*ct - func*st, diff*st + func*ct))
         del func, diff, ct, st
         return ans
 
-    def cart_diff_2nd(self, t):
-        func = self.outline.func(t)
-        diff = self.outline.diff(t)
-        dif2 = self.outline.diff_2nd(t)
+    def cart_diff_2nd(self, t, func=None, diff=None, diff_2nd=None):
+        if func is None or diff is None:
+            func = self.outline.func(t)
+            diff = self.outline.diff(t)
+            diff_2nd = self.outline.diff_2nd(t)
         ct = np.cos(t)
         st = np.sin(t)
-        ans =  np.hstack((dif2*ct - 2.*diff*st - func*ct,
-                          dif2*st + 2.*diff*ct - func*st))
-        del func, diff, dif2, ct, st
+        ans =  np.hstack((diff_2nd*ct - 2.*diff*st - func*ct,
+                          diff_2nd*st + 2.*diff*ct - func*st))
+        del func, diff, diff_2nd, ct, st
         return ans
 
-############################################
-############################################
-
-############################################
-#####  Wrappers for ETCHED Cartesian coords #####
-############################################
-
-    #TODO: add 2nd derivative change for etch
-
-    def etch_cart_func(self, func, t):
-        return func * np.hstack((np.cos(t), np.sin(t)))
-
-    def etch_cart_diff(self, func, diff, t):
-        ct = np.cos(t)
-        st = np.sin(t)
-        ans = np.hstack((diff*ct - func*st, diff*st + func*ct))
-        del ct, st
-        return ans
-
-    def etch_inv_cart(self, xy):
+    def inv_cart(self, xy):
         #Inverse to go from cartesian to parameter, function
         rad = np.hypot(*xy.T)
-        the = np.arctan2(*xy[:,::-1].T) * self.num_petals/np.pi
+        the = np.arctan2(*xy[:,::-1].T)
         return the, rad
 
 ############################################
