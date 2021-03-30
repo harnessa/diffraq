@@ -165,11 +165,11 @@ class Notch(object):
         if self.local_norm:
             #Local normals
             normal = normal[:,::-1]
-            normal /= np.hypot(*normal.T)[:,None]
+            normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
         else:
             #Get normal vector of middle of old_edge
             normal = normal[:,::-1][len(ts)//2]
-            normal /= np.hypot(*normal)
+            normal /= np.hypot(normal[0], normal[1])
 
         #Shift edge out by the normal vector
         etch = -self.height * np.array([1., -1]) * self.direction * self.parent.opq_sign
@@ -224,9 +224,9 @@ class Notch(object):
 
         #Get polar coordinates of edges
         oldt = np.arctan2(old_edge[:,1], old_edge[:,0])[:,None]
-        oldr = np.hypot(*old_edge.T)
+        oldr = np.hypot(old_edge[:,0], old_edge[:,1])
         newt_tmp = np.arctan2(new_edge[:,1], new_edge[:,0])
-        newr = np.hypot(*new_edge.T)
+        newr = np.hypot(new_edge[:,0], new_edge[:,1])
 
         #Do we need to flip to increasing radius? (for interpolation)
         dir_sign = int(np.sign(newr[1] - newr[0]))

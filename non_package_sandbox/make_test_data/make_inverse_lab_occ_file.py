@@ -1,47 +1,38 @@
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 import diffraq
+import h5py
 
 #Load bb_2017
-rads, apod = np.genfromtxt(f'{diffraq.apod_dir}/bb_2017.txt', delimiter=',').T
-rmin = rads.min()
+with h5py.File(f'{diffraq.apod_dir}/bb_2017.h5', 'r') as f:
+    data = f['data'][()]
+rads = data[:,0]
+apod = data[:,1]
 
+rmin = rads.min()
 max_apod = apod.max()
 
 #Get inner (inverse)
 inn_cut = np.where(apod >= max_apod)[0][0]
-ainn = 1 - apod[:inn_cut]
-rinn = rads[:inn_cut]
+data_inn = np.stack((rads, 1 - apod), 1)[:inn_cut]
 
 #Get outer
 out_cut = np.where(apod >= max_apod)[0][-1]
-aout = apod[out_cut:]
-rout = rads[out_cut:]
+data_out = data[out_cut:]
 
 #Write out full apod
-with open(f'{diffraq.int_data_dir}/Test_Data/inv_apod_file.txt', 'w') as f:
-    f.write(f'#Test Inverse apodization function (bb_2017)\n')
-    for i in range(len(rads)):
-        f.write(f'{rads[i]},{apod[i]}\n')
+with h5py.File(f'{diffraq.int_data_dir}/Test_Data/inv_apod_file.h5', 'w') as f:
+    f.create_dataset('note', data='Test Inverse apodization function (bb_2017)')
+    f.create_dataset('header', data='radius [m], apodization value')
+    f.create_dataset('data', data=data)
 
 #Write out split apod
-with open(f'{diffraq.int_data_dir}/Test_Data/inv_apod__inner.txt', 'w') as f:
-    f.write(f'#Inner apodization of inverse apod\n')
-    #Write out last radius
-    f.write(f'#,{rinn[-1]}\n')
-    for i in range(len(rinn)):
-        f.write(f'{rinn[i]},{ainn[i]}\n')
+with h5py.File(f'{diffraq.int_data_dir}/Test_Data/inv_apod__inner.h5', 'w') as f:
+    f.create_dataset('note', data='Inner apodization of inverse apod')
+    f.create_dataset('header', data='radius [m], apodization value')
+    f.create_dataset('data', data=data_inn)
 
-with open(f'{diffraq.int_data_dir}/Test_Data/inv_apod__outer.txt', 'w') as f:
-    f.write(f'#Outer apodization of inverse apod\n')
-    #Write out first radius
-    f.write(f'#,{rout[0]}\n')
-    for i in range(len(rout)):
-        f.write(f'{rout[i]},{aout[i]}\n')
-
-# plt.plot(rads, apod, '-')
-#
-# plt.plot(rinn, ainn, '--')
-# plt.plot(rinn, 1-ainn, '+-')
-# plt.plot(rout, aout, 'x-')
-# breakpoint()
+with h5py.File(f'{diffraq.int_data_dir}/Test_Data/inv_apod__outer.h5', 'w') as f:
+    f.create_dataset('note', data='Outer apodization of inverse apod')
+    f.create_dataset('header', data='radius [m], apodization value')
+    f.create_dataset('data', data=data_out)

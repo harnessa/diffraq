@@ -53,7 +53,7 @@ class Test_Circles(object):
         petal_func = lambda r: (1 - r/self.circle_rad)*2*np.pi
         petal_diff = lambda r: -2*np.pi/self.circle_rad
 
-        loci_file = f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.txt'
+        loci_file = f'{diffraq.int_data_dir}/Test_Data/circle_loci_file.h5'
 
         shape = {'is_opaque':is_opaque, 'min_radius':self.circle_rad-1e-12, \
             'max_radius':self.circle_rad, 'loci_file':loci_file, 'num_petals':1}

@@ -256,14 +256,16 @@ class Simulator(object):
 
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(self.vector.xq, self.vector.yq, \
-                    wu0, lamzz, grid_pts, self.fft_tol, \
-                    is_babinet=False, lamz0=lamz0)
+                    wu0, lamzz, grid_pts, self.fft_tol, is_babinet=False, lamz0=lamz0)
 
                 #Multiply by plane wave
                 uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
 
                 #Store
                 pupil[iw,ip] = uu
+
+        #Cleanup
+        del wu0
 
         return pupil
 

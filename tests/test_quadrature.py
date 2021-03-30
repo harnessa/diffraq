@@ -13,6 +13,7 @@ Description: Test of building areal quadrature.
 
 import diffraq
 import numpy as np
+import h5py
 
 class Test_Quadrature(object):
 
@@ -132,7 +133,8 @@ class Test_Quadrature(object):
     def test_loci(self):
 
         #Load loci
-        loci = np.genfromtxt(f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt', delimiter=',')
+        with h5py.File(f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.h5', 'r') as f:
+            loci = f['loci'][()]
 
         for m in range(100,200,20):
             for dn in [2, 5, 10]:

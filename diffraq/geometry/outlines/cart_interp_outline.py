@@ -70,7 +70,7 @@ class Cart_InterpOutline(object):
 
         #Create normal from derivative
         normal = self.diff(self._data[:,:1])[:,::-1]
-        normal /= np.hypot(*normal.T)[:,None]
+        normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
 
         #Get proper etch direction (negative etch adds more material)
         etch = etch * np.array([1, -1]) * self.parent.opq_sign

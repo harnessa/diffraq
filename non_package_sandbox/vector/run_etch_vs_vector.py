@@ -55,17 +55,17 @@ shapes = mod.shapes[0]
 #Add etch
 shapes['etch_error'] = etch
 
-#Nominal
-dif_params['do_run_vector'] = False
-dif_params['save_ext'] = 'etch'
-sim = diffraq.Simulator(dif_params, shapes)
-sim.run_sim()
+# #Nominal
+# dif_params['do_run_vector'] = False
+# dif_params['save_ext'] = 'etch'
+# sim = diffraq.Simulator(dif_params, shapes)
+# sim.run_sim()
 
 #Vector
 shapes['etch_error'] = None
-maxwell_func = [lambda d, w: np.heaviside(-d, 1)*np.heaviside(etch+d,1)+0j for i in range(2)]
+maxwell_func = lambda d, w: [np.heaviside(-d, 1)*np.heaviside(etch+d,1)+0j]*2
 dif_params['do_run_vector'] = True
 dif_params['maxwell_func'] = maxwell_func
-dif_params['save_ext'] = 'vect'
+dif_params['save_ext'] = 'vect2'
 sim = diffraq.Simulator(dif_params, shapes)
 sim.run_sim()

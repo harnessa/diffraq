@@ -50,7 +50,7 @@ def seam_cartesian_quad(fxy, dxy, m, n, seam_width):
     dt = dxy(pt)[:,:,None]
 
     #Get normal angle at all theta nodes (flipped negative to point inward to match seam_polar_quad)
-    norm = np.hypot(*dt[...,0].T)
+    norm = np.hypot(dt[:,0][:,0], dt[:,1][:,0])
     nx =  dt[:,1,0] / norm
     ny = -dt[:,0,0] / norm
 
@@ -97,7 +97,7 @@ def seam_cartesian_edge(fxy, n, seam_width):
     diff = dxy(pt)
 
     #Get normal angle at all theta nodes (flipped negative to point inward to match seam_polar_quad)
-    norm = np.hypot(*diff.T)
+    norm = np.hypot(diff[:,0], diff[:,1])
     nx =  diff[:,1] / norm
     ny = -diff[:,0] / norm
 

@@ -100,12 +100,12 @@ class LambdaOutline(object):
 
     def cartesian_etch_func(self, t):
         diff = self._diff(t)
-        return self._func(t) + self.etch*diff[:,::-1]/np.hypot(*diff.T)[:,None]
+        return self._func(t) + self.etch*diff[:,::-1]/np.hypot(diff[:,0], diff[:,1])[:,None]
 
     def cartesian_etch_diff(self, t):
         diff = self._diff(t)
         diff_2nd = self.diff_2nd(t)
-        norm = np.hypot(*diff.T)
+        norm = np.hypot(diff[:,0], diff[:,1])
         return diff + self.etch*(diff_2nd[:,::-1] - diff[:,::-1]* \
             (np.sum(diff*diff_2nd,1)/norm**2)[:,None])/norm[:,None]
 

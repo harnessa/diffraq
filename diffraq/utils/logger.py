@@ -217,7 +217,12 @@ class Logger(object):
         with h5py.File(filename, 'r') as f:
             pupil = f['field'][()]
             grid_pts = f['grid_pts'][()]
-            is_polarized = f['is_polarized'][()]
+            #Check if polarized key available
+            if 'is_polarized' in f.keys():
+                is_polarized = f['is_polarized'][()]
+            else:
+                is_polarized = False
+            #If polarized, load vector field
             if is_polarized:
                 vec_pupil = f['vector_field'][()]
                 vec_comps = f['vector_comps'][()]
@@ -233,7 +238,11 @@ class Logger(object):
         with h5py.File(self.filename('image','h5'), 'r') as f:
             image = f['intensity'][()]
             grid_pts = f['grid_pts'][()]
-            is_polarized = f['is_polarized'][()]
+            #Check if polarized key available
+            if 'is_polarized' in f.keys():
+                is_polarized = f['is_polarized'][()]
+            else:
+                is_polarized = False
 
         return image, grid_pts, is_polarized
 

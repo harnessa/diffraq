@@ -57,6 +57,8 @@ def_sim_params = {
     'radial_nodes':         50,         #Number of radial quadrature nodes
     'theta_nodes':          50,         #Number of azimuthal quadrature nodes
     'fft_tol':              1e-9,       #Tolerance to feed to NUFFT
+    'seam_radial_nodes':    None,       #Number of radial quadrature nodes in seam. If None, use shape's
+    'seam_theta_nodes':     None,       #Number of theta quadrature nodes in seam. If None, use shape's
 
     ### Polarization ###
     'seam_width':           5e-6,       #Half-width of Braunbek seam
@@ -67,7 +69,6 @@ def_sim_params = {
     'polarization_angle':   0,          #Angle of linear polarization relative to Lab frame horizontal [degrees]
     'stokes_parameters':    None,       #Stokes' parameters [I,Q,U,V] describing state of polarization
     'analyzer_angle':       0,          #Angle of camera polarizing analyzer relative to Lab frame horizontal [degrees]
-
 }
 
 ############################################

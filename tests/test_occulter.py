@@ -118,7 +118,7 @@ class Test_Occulter(object):
 
         #HG function and file
         ss_Afunc = lambda r: np.exp(-((r-rmin)/(rmax-rmin)/0.6)**6)
-        ss_Afile = f'{diffraq.int_data_dir}/Test_Data/hg_apod_file.txt'
+        ss_Afile = f'{diffraq.int_data_dir}/Test_Data/hg_apod_file.h5'
 
         #Analytic vs numeric
         afunc_dict = {'analytic':ss_Afunc, 'numeric':None}
@@ -161,7 +161,7 @@ class Test_Occulter(object):
         tol = 1e-3
 
         #Point to loci file
-        loci_file = f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.txt'
+        loci_file = f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.h5'
 
         #Simulation parameters
         params = {'radial_nodes':100, 'theta_nodes':100}

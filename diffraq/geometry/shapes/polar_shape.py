@@ -115,8 +115,8 @@ class PolarShape(Shape):
 
     def inv_cart(self, xy):
         #Inverse to go from cartesian to parameter, function
-        rad = np.hypot(*xy.T)
-        the = np.arctan2(*xy[:,::-1].T)
+        rad = np.hypot(xy[:,0], xy[:,1])
+        the = np.arctan2(xy[:,1], xy[:,0])
         return the, rad
 
 ############################################

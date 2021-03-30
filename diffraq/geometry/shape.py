@@ -12,6 +12,7 @@ Description: Base class of an occulter shape, used to generate quadrature points
 """
 
 import numpy as np
+import h5py
 from diffraq.utils import misc_util
 import diffraq.geometry as geometry
 from diffraq.utils import def_shape_params
@@ -187,7 +188,8 @@ class Shape(object):
 
     def load_edge_file(self, edge_file):
         #Load file
-        data = np.genfromtxt(edge_file, delimiter=',')
+        with h5py.File(edge_file, 'r') as f:
+            data = f['data'][()]
 
         #Replace min/max radius
         self.min_radius = data[:,0].min()

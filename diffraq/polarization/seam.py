@@ -18,8 +18,10 @@ import diffraq.quadrature as quad
 
 class Seam(object):
 
-    def __init__(self, shape):
+    def __init__(self, shape, radial_nodes, theta_nodes):
         self.shape = shape
+        self.radial_nodes = radial_nodes
+        self.theta_nodes = theta_nodes
 
 ############################################
 #####  Build Quadrature and Edge distances #####
@@ -40,6 +42,9 @@ class Seam(object):
         #Build edge distances
         dq = seam_width * (dept_nodes * pos_angle).ravel()
 
+        #Cleanup
+        del dept_nodes, pos_angle
+
         #Flip sign of distance and rotate normal angle by pi if opaque
         if self.shape.is_opaque:
             dq *= -1
@@ -56,17 +61,17 @@ class Seam(object):
 
     def get_quad_polar(self, seam_width):
         return quad.seam_polar_quad(self.shape.outline.func, \
-            self.shape.radial_nodes, self.shape.theta_nodes, seam_width)
+            self.radial_nodes, self.theta_nodes, seam_width)
 
     def get_quad_cartesian(self, seam_width):
         return quad.seam_cartesian_quad(self.shape.outline.func,
-            self.shape.outline.diff, self.shape.radial_nodes, \
-            self.shape.theta_nodes, seam_width)
+            self.shape.outline.diff, self.radial_nodes, \
+            self.theta_nodes, seam_width)
 
     def get_quad_petal(self, seam_width):
         return quad.seam_petal_quad(self.shape.outline.func, self.shape.num_petals, \
-            self.shape.min_radius, self.shape.max_radius, self.shape.radial_nodes, \
-            self.shape.theta_nodes, seam_width)
+            self.shape.min_radius, self.shape.max_radius, self.radial_nodes, \
+            self.theta_nodes, seam_width)
 
 ############################################
 ############################################
@@ -78,41 +83,31 @@ class Seam(object):
     def get_normal_angles_petal(self, indt_values):
 
         #Get petal signs and angle to rotate
-        ones = np.ones(self.shape.theta_nodes, dtype=int)
+        ones = np.ones(self.theta_nodes, dtype=int)
         pet_mul = np.tile(np.concatenate((ones, -ones)), self.shape.num_petals)
         pet_add = 2*(np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
-            2*self.shape.theta_nodes) - 1)
+            2*self.theta_nodes) - 1)
 
         #Get function and derivative values at the parameter values
         func = self.shape.outline.func(indt_values)*pet_mul + pet_add
         diff = self.shape.outline.diff(indt_values)*pet_mul
-        diff_2nd = self.shape.outline.diff_2nd(indt_values)*pet_mul
 
         #Get cartesian function and derivative values at the parameter values
-        cart_func, cart_diff, cart_diff_2nd = self.shape.cart_func_diffs(\
-            indt_values, func=func, diff=diff, diff_2nd=diff_2nd, with_2nd=True)
+        cart_func, cart_diff = self.shape.cart_func_diffs( \
+            indt_values, func=func, diff=diff)
 
         #Cleanup
-        del func, diff, diff_2nd
-
-        #Flatten
-        orig_shape = cart_func.shape[:2]
-        cart_func = cart_func.reshape((-1, 2))
-        cart_diff = cart_diff.reshape((-1, 2))
-        cart_diff_2nd = cart_diff_2nd.reshape((-1, 2))
+        del func, diff, pet_add, ones
 
         #Calculate angle between normal and theta vector (orthogonal to position vector)
-        pos_angle = -(cart_func[:,0]*cart_diff[:,0] + cart_func[:,1]*cart_diff[:,1]) / \
-            (np.hypot(cart_func[:,0], cart_func[:,1]) * np.hypot(cart_diff[:,0], cart_diff[:,1]))
+        pos_angle = -(cart_func[...,0]*cart_diff[...,0] + cart_func[...,1]*cart_diff[...,1]) / \
+            (np.hypot(cart_func[...,0], cart_func[...,1]) * np.hypot(cart_diff[...,0], cart_diff[...,1]))
 
-        pos_angle = pos_angle.reshape(orig_shape)
-
-        #Build normal angle (get sign from second derivatives)
-        beta = np.sign(cart_diff[:,0]*cart_diff_2nd[:,1] - cart_diff[:,1]*cart_diff_2nd[:,0])
-        nq = np.arctan2(beta*cart_diff[:,0], -beta*cart_diff[:,1])
+        #Build normal angle
+        nq = np.arctan2(pet_mul*cart_diff[...,0], -pet_mul*cart_diff[...,1]).ravel()
 
         #Cleanup
-        del indt_values, cart_func, cart_diff, cart_diff_2nd, beta
+        del indt_values, cart_func, cart_diff, pet_mul
 
         return pos_angle, nq
 
@@ -125,7 +120,7 @@ class Seam(object):
             (np.hypot(func[:,0],func[:,1]) * np.hypot(diff[:,0],diff[:,1])))[:,None]
 
         #Build normal angles
-        nq = (np.ones(self.shape.radial_nodes) * \
+        nq = (np.ones(self.radial_nodes) * \
             np.arctan2(diff[:,0], -diff[:,1])[:,None]).ravel()
 
         #Cleanup

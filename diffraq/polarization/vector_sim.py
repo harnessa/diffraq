@@ -43,8 +43,19 @@ class VectorSim(object):
         self.seams = []
         for shape in self.shapes:
 
+            #Set number of nodes
+            if self.sim.seam_radial_nodes is not None:
+                radial_nodes = self.sim.seam_radial_nodes
+            else:
+                radial_nodes = shape.radial_nodes
+
+            if self.sim.seam_theta_nodes is not None:
+                theta_nodes = self.sim.seam_theta_nodes
+            else:
+                theta_nodes = shape.theta_nodes
+
             #Build seam for given shape
-            seam = polar.Seam(shape)
+            seam = polar.Seam(shape, radial_nodes, theta_nodes)
 
             #Save seam
             self.seams.append(seam)

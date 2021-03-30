@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 import diffraq
+import h5py
 
 num_pts = 10000
 
@@ -22,11 +23,13 @@ the = np.linspace(0, 2*np.pi, num_pts)
 xx = xfunc(the)
 yy = yfunc(the)
 
+loci = np.stack((xx,yy), 1)
+
 plt.plot(xx, yy, 'x-')
 
-with open(f'{diffraq.int_data_dir}/Test_Data/{name}_loci_file.txt', 'w') as f:
-    f.write(f'{head}\n')
-    for i in range(len(xx)):
-        f.write(f'{xx[i]},{yy[i]}\n')
+with h5py.File(f'{diffraq.int_data_dir}/Test_Data/{name}_loci_file.h5', 'w') as f:
+    f.create_dataset('note', data=head)
+    f.create_dataset('header', data='x [m], y [m]')
+    f.create_dataset('loci', data=loci)
 
 breakpoint()

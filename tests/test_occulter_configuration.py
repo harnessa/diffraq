@@ -44,7 +44,7 @@ class Test_Occulter_Configuration(object):
 
         #Load regular sim
         shape = {'kind':'starshade', 'is_opaque':False, 'num_petals':self.num_pet, \
-            'edge_file':f'{self.apod_dir}/inv_apod_file.txt', 'has_center':False}
+            'edge_file':f'{self.apod_dir}/inv_apod_file.h5', 'has_center':False}
         reg_sim = diffraq.Simulator(params, shape)
 
         #Load occulter sim

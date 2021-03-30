@@ -131,9 +131,9 @@ class PetalShape(Shape):
 
         #Second derivative
         if with_2nd:
-            shr1 = -(diff*pang)**2*r
-            shr2 = (2*diff + r*diff_2nd)*pang
-            diff_2nd_ans = np.stack((shr1*cf - sf*shr2, shr2*sf + cf*shr2), func.ndim).squeeze()
+            shr1 = -pang * diff**2 * r
+            shr2 = 2*diff + r*diff_2nd
+            diff_2nd_ans = pang*np.stack((shr1*cf - sf*shr2, shr1*sf + cf*shr2), func.ndim).squeeze()
 
             #Cleanup
             del func, diff, cf, sf, diff_2nd, shr1, shr2
@@ -151,8 +151,8 @@ class PetalShape(Shape):
 
     def inv_cart(self, xy):
         #Inverse to go from cartesian to parameter, function
-        rad = np.hypot(*xy.T)
-        the = np.arctan2(*xy[:,::-1].T) * self.num_petals/np.pi
+        rad = np.hypot(xy[:,0], xy[:,1])
+        the = np.arctan2(xy[:,1], xy[:,0]) * self.num_petals/np.pi
         return rad, the
 
 ############################################

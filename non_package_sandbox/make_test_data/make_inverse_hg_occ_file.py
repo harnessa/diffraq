@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 import diffraq
+import h5py
 
 rmin, rcut, rstt, rmax = 8e-3, 13e-3, 18e-3, 25e-3
 max_apod = 0.9

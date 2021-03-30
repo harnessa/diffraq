@@ -17,7 +17,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 class InterpOutline(object):
 
-    def __init__(self, parent, data, with_2nd=True, etch_error=None):
+    def __init__(self, parent, data, with_2nd=False, etch_error=None):
 
         self.parent = parent    #Shape
         self._data = data       #polar parent - (theta, apod), petal parent - (radius, apod)
@@ -62,7 +62,7 @@ class InterpOutline(object):
 
         #Create normal from derivative
         normal = cart_diff[:,::-1]
-        normal /= np.hypot(*normal.T)[:,None]
+        normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
 
         #Build new data (negative etch adds more material)
         new_cart_func = cart_func + etch*normal*np.array([1,-1])*self.parent.opq_sign

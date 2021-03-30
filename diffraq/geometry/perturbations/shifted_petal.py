@@ -141,7 +141,7 @@ class Shifted_Petal(object):
         pr = pr[:,None]
 
         #Get polar coordinates of edges
-        oldr = np.hypot(*old_edge.T)
+        oldr = np.hypot(old_edge[:,0], old_edge[:,1])
         newt = np.arctan2(new_edge[:,1], new_edge[:,0])
 
         #Circle theta around
@@ -152,7 +152,7 @@ class Shifted_Petal(object):
         pw = pw*ang_wid/2 + ang_avg
 
         #Resample new edge onto theta nodes (flip pw to be increasing)
-        newr = np.interp(pw[::-1], newt, np.hypot(*new_edge.T))
+        newr = np.interp(pw[::-1], newt, np.hypot(new_edge[:,0], new_edge[:,1]))
 
         #Difference in radius
         dr = newr - oldr
