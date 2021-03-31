@@ -8,5 +8,3 @@ Performance Testing
     gprof2dot -f pstats output.pstats | dot -Teps -o output.eps
 
 Then, have a look at ``output.png`` to see where time is being spent.
-
-    
