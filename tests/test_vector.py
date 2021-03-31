@@ -235,12 +235,7 @@ class Test_Vector(object):
 
         #Compare areas
         varea = vec_area + seam_area
-        assert(np.abs(varea - etch_area) < 5e-3)
-
-        # import matplotlib.pyplot as plt;plt.ion()
-        # fs = area_func(ds)
-        # plt.colorbar(plt.scatter(xs, ys, c=fs, s=1))
-        # breakpoint()
+        assert(np.abs(varea - etch_area) < 1e-3)
 
 ############################################
 ############################################

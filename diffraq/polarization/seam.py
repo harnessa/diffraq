@@ -14,7 +14,7 @@ Description: Class representing the narrow seam around the edge of an occulter/a
 """
 
 import numpy as np
-import diffraq.quadrature as quad
+import diffraq.polarization as polar
 
 class Seam(object):
 
@@ -60,16 +60,16 @@ class Seam(object):
 ############################################
 
     def get_quad_polar(self, seam_width):
-        return quad.seam_polar_quad(self.shape.outline.func, \
+        return polar.seam_polar_quad(self.shape.outline.func, \
             self.radial_nodes, self.theta_nodes, seam_width)
 
     def get_quad_cartesian(self, seam_width):
-        return quad.seam_cartesian_quad(self.shape.outline.func,
+        return polar.seam_cartesian_quad(self.shape.outline.func,
             self.shape.outline.diff, self.radial_nodes, \
             self.theta_nodes, seam_width)
 
     def get_quad_petal(self, seam_width):
-        return quad.seam_petal_quad(self.shape.outline.func, self.shape.num_petals, \
+        return polar.seam_petal_quad(self.shape.outline.func, self.shape.num_petals, \
             self.shape.min_radius, self.shape.max_radius, self.radial_nodes, \
             self.theta_nodes, seam_width)
 
