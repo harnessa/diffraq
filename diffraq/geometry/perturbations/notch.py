@@ -24,10 +24,11 @@ class Notch(object):
             - kind:         kind of perturbation
             - xy0:          (x,y) coordinates of start of notch (innermost point) [m],
             - height:       height of notch [m],
-            - width:        width (along edge) of notch [m],
+            - width:        width (change in radius) of notch [m],
             - direction:    direction of notch. 1 = excess material, -1 = less material,
             - local_norm:   True = shift each part of original edge by its local normal,
                             False = shift entire edge by single direction (equal to normal in the middle),
+            - kluge_norm:   kluge to match norm to lab (M12P2) notches
             - num_quad:     number of quadrature nodes in each direction,
         """
         #Point to parent [shape]
@@ -35,7 +36,7 @@ class Notch(object):
 
         #Set Default parameters
         def_params = {'kind':'Notch', 'xy0':[0,0], 'height':0, 'width':0, \
-            'direction':1, 'local_norm':True, 'num_quad':None}
+            'direction':1, 'local_norm':True, 'num_quad':None, 'kluge_norm':False}
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
@@ -158,11 +159,17 @@ class Notch(object):
 
     def get_new_edge(self, ts):
 
+        #Shift edge out by the normal vector
+        etch = -self.height * np.array([1., -1]) * self.direction * self.parent.opq_sign
+
         #Get loci of edge across test region and normals
         old_edge, normal = self.parent.cart_func_diffs(ts[:,0])
 
-        #Use one normal or local normals
-        if self.local_norm:
+        #Use one normal or local normals or kluge norm
+        if self.kluge_norm:
+            #Fix normal with Kluge to replicate lab notches which have issues from scaling to 12 petals
+            normal = self.get_kluge_norm(old_edge, etch, ts)
+        elif self.local_norm:
             #Local normals
             normal = normal[:,::-1]
             normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
@@ -170,9 +177,6 @@ class Notch(object):
             #Get normal vector of middle of old_edge
             normal = normal[:,::-1][len(ts)//2]
             normal /= np.hypot(normal[0], normal[1])
-
-        #Shift edge out by the normal vector
-        etch = -self.height * np.array([1., -1]) * self.direction * self.parent.opq_sign
 
         return old_edge, etch, normal
 
@@ -252,29 +256,54 @@ class Notch(object):
         #Get weights (theta change is absolute) rdr = wr*pr, dtheta = ww*dt
         wq = qd_sign * (ww * pr * wr * np.abs(dt)).ravel()
 
+        #Add ramped triangles for kluge
+        # if self.kluge_norm:
+
+
+
+        # #Get perturbation specifc edge points
+        # xy = self.get_pert_edge(t0, tf, m)
 
         # new_edge = pr*np.stack((np.cos(newt[:,0]), np.sin(newt[:,0])),1) #TODO: remove
         # import matplotlib.pyplot as plt;plt.ion()
-        # plt.figure()
-        # plt.plot(oldr, oldt, 'x')
-        # plt.plot(np.hypot(*new_dummy.T),  np.arctan2(*new_dummy[:,::-1].T), '+')
-        # plt.plot(pr[:,0], oldt + dt, '*')
+
+        # import matplotlib.pyplot as plt;plt.ion()
         #
-        # plt.figure()
-        # plt.plot(*old_edge.T, 'x-')
-        # plt.plot(*new_dummy.T, '+-')
-        # plt.plot(*new_edge.T, '*-')
+        # ddir = '/home/aharness/repos/Milestone_2/analysis/modeling/M12P2/make_loci/Loci'
+        # file1 = 'petal10_notch12p'
+        # file2 = 'petal4_notch12p'
+        # filen = 'nompetal12p'
+        #
+        # pet1 = np.genfromtxt(f'{ddir}/{file1}.txt', delimiter='  ')
+        # pet2 = np.genfromtxt(f'{ddir}/{file2}.txt', delimiter='  ')
+        # petn = np.genfromtxt(f'{ddir}/{filen}.txt', delimiter='  ')
+        #
+        # pet1[:,1] *= -1
+        # pet2[:,1] *= -1
+        #
+        # if t0 < -5000:
+        #     angle = -6*np.pi/12
+        # else:
+        #     angle = 6*np.pi/12
+        #
+        # pet1 = pet1.dot( np.array([[ np.cos(angle), np.sin(angle)], \
+        #                      [-np.sin(angle), np.cos(angle)]]) )
+        # pet2 = pet2.dot( np.array([[ np.cos(angle), np.sin(angle)], \
+        #                      [-np.sin(angle), np.cos(angle)]]) )
+        # petn = petn.dot( np.array([[ np.cos(angle), np.sin(angle)], \
+        #                      [-np.sin(angle), np.cos(angle)]]) )
+        #
+        # plt.cla()
+        # if t0 < -5000:
+        #     plt.plot(*pet2.T)
+        # else:
+        #     plt.plot(*pet1.T)
+        # plt.plot(*petn.T ,'--')
+        # plt.plot(*xy.T, 'x')
+        # plt.plot(xq, yq, '+')
         # plt.axis('equal')
-        # # breakpoint()
-        #
-        #
-        # tru_a = self.height*self.width
-        # print((np.abs(wq.sum())-tru_a)/tru_a*100)
-        #
-        # # plt.figure()
-        # # plt.scatter(xq, yq, c=wq, s=1)
-        #
         # breakpoint()
+
 
         #Cleanup
         del pw, ww, pr, wr, old_edge, new_edge, oldt, newt, ts, dt, tt, \
@@ -309,6 +338,52 @@ class Notch(object):
         del loci
 
         return xq, yq, wq
+
+############################################
+############################################
+
+############################################
+#####  Kluge Norm #####
+############################################
+
+    def get_kluge_norm(self, old_edge, etch, ts):
+        #Scale factor 16 -> 12 petals
+        scale = 12/16
+
+        #Build new old edge w/ 16 petals
+        a0 = np.arctan2(old_edge[:,1], old_edge[:,0]) * scale
+        pet0 = np.hypot(old_edge[:,0], old_edge[:,1])[:,None] * \
+            np.stack((np.cos(a0), np.sin(a0)),1)
+
+        #Build normal from this edge
+        normal = (np.roll(pet0, -1, axis=0) - pet0)[:,::-1]
+        normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
+        normal[0] = normal[1]
+
+        #Flip sign of normal if decreasing ts
+        if np.sign(ts[-1] - ts[0]) < 0:
+            normal *= -1
+
+        #Build notch edge
+        edge0 = pet0 + normal * etch
+
+        #Convert to polar cooords
+        anch = np.arctan2(edge0[:,1], edge0[:,0]) / scale
+
+        #Scale and go back to cart coords
+        nch = np.hypot(edge0[:,0], edge0[:,1])[:,None] * \
+            np.stack((np.cos(anch), np.sin(anch)), 1)
+
+        #New edge
+        edge = scale*nch + old_edge*(1-scale)
+
+        #Compute new normal
+        new_normal = (edge - old_edge) / etch
+
+        #Cleanup
+        del a0, pet0, normal, edge0, anch, nch, edge
+
+        return new_normal
 
 ############################################
 ############################################

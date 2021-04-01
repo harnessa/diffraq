@@ -14,6 +14,7 @@ Description: Script to take a joint apodization function with inner and outer
 
 import numpy as np
 import diffraq
+import h5py
 
 ############################
 #####   USER INPUT     #####
@@ -26,7 +27,10 @@ apod_dir = diffraq.apod_dir
 ############################
 
 #Load joint apodization function
-rads, apod = np.genfromtxt(f'{apod_dir}/{apod_name}.txt', delimiter=',').T
+with h5py.File(f'{apod_dir}/{apod_name}.h5', 'r') as f:
+    data = f['data'][()]
+rads = data[:,0]
+apod = data[:,1]
 
 #Get minimum radius and maximum apodization value
 rmin = rads.min()
@@ -34,28 +38,19 @@ max_apod = apod.max()
 
 #Get index of end of inner starshade (subtract one to go from strut to starshade)
 inn_cut = np.where(apod >= max_apod)[0][0] - 1 + 3   #3 matches Stuart's loci for M12P6
-ainn = 1 - apod[:inn_cut]   #Take inverse
-rinn = rads[:inn_cut]
+data_inn = np.stack((rads, 1 - apod), 1)[:inn_cut]
 
 #Get index of start of outer starshade (add one to go from strut to starshade)
 out_cut = np.where(apod >= max_apod)[0][-1] + 1
-aout = apod[out_cut:]
-rout = rads[out_cut:]
+data_out = data[out_cut:]
 
-#Write out Inner apod
-with open(f'{apod_dir}/{apod_name}__inner.txt', 'w') as f:
-    f.write(f'#Inner apodization\n')
-    #Write out last radius
-    f.write(f'#,{rinn[-1]}\n')
-    #Write out all data
-    for i in range(len(rinn)):
-        f.write(f'{rinn[i]},{ainn[i]}\n')
+#Write out split apod
+with h5py.File(f'{apod_dir}/{apod_name}__inner.h5', 'w') as f:
+    f.create_dataset('note', data='Inner apodization of bb_2017')
+    f.create_dataset('header', data='radius [m], apodization value')
+    f.create_dataset('data', data=data_inn)
 
-#Write out Outer apod
-with open(f'{apod_dir}/{apod_name}__outer.txt', 'w') as f:
-    f.write(f'#Outer apodization\n')
-    #Write out first radius
-    f.write(f'#,{rout[0]}\n')
-    #Write out all data
-    for i in range(len(rout)):
-        f.write(f'{rout[i]},{aout[i]}\n')
+with h5py.File(f'{apod_dir}/{apod_name}__outer.h5', 'w') as f:
+    f.create_dataset('note', data='Outer apodization of bb_2017')
+    f.create_dataset('header', data='radius [m], apodization value')
+    f.create_dataset('data', data=data_out)
