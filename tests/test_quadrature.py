@@ -18,7 +18,7 @@ import h5py
 class Test_Quadrature(object):
 
     def run_all_tests(self):
-        tsts = ['lgwt', 'polar', 'cartesian', 'starshade', 'loci']
+        tsts = ['lgwt', 'polar', 'cartesian', 'starshade', 'loci', 'triangle']
         for t in tsts:
             getattr(self, f'test_{t}')()
 
@@ -98,8 +98,8 @@ class Test_Quadrature(object):
         disk_r0 = 0.7; disk_r1 = 1.3
         disk_Afunc = lambda t: 1 + 0*t
 
-        for m in range(20,100,10):
-            for n in range(20,100,10):
+        for m in range(20,100,20):
+            for n in range(20,100,20):
 
                 ### Test DISK ###
                 #Get quad
@@ -136,7 +136,7 @@ class Test_Quadrature(object):
         with h5py.File(f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.h5', 'r') as f:
             loci = f['loci'][()]
 
-        for m in range(100,200,20):
+        for m in range(100,200,40):
             for dn in [2, 5, 10]:
 
                 #Get quad
@@ -147,6 +147,28 @@ class Test_Quadrature(object):
 
         #Cleanup
         del xq, yq, wq, loci
+
+############################################
+
+    def test_triangle(self):
+        #Build vertices
+        vv = np.exp(2j*np.pi/3*(np.arange(3)+1))
+        vx = vv.real
+        vy = vv.imag
+
+        #True area
+        tru_area = 0.5 * ((vx[1] - vx[0])*(vy[2] - vy[0]) - (vy[1] - vy[0])*(vx[2] - vx[0]))
+
+        for m in range(20,100,20):
+
+            #Get quad
+            xq, yq, wq = diffraq.quadrature.triangle_quad(vx, vy, m)
+
+            #Make sure area agrees
+            assert(np.isclose(wq.sum(), tru_area))
+
+            #yq should be odd
+            assert(np.isclose((wq*yq**3).sum(), 0))
 
 ############################################
 
