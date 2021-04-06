@@ -28,6 +28,27 @@ class Seam(object):
 ############################################
 
     def build_seam_quadrature(self, seam_width):
+        #Get main shape quadrature
+        xq, yq, wq, dq, nq = self.build_shape_quadrature(seam_width)
+
+        #Add perturbations
+
+        # import matplotlib.pyplot as plt;plt.ion()
+        # breakpoint()
+
+        #Rotate with parent shape
+        if self.shape.rot_mat is not None:
+            xq, yq = np.stack((xq,yq),1).dot(self.shape.rot_mat).T
+            nq += self.shape.rot_angle
+
+        #Flip sign of distance and rotate normal angle by pi if opaque
+        if self.shape.is_opaque:
+            dq *= -1
+            nq += np.pi
+
+        return xq, yq, wq, dq, nq
+
+    def build_shape_quadrature(self, seam_width):
         #Get shape specific quadrature and nodes in dependent direction (r-polar, theta-petal) and
             #values in independent, i.e. parameter, direction (theta-polar, r-petal)
         xq, yq, wq, dept_nodes, indt_values = getattr(self, \
@@ -44,11 +65,6 @@ class Seam(object):
 
         #Cleanup
         del dept_nodes, pos_angle
-
-        #Flip sign of distance and rotate normal angle by pi if opaque
-        if self.shape.is_opaque:
-            dq *= -1
-            nq += np.pi
 
         return xq, yq, wq, dq, nq
 

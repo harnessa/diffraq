@@ -16,7 +16,7 @@ import h5py
 from diffraq.utils import misc_util
 import diffraq.geometry as geometry
 from diffraq.utils import def_shape_params
-from scipy.optimize import fmin, newton
+from scipy.optimize import newton
 
 class Shape(object):
 
@@ -27,23 +27,14 @@ class Shape(object):
         #Set Default parameters
         misc_util.set_default_params(self, {**kwargs}, def_shape_params, skip_keys=['kind'])
 
-        #Set nodes if fraction
-        if self.radial_nodes is None:
-            self.radial_nodes = self.parent.sim.radial_nodes
-        elif self.radial_nodes < 1:
-            self.radial_nodes = int(self.radial_nodes * self.parent.sim.radial_nodes)
-
-        if self.theta_nodes is None:
-            self.theta_nodes = self.parent.sim.theta_nodes
-        elif self.theta_nodes < 1:
-            self.theta_nodes = int(self.theta_nodes * self.parent.sim.theta_nodes)
-
-        #Clocking matrix
-        self.clock_angle = np.pi/self.num_petals
-        self.clock_mat = self.build_rot_matrix(self.clock_angle)
-
         #Sign for perturbation and etch directions
         self.opq_sign = -(2*int(self.is_opaque) - 1)
+
+        #Set nodes
+        self.set_nodes()
+
+        #Set rotation angle
+        self.set_rotation_angle()
 
         #Load outline and perturbations
         self.set_outline()
@@ -107,14 +98,9 @@ class Shape(object):
         for pert in self.pert_list:
             sxq, syq, swq = pert.build_quadrature(sxq, syq, swq)
 
-        #Clock (if applicable)
-        if self.is_clocked:
-            sxq, syq = np.stack((sxq,syq),1).dot(self.clock_mat).T
-
-        #Rotate (if applicable)
-        if not np.isclose(self.rotation, 0):
-            rot_mat = self.build_rot_matrix(self.rotation)
-            sxq, syq = np.stack((sxq,syq),1).dot(rot_mat).T
+        #Rotate (w/ clocking; if applicable)
+        if self.rot_mat is not None:
+            sxq, syq = np.stack((sxq,syq),1).dot(self.rot_mat).T
 
         return sxq, syq, swq
 
@@ -129,14 +115,9 @@ class Shape(object):
         for pert in self.pert_list:
             sedge = pert.build_edge_points(sedge)
 
-        #Clock (if applicable)
-        if self.is_clocked:
-            sedge = sedge.dot(self.clock_mat)
-
-        #Rotate (if applicable)
-        if not np.isclose(self.rotation, 0):
-            rot_mat = self.build_rot_matrix(self.rotation)
-            sedge = sedge.dot(rot_mat)
+        #Rotate (w/ clocking; if applicable)
+        if self.rot_mat is not None:
+            sedge = sedge.dot(self.rot_mat)
 
         return sedge
 
@@ -186,6 +167,33 @@ class Shape(object):
 #####   Misc Functions #####
 ############################################
 
+    def set_nodes(self):
+        #If nodes not specified, set equal to parents. If nodes < 1, use fraction of parents
+        if self.radial_nodes is None:
+            self.radial_nodes = self.parent.sim.radial_nodes
+        elif self.radial_nodes < 1:
+            self.radial_nodes = int(self.radial_nodes * self.parent.sim.radial_nodes)
+
+        if self.theta_nodes is None:
+            self.theta_nodes = self.parent.sim.theta_nodes
+        elif self.theta_nodes < 1:
+            self.theta_nodes = int(self.theta_nodes * self.parent.sim.theta_nodes)
+
+    def set_rotation_angle(self):
+        #Clocking angle
+        self.clock_angle = np.pi/self.num_petals
+
+        #Rotation matrix
+        self.rot_angle = self.rotation
+        if self.is_clocked:
+            self.rot_angle += self.clock_angle
+        if not np.isclose(self.rot_angle, 0):
+            self.rot_mat = self.parent.build_rot_matrix(self.rot_angle)
+        else:
+            self.rot_mat = None
+
+    ##########################
+
     def load_edge_file(self, edge_file):
         #Load file
         with h5py.File(edge_file, 'r') as f:
@@ -209,58 +217,6 @@ class Shape(object):
         edge = edge[np.argsort(angles)]
 
         return edge
-
-        #Sort by angle across petals
-        new_edge = np.empty((0,2))
-        for i in range(num_petals):
-
-            #Difference between angles
-            dang = 2*np.pi/num_petals
-
-            #Angle bisector (mean angle)
-            mang = i*2*np.pi/num_petals
-
-            #Get angle between points and bisector
-            dot = edge[:,0]*np.cos(mang) + edge[:,1]*np.sin(mang)
-            det = edge[:,0]*np.sin(mang) - edge[:,1]*np.cos(mang)
-            diff_angs = np.abs(np.arctan2(det, dot))
-
-            #Indices are where angles are <= dang/2 away
-            inds = diff_angs <= dang/2
-
-            #Grab points in this angle range
-            cur_pts = edge[inds]
-
-            if len(cur_pts) == 0:
-                continue
-
-            #Get new angles
-            cur_ang = np.arctan2(cur_pts[:,1] - cur_pts[:,1].mean(), \
-                cur_pts[:,0] - cur_pts[:,0].mean()) % (2.*np.pi)
-
-            #Sort current section
-            cur_pts = cur_pts[np.argsort(cur_ang)]
-
-            #Rotate to minimum radius
-            min_rad_ind = np.argmin(np.hypot(*cur_pts.T))
-            cur_pts = np.roll(cur_pts, -min_rad_ind, axis=0)
-
-            #Append
-            new_edge = np.concatenate((new_edge, cur_pts))
-
-        #Check the same
-        if new_edge.size != edge.size:
-            print('Bad Sort!')
-            breakpoint()
-
-        #Cleanup
-        del dot, det, diff_angs, inds, cur_pts, cur_ang, edge
-
-        return new_edge
-
-    def build_rot_matrix(self, angle):
-        return np.array([[ np.cos(angle), np.sin(angle)],
-                         [-np.sin(angle), np.cos(angle)]])
 
 ############################################
 ############################################

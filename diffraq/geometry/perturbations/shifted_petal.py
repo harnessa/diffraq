@@ -192,15 +192,16 @@ class Shifted_Petal(object):
         old_edge, new_edge, r0, r1 = self.get_new_edge(ang_avg)
 
         #Get angles of edges
-        old_angs = np.arctan2(*old_edge[:,::-1].T)
-        new_angs = np.arctan2(*new_edge[:,::-1].T)
+        old_angs = np.arctan2(*old_edge[:,::-1].T) % (2.*np.pi)
+        new_angs = np.arctan2(*new_edge[:,::-1].T) % (2.*np.pi)
 
         #Make lines between edges
         edge = np.empty((0,2))
         for i in range(2):
             #Get points closest to angle
-            old_pt = old_edge[np.argmin(np.abs(old_angs - self.angles[i]))]
-            new_pt = new_edge[np.argmin(np.abs(new_angs - self.angles[i]))]
+            cur_ang = self.angles[i] % (2.*np.pi)
+            old_pt = old_edge[np.argmin(np.abs(old_angs - cur_ang))]
+            new_pt = new_edge[np.argmin(np.abs(new_angs - cur_ang))]
 
             #Build line between old and new
             edge = np.concatenate((edge, self.make_line(old_pt, new_pt, self.num_quad)))

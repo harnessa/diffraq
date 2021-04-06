@@ -24,7 +24,7 @@ class Notch(object):
             - kind:         kind of perturbation
             - xy0:          (x,y) coordinates of start of notch (innermost point) [m],
             - height:       height of notch [m],
-            - width:        width (change in radius) of notch [m],
+            - width:        width (change in distance) of notch [m],
             - direction:    direction of notch. 1 = excess material, -1 = less material,
             - local_norm:   True = shift each part of original edge by its local normal,
                             False = shift entire edge by single direction (equal to normal in the middle),
@@ -104,8 +104,8 @@ class Notch(object):
 
     def get_param_locs(self):
         #Clock starting point to match pre-clocked parent shape
-        if self.parent.is_clocked:
-            xy0 = self.xy0.dot(self.parent.clock_mat.T)
+        if self.parent.rot_mat is not None:
+            xy0 = self.xy0.dot(self.parent.rot_mat.T)
         else:
             xy0 = self.xy0.copy()
 
@@ -212,9 +212,6 @@ class Notch(object):
         #Get old edge at radial node points, and etch and normal
         old_edge, etch, normal = self.get_new_edge(ts)
 
-        # new_dummy = old_edge + etch*normal  #TODO: remove
-
-
         #Get parameters outside bounds of old edge
         ts_big = np.linspace(ts.min()-ts.ptp()*.05, ts.max()+ts.ptp()*.05, \
             int(len(ts)*1.1))[:,None]
@@ -256,55 +253,6 @@ class Notch(object):
         #Get weights (theta change is absolute) rdr = wr*pr, dtheta = ww*dt
         wq = qd_sign * (ww * pr * wr * np.abs(dt)).ravel()
 
-        #Add ramped triangles for kluge
-        # if self.kluge_norm:
-
-
-
-        # #Get perturbation specifc edge points
-        # xy = self.get_pert_edge(t0, tf, m)
-
-        # new_edge = pr*np.stack((np.cos(newt[:,0]), np.sin(newt[:,0])),1) #TODO: remove
-        # import matplotlib.pyplot as plt;plt.ion()
-
-        # import matplotlib.pyplot as plt;plt.ion()
-        #
-        # ddir = '/home/aharness/repos/Milestone_2/analysis/modeling/M12P2/make_loci/Loci'
-        # file1 = 'petal10_notch12p'
-        # file2 = 'petal4_notch12p'
-        # filen = 'nompetal12p'
-        #
-        # pet1 = np.genfromtxt(f'{ddir}/{file1}.txt', delimiter='  ')
-        # pet2 = np.genfromtxt(f'{ddir}/{file2}.txt', delimiter='  ')
-        # petn = np.genfromtxt(f'{ddir}/{filen}.txt', delimiter='  ')
-        #
-        # pet1[:,1] *= -1
-        # pet2[:,1] *= -1
-        #
-        # if t0 < -5000:
-        #     angle = -6*np.pi/12
-        # else:
-        #     angle = 6*np.pi/12
-        #
-        # pet1 = pet1.dot( np.array([[ np.cos(angle), np.sin(angle)], \
-        #                      [-np.sin(angle), np.cos(angle)]]) )
-        # pet2 = pet2.dot( np.array([[ np.cos(angle), np.sin(angle)], \
-        #                      [-np.sin(angle), np.cos(angle)]]) )
-        # petn = petn.dot( np.array([[ np.cos(angle), np.sin(angle)], \
-        #                      [-np.sin(angle), np.cos(angle)]]) )
-        #
-        # plt.cla()
-        # if t0 < -5000:
-        #     plt.plot(*pet2.T)
-        # else:
-        #     plt.plot(*pet1.T)
-        # plt.plot(*petn.T ,'--')
-        # plt.plot(*xy.T, 'x')
-        # plt.plot(xq, yq, '+')
-        # plt.axis('equal')
-        # breakpoint()
-
-
         #Cleanup
         del pw, ww, pr, wr, old_edge, new_edge, oldt, newt, ts, dt, tt, \
             ts_big, old_big, normal_big,
@@ -343,7 +291,7 @@ class Notch(object):
 ############################################
 
 ############################################
-#####  Kluge Norm #####
+#####  Lab Kluge #####
 ############################################
 
     def get_kluge_norm(self, old_edge, etch, ts):
@@ -358,7 +306,9 @@ class Notch(object):
         #Build normal from this edge
         normal = (np.roll(pet0, -1, axis=0) - pet0)[:,::-1]
         normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
+        #Fix normals on end pieces
         normal[0] = normal[1]
+        normal[-1] = normal[-2]
 
         #Flip sign of normal if decreasing ts
         if np.sign(ts[-1] - ts[0]) < 0:

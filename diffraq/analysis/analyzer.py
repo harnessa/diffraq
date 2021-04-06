@@ -145,8 +145,11 @@ class Analyzer(object):
         # #Convert to contrast by dividing by blocked apodization area
         # self.image /= self.max_apod**2.
 
-        #Take first wavelength only
-        self.image = self.image[0]
+        #Store all waves
+        self.image_waves = self.image.copy()
+
+        #Take one wavelength only
+        self.image = self.image[self.wave_ind]
 
         return
 
@@ -160,8 +163,8 @@ class Analyzer(object):
     def show_results(self):
 
         import matplotlib.pyplot as plt;plt.ion()
-        plt.imshow(self.image[0])
-        print(self.image[0].max())
+        plt.imshow(self.image)
+        print(self.image.max())
         breakpoint()
 
 ############################################

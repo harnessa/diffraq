@@ -13,14 +13,14 @@ focal_length = 0.498
 apod = 'bb_2017'
 
 session = apod
-save_dir_base = f'{diffraq.results_dir}/vector'
+save_dir_base = f'{diffraq.results_dir}/vector_test'
 
 seam_width = 5e-6
 mm = 6000
 nn = 300
 
-# mm = 400
-# nn = 30
+mm = 400
+nn = 30
 
 #Params
 dif_params = {

@@ -97,7 +97,7 @@ class VectorSim(object):
 ############################################
 
 ############################################
-#####  Quadrature #####
+#####  Quadrature + Vector Field #####
 ############################################
 
     def build_quadrature(self):
@@ -147,7 +147,7 @@ class VectorSim(object):
             self.xq, self.yq = self.sim.occulter.spin_occulter(self.xq, self.yq)
 
             #Rotate all normal angles
-            self.nq += self.sim.spin_angle
+            self.nq += np.radians(self.sim.spin_angle)
 
 ############################################
 ############################################

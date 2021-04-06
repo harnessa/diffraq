@@ -14,7 +14,7 @@ Description: Derived class of Shape with outline parameterized in radial coordin
 import numpy as np
 import diffraq.quadrature as quad
 from diffraq.geometry import Shape
-from scipy.optimize import fmin, newton
+from scipy.optimize import fmin
 
 class PetalShape(Shape):
 

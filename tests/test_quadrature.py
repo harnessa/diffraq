@@ -28,7 +28,7 @@ class Test_Quadrature(object):
 
         #Test points
         limits = [[-1,1], [-1,0], [5,10]]
-        nums = [5, 10, 100, 1001, 5000]
+        nums = [5, 10, 1001]
 
         for (a,b) in limits:
             for N in nums:
@@ -51,9 +51,9 @@ class Test_Quadrature(object):
 ############################################
 
     def test_polar(self):
-        for m in range(20,100,20):
-            for n in range(20,100,20):
-                for a in np.arange(0.1, 0.9, 0.1):
+        for m in range(20,80,20):
+            for n in range(20,80,20):
+                for a in np.arange(0.1, 0.9, 0.3):
                     #Smooth radial function on [0, 2pi)
                     gfunc = lambda t: 1 + a*np.cos(3*t)
 
@@ -69,8 +69,8 @@ class Test_Quadrature(object):
 ############################################
 
     def test_cartesian(self):
-        for m in range(100,200,20):
-            for n in range(100,200,20):
+        for m in range(100,200,50):
+            for n in range(100,200,50):
                 #Kite occulter
                 func = lambda t: np.hstack((0.5*np.cos(t) + 0.5*np.cos(2*t), np.sin(t)))
                 diff = lambda t: np.hstack((-0.5*np.sin(t) - np.sin(2*t), np.cos(t)))
@@ -98,8 +98,8 @@ class Test_Quadrature(object):
         disk_r0 = 0.7; disk_r1 = 1.3
         disk_Afunc = lambda t: 1 + 0*t
 
-        for m in range(20,100,20):
-            for n in range(20,100,20):
+        for m in range(20,80,20):
+            for n in range(20,80,20):
 
                 ### Test DISK ###
                 #Get quad
@@ -136,7 +136,7 @@ class Test_Quadrature(object):
         with h5py.File(f'{diffraq.int_data_dir}/Test_Data/kite_loci_file.h5', 'r') as f:
             loci = f['loci'][()]
 
-        for m in range(100,200,40):
+        for m in range(100,200,50):
             for dn in [2, 5, 10]:
 
                 #Get quad
@@ -159,7 +159,7 @@ class Test_Quadrature(object):
         #True area
         tru_area = 0.5 * ((vx[1] - vx[0])*(vy[2] - vy[0]) - (vy[1] - vy[0])*(vx[2] - vx[0]))
 
-        for m in range(20,100,20):
+        for m in range(20,80,20):
 
             #Get quad
             xq, yq, wq = diffraq.quadrature.triangle_quad(vx, vy, m)

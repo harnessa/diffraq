@@ -60,7 +60,7 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq_5',
+    'save_ext':         f'newnotch_diffraq_2',
 }
 
 if [False, True][1]:

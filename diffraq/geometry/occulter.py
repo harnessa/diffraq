@@ -40,7 +40,6 @@ class Occulter(object):
             if hasattr(mod, 'is_finite'):
                 self.sim.is_finite = mod.is_finite
 
-
         #Turn into list
         if not isinstance(shapes, list):
             shapes = [shapes]
@@ -145,12 +144,22 @@ class Occulter(object):
 ############################################
 
     def spin_occulter(self, xx, yy=None):
-        #Rotation angle
-        #FIXME: add
-        pass
-        #Spin edge
+        #Rotation matrix
+        rot_mat = self.build_rot_matrix(np.radians(self.sim.spin_angle))
 
-        #Also move seam!
+        #Rotate
+        if yy is not None:
+            #Separate xy (i.e., quad)
+            new = np.stack((xx, yy),1).dot(rot_mat)
+            return new[:,0], new[:,1]
+
+        else:
+            #Edge
+            return xx.dot(rot_mat)
+
+    def build_rot_matrix(self, angle):
+        return np.array([[ np.cos(angle), np.sin(angle)],
+                         [-np.sin(angle), np.cos(angle)]])
 
 ############################################
 ############################################

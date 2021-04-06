@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt;plt.ion()
 import h5py
 import diffraq
 
-session = ['wfirst', 'bb_2017', 'M12P2', 'M12P6'][-1]
+session = ['wfirst', 'bb_2017', 'M12P2', 'M12P6'][-2]
 
 bdw_run = 'bdw_1x'
-dif_run = 'diffraq_1'
+dif_run = 'newnotch_diffraq_1'
 
 
 load_dir_base = f'{diffraq.results_dir}/bdw_compare_new'
