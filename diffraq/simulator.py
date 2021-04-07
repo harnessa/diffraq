@@ -229,6 +229,9 @@ class Simulator(object):
             #Store
             pupil[iw] = uu
 
+        #Cleanup
+        del uu
+
         return pupil
 
     def vector_diffraction_calculation(self, grid_pts):
@@ -265,7 +268,7 @@ class Simulator(object):
                 pupil[iw,ip] = uu
 
         #Cleanup
-        del wu0
+        del wu0, uu
 
         return pupil
 

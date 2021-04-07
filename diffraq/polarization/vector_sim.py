@@ -203,7 +203,7 @@ class VectorSim(object):
         new_pupil[:,1] = U_orth.copy()
 
         #Cleanup
-        del pupil, U_prim, U_orth
+        del pupil, U_prim, U_orth, vec_pupil, scl_pupil
 
         return new_pupil
 
@@ -216,7 +216,7 @@ class VectorSim(object):
 
     def clean_up(self):
         #Delete trash
-        trash_list = ['xq' 'yq', 'wq', 'edge', 'vec_UU']
+        trash_list = ['xq', 'yq', 'wq', 'dq', 'nq', 'edge', 'vec_UU', 'shapes', 'seams']
         for att in trash_list:
             if hasattr(self, att):
                 delattr(self, att)
