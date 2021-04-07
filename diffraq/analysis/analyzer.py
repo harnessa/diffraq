@@ -13,6 +13,7 @@ Description: Class to analyze results of DIFFRAQ simulation.
 import numpy as np
 from diffraq.utils import image_util, misc_util, def_alz_params, Logger
 from diffraq import pkg_home_dir, Simulator
+import h5py
 
 class Analyzer(object):
 
@@ -81,6 +82,23 @@ class Analyzer(object):
 ############################################
 
 ############################################
+####	Properties ####
+############################################
+
+    @property
+    def pupil_dx(self):
+        if hasattr(self, 'pupil_xx'):
+            return self.pupil_xx[1] - self.pupil_xx[0]
+
+    @property
+    def image_dx(self):
+        if hasattr(self, 'image_xx'):
+            return self.image_xx[1] - self.image_xx[0]
+
+############################################
+############################################
+
+############################################
 ####	Load Data ####
 ############################################
 
@@ -121,42 +139,6 @@ class Analyzer(object):
 ############################################
 
 ############################################
-####	Calibration Values ####
-############################################
-
-    def calibrate_pupil(self):
-        # #FIXME: load open data
-        # if self.is_normalized:
-        #
-        #     breakpoint()
-        # else:
-        #
-        #     breakpoint()
-        return
-
-    def calibrate_image(self):
-        # #FIXME: load open data
-        # if self.is_normalized:
-        #
-        #     breakpoint()
-        # else:
-        #     self.image *= (self.sim.z0/(self.sim.z0 + self.sim.zz))**2
-        #
-        # #Convert to contrast by dividing by blocked apodization area
-        # self.image /= self.max_apod**2.
-
-        #Store all waves
-        self.image_waves = self.image.copy()
-
-        #Take one wavelength only
-        self.image = self.image[self.wave_ind]
-
-        return
-
-############################################
-############################################
-
-############################################
 ####	Main Script ####
 ############################################
 
@@ -166,6 +148,75 @@ class Analyzer(object):
         plt.imshow(self.image)
         print(self.image.max())
         breakpoint()
+
+############################################
+############################################
+
+############################################
+####	Calibration Values ####
+############################################
+
+    def calibrate_image(self):
+        #Convert to contrast?
+        if self.is_contrast:
+            self.convert_to_contrast()
+
+        #Store all waves
+        self.image_waves = self.image.copy()
+
+        #Take one wavelength only
+        self.image = self.image_waves[self.wave_ind]
+
+    def convert_to_contrast(self):
+
+        #Get calibration value
+        if self.calibration_file is None:
+            cal_val = (self.sim.z0/(self.sim.z0 + self.sim.zz))**2
+        else:
+            cal_val = self.get_calibration_value()
+
+        #Get freespace correction
+        if isinstance(self.freespace_corr, dict):
+            fcorr = np.array([self.freespace_corr[np.round(wv*1e9,0)] for wv in self.sim.waves])
+        else:
+            fcorr = self.freespace_corr
+
+        #Convert to contrast
+        self.image /= (fcorr * cal_val * self.max_apod**2.)[:,None,None]
+
+    def get_calibration_value(self):
+        #Load calibration image
+        with h5py.File(self.calibration_file, 'r') as f:
+            cal_img = f['intensity'][()]
+
+        #Get calibration value
+        if not self.fit_airy:
+            #Use max value
+            cal_val = cal_img.max((1,2))
+
+        else:
+            #Fit airy pattern with astropy
+            from astropy.modeling import models, fitting
+
+            cal_val = np.array([])
+            for iw in range(cal_img.shape[0]):
+                #Get sub image
+                wid = int(self.sim.waves[iw]/self.sim.tel_diameter * \
+                    misc_util.rad2arcsec/self.image_dx) * 10
+                sub_img = image_util.crop_image(cal_img[iw], None, wid)
+
+                #Fit Airy 2D
+                gg_init = models.AiryDisk2D(sub_img.max(),len(sub_img)//2,len(sub_img)//2,5)
+                fitter = fitting.LevMarLSQFitter()
+                y,x = np.indices(sub_img.shape)
+                weights = np.sqrt(sub_img - sub_img.min())
+                weights[weights == 0.] = 1e-12
+                gg_fit = fitter(gg_init, x, y, sub_img, weights=weights)
+
+                #Get peak value
+                cal_val = np.concatenate((cal_val, [gg_fit.amplitude.value]))
+
+        return cal_val
 
 ############################################
 ############################################

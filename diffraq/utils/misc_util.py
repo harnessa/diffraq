@@ -20,6 +20,8 @@ import base64
 #Constants
 m2mu = 1e6
 mu2m = 1e-6
+rad2arcsec = (180.*3600)/np.pi
+arcsec2rad = np.pi/(180*3600)
 
 ### Text Colors ###
 bad_color = "\x1b[0;30;41m"

@@ -119,16 +119,20 @@ def_alz_params = {
     'session':              '',         #Session name (next level folder)
     'load_ext':             '',         #Load extension
 
-    ### Analysis to run ###
+    ### Skip data ###
     'skip_pupil':           False,      #Skip loading + showing pupil data
     'skip_image':           False,      #Skip loading + showing image data
 
     ### Analysis ###
-    'is_normalized':        False,      #Is normalized by unblocked simulation
-    'wave_ind':             0,          #Wavelength index to show,
-    'max_apod':             1.,         #Maximum Apodization value, to convert to contrast
     'cam_analyzer':         None,       #Camera's polarized analyzer mode. Options: [None:unpolarized, 'p':primary polarization, 'o':orthogonal polarization]
+    'wave_ind':             0,          #Wavelength index to show,
 
+    ### Contrast ###
+    'is_contrast':          True,       #Should we normalize as a contrast measurement?
+    'calibration_file':     None,       #File pointing to calibration image for which to normalize image to contrast
+    'max_apod':             1.,         #Maximum Apodization value, to convert to contrast
+    'freespace_corr':       1.,         #Freespace correction for contrast measurement. If wavelength dependent, supply dictionary with {wave [nm]: correction}
+    'fit_airy':             False,      #Fit Airy pattern to calibration image to get peak?
 }
 
 ############################################
