@@ -44,7 +44,7 @@ results_dir = "/home/aharness/Research/Optics_Modeling/Diffraq_Results"
 
 import diffraq.utils
 from diffraq.simulator import Simulator
-from diffraq.analysis import Analyzer
+from diffraq.analysis import Analyzer, Dual_Analyzer
 import diffraq.quadrature
 import diffraq.diffraction
 import diffraq.geometry

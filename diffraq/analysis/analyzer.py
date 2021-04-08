@@ -14,6 +14,7 @@ import numpy as np
 from diffraq.utils import image_util, misc_util, def_alz_params, Logger
 from diffraq import pkg_home_dir, Simulator
 import h5py
+import matplotlib.pyplot as plt
 
 class Analyzer(object):
 
@@ -72,6 +73,10 @@ class Analyzer(object):
     def clean_up(self):
         att_list = ['pupil', 'image', 'sim']
 
+        #Cleanup sim
+        if hasattr(self, 'sim'):
+            self.sim.clean_up()
+
         #Loop through attributes and delete
         for att in att_list:
             #Delete if self has attribute
@@ -111,12 +116,9 @@ class Analyzer(object):
         self.pupil, self.pupil_xx, self.vec_pupil, self.vec_comps = \
             self.sim.logger.load_pupil_field()
 
+        #TODO: add pupil calibration
         #Normalize with calibration data
         # self.calibrate_pupil()
-
-        #Get coordinates
-
-        # breakpoint()
 
     def load_image_data(self):
         #Return if skipping or sim didn't run image
@@ -144,7 +146,7 @@ class Analyzer(object):
 
     def show_results(self):
 
-        import matplotlib.pyplot as plt;plt.ion()
+        plt.ion()
         plt.imshow(self.image)
         print(self.image.max())
         breakpoint()
@@ -153,7 +155,7 @@ class Analyzer(object):
 ############################################
 
 ############################################
-####	Calibration Values ####
+####	Calibration ####
 ############################################
 
     def calibrate_image(self):

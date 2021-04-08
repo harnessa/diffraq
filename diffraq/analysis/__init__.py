@@ -12,3 +12,4 @@ Description: __init__ package for the ANALYSIS module.
 """
 
 from diffraq.analysis.analyzer import Analyzer
+from diffraq.analysis.dual_analyzer import Dual_Analyzer
