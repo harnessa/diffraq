@@ -128,7 +128,7 @@ def_alz_params = {
     'wave_ind':             0,          #Wavelength index to show,
 
     ### Contrast ###
-    'is_contrast':          True,       #Should we normalize as a contrast measurement?
+    'is_contrast':          False,      #Should we normalize as a contrast measurement?
     'calibration_file':     None,       #File pointing to calibration image for which to normalize image to contrast
     'max_apod':             1.,         #Maximum Apodization value, to convert to contrast
     'freespace_corr':       1.,         #Freespace correction for contrast measurement. If wavelength dependent, supply dictionary with {wave [nm]: correction}

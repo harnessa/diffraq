@@ -119,8 +119,8 @@ class ThickScreen(object):
         #Load data from file and build interpolation function for current wavelength
         with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
             xx = f['xx'][()]
-            sfld = np.interp(dd, xx, f[f'{wave*1e9:.0f}_s'][()])
-            pfld = np.interp(dd, xx, f[f'{wave*1e9:.0f}_p'][()])
+            sfld = np.interp(dd, xx, f[f'{wave*1e9:.0f}_s'][()], left=0j, right=0j)
+            pfld = np.interp(dd, xx, f[f'{wave*1e9:.0f}_p'][()], left=0j, right=0j)
 
         return sfld, pfld
 

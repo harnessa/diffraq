@@ -26,6 +26,7 @@ class Notch(object):
             - height:       height of notch [m],
             - width:        width (change in distance) of notch [m],
             - direction:    direction of notch. 1 = excess material, -1 = less material,
+            - rotation:     rotation relative to normal direction [degrees],
             - local_norm:   True = shift each part of original edge by its local normal,
                             False = shift entire edge by single direction (equal to normal in the middle),
             - kluge_norm:   kluge to match norm to lab (M12P2) notches
@@ -35,7 +36,7 @@ class Notch(object):
         self.parent = parent
 
         #Set Default parameters
-        def_params = {'kind':'Notch', 'xy0':[0,0], 'height':0, 'width':0, \
+        def_params = {'kind':'Notch', 'xy0':[0,0], 'height':0, 'width':0, 'rotation':0,
             'direction':1, 'local_norm':True, 'num_quad':None, 'kluge_norm':False}
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
@@ -159,8 +160,9 @@ class Notch(object):
 
     def get_new_edge(self, ts):
 
-        #Shift edge out by the normal vector
-        etch = -self.height * np.array([1., -1]) * self.direction * self.parent.opq_sign
+        #Get sign of etch
+        etch = np.sign(ts[0])* self.height * np.array([1., -1]) * \
+            self.direction * self.parent.opq_sign
 
         #Get loci of edge across test region and normals
         old_edge, normal = self.parent.cart_func_diffs(ts[:,0])
@@ -177,6 +179,11 @@ class Notch(object):
             #Get normal vector of middle of old_edge
             normal = normal[:,::-1][len(ts)//2]
             normal /= np.hypot(normal[0], normal[1])
+
+        #Rotate by rotating normal direction
+        if self.rotation != 0:
+            rot_mat = self.parent.parent.build_rot_matrix(np.radians(self.rotation))
+            normal = normal.dot(rot_mat)
 
         return old_edge, etch, normal
 
