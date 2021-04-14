@@ -101,27 +101,16 @@ class VectorSim(object):
 ############################################
 
     def build_quadrature(self):
-        #Build area quadrature for seams
-        self.build_area_quadrature()
-
-        #Get additive vector field in Braunbek seam
-        self.vec_UU = self.screen.get_vector_field( \
-            self.dq, self.nq, self.sim.waves, self.Ex_comp, self.Ey_comp)
-
-        #Cleanup
-        del self.dq, self.nq
-
-    def build_area_quadrature(self):
 
         #Initialize
         self.xq, self.yq, self.wq = np.empty(0), np.empty(0), np.empty(0)
-        self.dq, self.nq = np.empty(0), np.empty(0)
+        self.dq, self.nq, self.gw = np.empty(0), np.empty(0), np.empty(0)
 
         #Loop through seams list and build quadratures
         for seam in self.seams:
 
             #Build quadrature (and edge distance and normal angles)
-            xs, ys, ws, ds, ns = seam.build_seam_quadrature(self.sim.seam_width)
+            xs, ys, ws, ds, ns, gs = seam.build_seam_quadrature(self.sim.seam_width)
 
             #If multiple shapes, check if we need to flip weights
             if self.sim.occulter.is_multi:
@@ -137,9 +126,11 @@ class VectorSim(object):
             self.wq = np.concatenate((self.wq, ws))
             self.dq = np.concatenate((self.dq, ds))
             self.nq = np.concatenate((self.nq, ns))
+            if gs is not None:
+                self.gw = np.concatenate((self.gw, gs))
 
         #Cleanup
-        del xs, ys, ws, ds, ns
+        del xs, ys, ws, ds, ns, gs
 
         #Add occulter motion
         if not np.isclose(self.sim.spin_angle, 0):
@@ -216,7 +207,7 @@ class VectorSim(object):
 
     def clean_up(self):
         #Delete trash
-        trash_list = ['xq', 'yq', 'wq', 'dq', 'nq', 'edge', 'vec_UU', 'shapes', 'seams']
+        trash_list = ['xq', 'yq', 'wq', 'dq', 'nq', 'gw', 'edge', 'shapes', 'seams']
         for att in trash_list:
             if hasattr(self, att):
                 delattr(self, att)

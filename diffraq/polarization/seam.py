@@ -29,7 +29,7 @@ class Seam(object):
 
     def build_seam_quadrature(self, seam_width):
         #Get main shape quadrature
-        xq, yq, wq, dq, nq = self.build_shape_quadrature(seam_width)
+        xq, yq, wq, dq, nq, gw = self.build_shape_quadrature(seam_width)
 
         #Add perturbations
 
@@ -46,7 +46,7 @@ class Seam(object):
             dq *= -1
             nq += np.pi
 
-        return xq, yq, wq, dq, nq
+        return xq, yq, wq, dq, nq, gw
 
     def build_shape_quadrature(self, seam_width):
         #Get shape specific quadrature and nodes in dependent direction (r-polar, theta-petal) and
@@ -54,19 +54,44 @@ class Seam(object):
         xq, yq, wq, dept_nodes, indt_values = getattr(self, \
             f'get_quad_{self.shape.kind}')(seam_width)
 
-        #Get normal and position angles depending on shape
+        #Get normal and position angles and gap widths depending on shape
         if self.shape.kind == 'petal':
-            pos_angle, nq = self.get_normal_angles_petal(indt_values)
+            pos_angle, nq, gw = self.get_normal_angles_petal(indt_values)
         else:
-            pos_angle, nq = self.get_normal_angles_polar(indt_values)
+            pos_angle, nq, gw = self.get_normal_angles_polar(indt_values)
 
         #Build edge distances
         dq = seam_width * (dept_nodes * pos_angle).ravel()
 
+        #Need to adjust where seams overlap (only used in petals)
+        if gw is not None:
+
+            #Build full gap widths
+            bigw = (gw[:,None] * np.ones_like(dept_nodes)).ravel()
+
+            #Find overlap
+            ovr_inds = dq >= bigw/2
+
+            #Divide weights by half
+            wq[ovr_inds] /= 2
+
+            #Distances that are past the halfway mark must take the other side's value
+            dq[ovr_inds] = bigw[ovr_inds] - dq[ovr_inds]
+
+            #... and flip normal angle
+            nq[ovr_inds] += np.pi
+
+            #Clear gap widths if not running gaps
+            if not self.shape.parent.sim.with_vector_gaps:
+                gw = None
+
+            #Cleanup
+            del bigw, ovr_inds
+
         #Cleanup
         del dept_nodes, pos_angle
 
-        return xq, yq, wq, dq, nq
+        return xq, yq, wq, dq, nq, gw
 
 ############################################
 ############################################
@@ -105,15 +130,21 @@ class Seam(object):
             2*self.theta_nodes) - 1)
 
         #Get function and derivative values at the parameter values
-        func = self.shape.outline.func(indt_values)*pet_mul + pet_add
+        Aval = self.shape.outline.func(indt_values)
+        func = Aval*pet_mul + pet_add
         diff = self.shape.outline.diff(indt_values)*pet_mul
+
+        #Get gaps widths
+        if self.shape.is_opaque:
+            Aval = 1 - Aval
+        gw = (2*Aval*np.pi/self.shape.num_petals*indt_values).ravel()
 
         #Get cartesian function and derivative values at the parameter values
         cart_func, cart_diff = self.shape.cart_func_diffs( \
             indt_values, func=func, diff=diff)
 
         #Cleanup
-        del func, diff, pet_add, ones
+        del func, diff, pet_add, ones, Aval
 
         #Calculate angle between normal and theta vector (orthogonal to position vector)
         pos_angle = -(cart_func[...,0]*cart_diff[...,0] + cart_func[...,1]*cart_diff[...,1]) / \
@@ -125,7 +156,7 @@ class Seam(object):
         #Cleanup
         del indt_values, cart_func, cart_diff, pet_mul
 
-        return pos_angle, nq
+        return pos_angle, nq, gw
 
     def get_normal_angles_polar(self, indt_values):
         #Get function and derivative values at the parameter values
@@ -139,10 +170,13 @@ class Seam(object):
         nq = (np.ones(self.radial_nodes) * \
             np.arctan2(diff[:,0], -diff[:,1])[:,None]).ravel()
 
+        #Pass dummy gap widths
+        gw = None
+
         #Cleanup
         del func, diff
 
-        return pos_angle, nq
+        return pos_angle, nq, gw
 
 ############################################
 ############################################

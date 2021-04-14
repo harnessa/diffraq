@@ -27,34 +27,7 @@ class ThickScreen(object):
 #####  Main Script #####
 ############################################
 
-    def get_vector_field(self, edge_dists, normals, waves, Ex_comp, Ey_comp):
-
-        #Build angle components
-        cosa = np.cos(normals)
-        sina = np.sin(normals)
-
-        #Build fields for each wavelength
-        vec_UU = np.empty((len(waves), 2, len(normals))) + 0j
-        for iw in range(len(waves)):
-
-            #Get edge field
-            s_fld, p_fld = self.get_edge_field(edge_dists, waves[iw])
-
-            #Build horizontal, vertical, and crossed components (different from Op.Exp. paper b/c here, normal defined from horizontal and CCW)
-            mH = s_fld*sina**2 + p_fld*cosa**2
-            mV = s_fld*cosa**2 + p_fld*sina**2
-            mX = sina*cosa * (s_fld - p_fld)
-
-            #Build incident field maps
-            vec_UU[iw, 0] = Ex_comp*mH + Ey_comp*mX         #Horizontal
-            vec_UU[iw, 1] = Ex_comp*mX + Ey_comp*mV         #Vertical
-
-        #Cleanup
-        del cosa, sina, s_fld, p_fld, mH, mV, mX
-
-        return vec_UU
-
-    def get_edge_field(self, dd, wave):
+    def get_edge_field(self, dd, gw, wave):
         if self.is_sommerfeld:
             #Solve Sommerfeld solution
             return self.sommerfeld_solution(dd, wave)
@@ -65,7 +38,7 @@ class ThickScreen(object):
 
         else:
             #Interpolate data from file
-            return self.interpolate_edge_file(dd, wave)
+            return self.interpolate_file(dd, gw, wave)
 
 ############################################
 ############################################
@@ -78,7 +51,7 @@ class ThickScreen(object):
         S,C = fresnel(np.sqrt(2./np.pi)*s)
         return np.sqrt(np.pi/2.)*( 0.5*(1. + 1j) - (C + 1j*S))
 
-    def sommerfeld_solution(self, dd, wave):
+    def sommerfeld_solution(self, dd, gw, wave):
 
         #Incident field
         U0 = np.heaviside(dd, 1)
@@ -115,12 +88,68 @@ class ThickScreen(object):
 #####  Load from file #####
 ############################################
 
-    def interpolate_edge_file(self, dd, wave):
+    def interpolate_file(self, dd, gw, wave):
+        #Split into gaps if applicable
+        if len(gw) == 0:
+            return self.interpolate_file_edge(dd, wave)
+        else:
+            return self.interpolate_file_gap(dd, gw, wave)
+
+    def interpolate_file_edge(self, dd, wave):
         #Load data from file and build interpolation function for current wavelength
         with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
             xx = f['xx'][()]
-            sfld = np.interp(dd, xx, f[f'{wave*1e9:.0f}_s'][()], left=0j, right=0j)
-            pfld = np.interp(dd, xx, f[f'{wave*1e9:.0f}_p'][()], left=0j, right=0j)
+            sf = f[f'{wave*1e9:.0f}_s'][()]
+            pf = f[f'{wave*1e9:.0f}_p'][()]
+            sfld = np.interp(dd, xx, sf, left=0j, right=0j)
+            pfld = np.interp(dd, xx, pf, left=0j, right=0j)
+
+        #Cleanup
+        del xx, sf, pf
+
+        return sfld, pfld
+
+    def interpolate_file_gap(self, dd, gw, wave):
+
+        #Get size of other axis
+        ny = dd.size//gw.size
+
+        #Load data from file and build interpolation function for current wavelength
+        with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
+
+            #Interpolate edge data for all (gaps will be overwritten -- just easier this way)
+            xx = f['xx'][()]
+            sf = f[f'{wave*1e9:.0f}_s'][()]
+            pf = f[f'{wave*1e9:.0f}_p'][()]
+            sfld = np.interp(dd, xx, sf, left=0j, right=0j)
+            pfld = np.interp(dd, xx, pf, left=0j, right=0j)
+
+            #Get widths
+            widths = f['ww'][()]
+
+            #Loop through widths and interpolate over gaps
+            for i in range(len(widths)-1):
+                #Get gap data
+                xx = f[f'xx_gap_{i}'][()]
+                sf = f[f'{wave*1e9:.0f}_gap_{i}_s'][()]
+                pf = f[f'{wave*1e9:.0f}_gap_{i}_p'][()]
+
+                #Get values in this gap region
+                gind = np.where((gw >= widths[i]) & (gw < widths[i+1]))[0]
+
+                #Skip if empty
+                if len(gind) == 0:
+                    continue
+
+                #Expand gind into all points
+                bigind = (gind*ny + np.arange(ny)[:,None]).ravel()
+
+                #Interpolate this region
+                sfld[bigind] = np.interp(dd[bigind], xx, sf, left=0j, right=0j)
+                pfld[bigind] = np.interp(dd[bigind], xx, pf, left=0j, right=0j)
+
+        #Cleanup
+        del xx, sf, pf, gind, bigind, widths
 
         return sfld, pfld
 

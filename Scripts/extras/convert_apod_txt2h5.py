@@ -17,11 +17,19 @@ import diffraq
 import h5py
 
 apods = ['bb_2017__inner', 'bb_2017__inner', 'bb_2017', 'wfirst_ni2']
+apods = ['frick_yk']
+
+is_lotus = False
 
 for aa in apods:
 
     #Load text data
     data = np.genfromtxt(f'{diffraq.apod_dir}/{aa}.txt', delimiter=',')
+
+    #Convert from microns to meters and scale apod if from lotus
+    if is_lotus:
+        data[:,0] *= 1e-6
+        data[:,1] *= 0.9
 
     #Save as h5py
     with h5py.File(f'{diffraq.apod_dir}/{aa}.h5', 'w') as f:

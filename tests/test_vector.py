@@ -57,7 +57,7 @@ class Test_Vector(object):
             sim = diffraq.Simulator(params, shapes)
 
             #Build polar seam
-            xs, ys, ws, ds, ns = \
+            xs, ys, ws, ds, ns, gw = \
                 sim.vector.seams[0].build_seam_quadrature(self.seam_width)
 
             #Get area of open seam (in aperture)
@@ -77,9 +77,13 @@ class Test_Vector(object):
             #Build quadrature
             sim.vector.build_quadrature()
 
-            #Average field sould be 1/2 (seem is half on screen, half off)
-            avg_fld = np.hypot(*sim.vector.vec_UU.real.mean((2,0)))
-            assert(np.isclose(avg_fld, 0.5))
+            #Get incident field
+            sfld, pfld = sim.vector.screen.get_edge_field( \
+                sim.vector.dq, sim.vector.gw, sim.waves[0])
+
+            #Average field sould be 1/2 (seam is half on screen, half off)\
+            assert(np.isclose(sfld.real.mean(), 0.5))
+            assert(np.isclose(pfld.real.mean(), 0.5))
 
         #Cleanup
         sim.clean_up()
@@ -223,7 +227,7 @@ class Test_Vector(object):
         vec_area = vec_sim.occulter.wq.sum()
 
         #Build polar seam
-        xs, ys, ws, ds, ns = \
+        xs, ys, ws, ds, ns, gw = \
             vec_sim.vector.seams[0].build_seam_quadrature(seam_width)
 
         #Build function that simulates overetch by truncating at certain distance normal to edge
@@ -243,5 +247,5 @@ class Test_Vector(object):
 if __name__ == '__main__':
 
     tv = Test_Vector()
-    # tv.run_all_tests()
-    tv.test_petal()
+    tv.run_all_tests()
+    # tv.test_petal()

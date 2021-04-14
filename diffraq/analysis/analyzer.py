@@ -190,6 +190,16 @@ class Analyzer(object):
         #Load calibration image
         with h5py.File(self.calibration_file, 'r') as f:
             cal_img = f['intensity'][()]
+            cal_wvs = f['waves'][()]
+
+        #Get matching wavelengths
+        if len(cal_wvs) != len(self.sim.waves):
+            #Get closest wavelength
+            wv_inds = [np.argmin(np.abs(cal_wvs - wv)) for wv in self.sim.waves]
+            #Throw out if too different
+            wv_inds = np.array(wv_inds)[np.abs(self.sim.waves - cal_wvs[wv_inds]) < 5e-9]
+            #keep images at those wavelengths
+            cal_img = cal_img[wv_inds]
 
         #Get calibration value
         if not self.fit_airy:

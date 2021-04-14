@@ -234,6 +234,8 @@ class Simulator(object):
 
         return pupil
 
+    ############################################
+
     def vector_diffraction_calculation(self, grid_pts):
         """Calculate the scalar diffraction of the vector seam's quadrature x+y,
             quadrature weights, and additive vector field, over the supplied grid. """
@@ -244,6 +246,11 @@ class Simulator(object):
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), 2, self.num_pts, self.num_pts)) + 0j
 
+        #Get edge normal components
+        cosa = np.cos(self.vector.nq)
+        sina = np.sin(self.vector.nq)
+        del self.vector.nq
+
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
 
@@ -251,11 +258,22 @@ class Simulator(object):
             lamzz = self.waves[iw] * self.zz
             lamz0 = self.waves[iw] * self.z0
 
+            #Get incident field
+            sfld, pfld = self.vector.screen.get_edge_field( \
+                self.vector.dq, self.vector.gw, self.waves[iw])
+
             #Loop over horizontal and vertical polarizations
             for ip in range(2):
 
                 #Build quadrature weights * incident field
-                wu0 = self.vector.wq * self.vector.vec_UU[iw,ip]
+                if ip == 0:
+                    wu0 = self.vector.wq * \
+                        (self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \
+                         self.vector.Ey_comp * (sina*cosa * (sfld - pfld)))
+                else:
+                    wu0 = self.vector.wq * \
+                        (self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
+                         self.vector.Ex_comp * (sina*cosa * (sfld - pfld)))
 
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(self.vector.xq, self.vector.yq, \
@@ -268,7 +286,8 @@ class Simulator(object):
                 pupil[iw,ip] = uu
 
         #Cleanup
-        del wu0, uu
+        del wu0, uu, cosa, sina, sfld, pfld
+        self.vector.clean_up()
 
         return pupil
 
