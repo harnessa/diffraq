@@ -184,7 +184,7 @@ class Test_Vector(object):
         petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
         etch = 0.01
-        seam_width = 2.*abs(etch)             #run larger than etch b/c not normal to edge
+        seam_width = 2*abs(etch)             #run larger than etch b/c not normal to edge
 
         #Sim params
         params = {
@@ -244,8 +244,64 @@ class Test_Vector(object):
 ############################################
 ############################################
 
+    def test_petal_diffraction(self):
+
+        params = {
+            'z0':               27.5,
+            'zz':               50,
+            'waves':            .641e-6,
+            'tel_diameter':     3e-3,
+            'skip_image':       True,
+            'free_on_end':      False,
+            'verbose':          False,
+            'is_finite':        True,
+            'radial_nodes':         500,
+            'theta_nodes':          50,
+            'seam_radial_nodes':    500,
+            'seam_theta_nodes':     500,
+        }
+
+        #Load regular sim
+        shape = {'kind':'starshade', 'is_opaque':False, 'num_petals':12, \
+            'edge_file':f'{diffraq.int_data_dir}/Test_Data/inv_apod_file.h5', \
+            'has_center':False}
+
+        #Overetch
+        etch = -1e-6
+
+        #Etched
+        shape['etch_error'] = etch
+        sim = diffraq.Simulator(params, shape)
+        etch_uu, grid_pts = sim.calc_pupil_field()
+        sim.clean_up()
+
+        #Vector
+        shape['etch_error'] = None
+        params['do_run_vector'] = True
+        params['seam_width'] = abs(etch) * 2
+        params['maxwell_func'] = lambda dd, wv: [np.heaviside(dd,0)*np.heaviside(-dd+abs(etch),0)+0j]*2
+        sim = diffraq.Simulator(params, shape)
+        vect_uu, grid_pts = sim.calc_pupil_field()
+        vect_ee = sim.vector.build_polarized_field(vect_uu, sim.vec_pupil, sim.vec_comps, 0)
+        sim.clean_up()
+
+        #Clear out wavelength
+        etch_uu = etch_uu[0]
+        vect_uu = vect_uu[0]
+        vect_ee = vect_ee[0,0]
+
+        #Get percent difference
+        per_diff = abs(vect_ee - etch_uu).max()/abs(etch_uu).max()*100
+
+        #Assert true < 2%
+        assert(per_diff < 2)
+
+############################################
+############################################
+
 if __name__ == '__main__':
 
     tv = Test_Vector()
-    tv.run_all_tests()
+    # tv.run_all_tests()
     # tv.test_petal()
+    tv.test_petal_diffraction()

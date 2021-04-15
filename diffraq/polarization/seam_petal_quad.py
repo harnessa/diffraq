@@ -57,7 +57,7 @@ def seam_petal_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
     wi = (r1 - r0) * wr * pr
 
     #Get trailing edge theta (divide by radius to turn seam_width into angle)
-    tt0 = (np.pi/num_pet*Aval + pw*seam_width)
+    tt0 = np.pi/num_pet*Aval + pw*seam_width
 
     #Add leading edge (negative A+pw)
     tt0 = np.hstack((tt0, -tt0))

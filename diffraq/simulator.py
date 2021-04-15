@@ -235,6 +235,7 @@ class Simulator(object):
         return pupil
 
     ############################################
+    ############################################
 
     def vector_diffraction_calculation(self, grid_pts):
         """Calculate the scalar diffraction of the vector seam's quadrature x+y,
@@ -286,7 +287,7 @@ class Simulator(object):
                 pupil[iw,ip] = uu
 
         #Cleanup
-        del wu0, uu, cosa, sina, sfld, pfld
+        del wu0, uu, sfld, pfld, cosa, sina
         self.vector.clean_up()
 
         return pupil

@@ -34,6 +34,11 @@ class ThickScreen(object):
 
         elif self.maxwell_func is not None:
             #Apply user-input function
+
+            # import matplotlib.pyplot as plt;plt.ion()
+            # dd = np.linspace(-60,60,10000) *1e-6
+            # plt.plot(dd, abs(self.maxwell_func(dd, wave)[0]))
+            # breakpoint()
             return self.maxwell_func(dd, wave)
 
         else:
@@ -49,35 +54,37 @@ class ThickScreen(object):
 
     def F_func(self, s):
         S,C = fresnel(np.sqrt(2./np.pi)*s)
-        return np.sqrt(np.pi/2.)*( 0.5*(1. + 1j) - (C + 1j*S))
+        ans = (1. + 1j)/2 - (C + 1j*S)
+        del S, C
+        return ans
 
-    def sommerfeld_solution(self, dd, gw, wave):
-
-        #Incident field
-        U0 = np.heaviside(dd, 1)
-
-        #Polar coordinates
-        rho = abs(dd)
-        phi = (1 - (U0 - 1))*np.pi
+    def sommerfeld_solution(self, dd, wave):
 
         #Wavelength
         kk = 2.*np.pi/wave
 
+        #Polar angle from Incident field (heaviside)
+        phi = (2 - np.heaviside(dd, 1))*np.pi
+
         #Build arguments of calculation
-        uu = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi - np.pi/2.))
-        vv = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi + np.pi/2.))
-        pre = np.exp(-1j*np.pi/4.) / np.sqrt(np.pi) * np.exp(1j*kk*rho)
+        uu = -np.sqrt(2.*kk*abs(dd))*np.cos(0.5*(phi - np.pi/2.))
+        vv = -np.sqrt(2.*kk*abs(dd))*np.cos(0.5*(phi + np.pi/2.))
+        pre = (np.exp(-1j*np.pi/4.) / np.sqrt(np.pi) * np.sqrt(np.pi/2)) * \
+            np.exp(1j*kk*abs(dd)) * np.exp(-1j*uu**2.)
 
         #Intermediate calculations (minus incident field)
-        Umid = pre*np.exp(-1j*uu**2.)*self.F_func(uu) - U0
-        Gv = pre*np.exp(-1j*vv**2.)*self.F_func(vv)
-
-        #Get field solution (minus incident field) for s,p polarization
-        Us = Umid + Gv
-        Up = Umid - Gv
+        Umid = pre*self.F_func(uu) - (2 - phi/np.pi)
+        Gv = pre*self.F_func(vv)
 
         #Cleanup
-        del U0, rho, phi, uu, vv, pre, Umid, Gv
+        del phi, uu, vv, pre
+
+        #Get field solution (minus incident field) for s,p polarization
+        Us = Umid - Gv
+        Up = Umid + Gv
+
+        #Cleanup
+        del Umid, Gv
 
         return Us, Up
 
