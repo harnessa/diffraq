@@ -258,7 +258,7 @@ class Test_Vector(object):
             'radial_nodes':         500,
             'theta_nodes':          50,
             'seam_radial_nodes':    500,
-            'seam_theta_nodes':     500,
+            'seam_theta_nodes':     250,
         }
 
         #Load regular sim
@@ -302,6 +302,6 @@ class Test_Vector(object):
 if __name__ == '__main__':
 
     tv = Test_Vector()
-    # tv.run_all_tests()
-    # tv.test_petal()
+    tv.run_all_tests()
+    tv.test_petal()
     tv.test_petal_diffraction()

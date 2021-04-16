@@ -15,23 +15,23 @@ with h5py.File(f'{maxwell_file}.h5', 'r') as f:
     xx = f['xx'][()]
     sf = f[f'{wave*1e9:.0f}_s'][()]
 
-sf = sf[abs(xx) <= 25e-6]
-xx = xx[abs(xx) <= 25e-6]
+sf = sf[abs(xx) <= 50e-6]
+xx = xx[abs(xx) <= 50e-6]
 
 a1 = integrate.simpson(sf, x=xx)
 a2 = integrate.trapezoid(sf, x=xx)
 
 # sws = range(5, int(xx.max()*1e6)+5, 5)
 sws = range(5, int(xx.max()*1e6)+2, 1)
-# pw, ww = lgwt(nw, -1, 1)
+pw, ww = lgwt(nw, -1, 1)
 
-a = -1
-b = 1
-
-p1, ww = np.polynomial.legendre.leggauss(nw)
-# p1, ww = roots_legendre(nw)
-pw = (a*(1-p1) + b*(1+p1))/2
-ww *= (b-a)/2
+# a = -1
+# b = 1
+#
+# p1, ww = np.polynomial.legendre.leggauss(nw)
+# # p1, ww = roots_legendre(nw)
+# pw = (a*(1-p1) + b*(1+p1))/2
+# ww *= (b-a)/2
 
 # #cheby
 # pw = np.cos(np.pi*(2*np.arange(1,nw+1) -1)/2/nw)
@@ -55,15 +55,15 @@ for seam in sws:
     #cheby
     # b1 = seam*1e-6 * np.pi/nw * (beta * sfld).sum()
 
-    # diff = abs(1. - b1/a1)*100 * np.sign(abs(a1)-abs(b1))
-    diff = abs(1. - b1/a1cut)*100 * np.sign(abs(a1cut)-abs(b1))
+    diff = abs(1. - b1/a1)*100 #* np.sign(abs(a1)-abs(b1))
+    # diff = abs(1. - b1/a1cut)*100 * np.sign(abs(a1cut)-abs(b1))
 
     dds.append(diff)
     anss.append(b1)
 
     print(f'{seam}, diff: {diff:.3f}')
-    plt.plot(pw*seam*1e-6, abs(sfld))
-    breakpoint()
+    # plt.plot(pw*seam*1e-6, abs(sfld))
+    # breakpoint()
 
 # print(f'\n{abs(a1):.5e}, {abs(a2):.5e}, {abs(a1cut):.5e}, {abs(b1):.5e}\n')
 anss = np.array(anss)
@@ -78,5 +78,6 @@ plt.axvline( seam*1e-6, color='k', linestyle=':')
 plt.figure()
 plt.plot(sws, dds, 'o')
 plt.axhline(0, color='k')
+plt.axhline(1, color='k', linestyle=':')
 plt.axvline(xx.max()*1e6, color='k')
 breakpoint()

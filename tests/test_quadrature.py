@@ -18,13 +18,13 @@ import h5py
 class Test_Quadrature(object):
 
     def run_all_tests(self):
-        tsts = ['lgwt', 'polar', 'cartesian', 'starshade', 'loci', 'triangle']
+        tsts = ['lgwt_A', 'lgwt_B', 'polar', 'cartesian', 'starshade', 'loci', 'triangle']
         for t in tsts:
             getattr(self, f'test_{t}')()
 
 ############################################
 
-    def test_lgwt(self):
+    def test_lgwt_A(self):
 
         #Test points
         limits = [[-1,1], [-1,0], [5,10]]
@@ -43,7 +43,29 @@ class Test_Quadrature(object):
                 #Diffraq answer
                 pq, wq = diffraq.quadrature.lgwt(N, a, b)
 
-                assert((np.isclose(pq, p2).all()) & (np.isclose(wq, w2).all()))
+                assert((np.allclose(pq, p2)) & (np.allclose(wq, w2)))
+
+        #Cleanup
+        del pq, wq, p2, w2
+
+############################################
+
+    def test_lgwt_B(self):
+
+        #Test points
+        limits = [[-1,1], [5,10]]
+        nums = [3000]
+
+        for (a,b) in limits:
+            for N in nums:
+
+                #Diffraq answer
+                pq, wq = diffraq.quadrature.lgwt(N, a, b)
+
+                #fresnaq answer
+                p2, w2 = diffraq.quadrature.fresnaq_lgwt(N, a, b)
+
+                assert((np.allclose(pq, p2)) & (np.allclose(wq, w2)))
 
         #Cleanup
         del pq, wq, p2, w2

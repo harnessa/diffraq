@@ -72,14 +72,8 @@ class Seam(object):
             #Find overlap
             ovr_inds = dq >= bigw/2
 
-            #Divide weights by half
-            wq[ovr_inds] /= 2
-
-            #Distances that are past the halfway mark must take the other side's value
-            dq[ovr_inds] = bigw[ovr_inds] - dq[ovr_inds]
-
-            #... and flip normal angle
-            nq[ovr_inds] += np.pi
+            #Zero out weights on overlap
+            wq[ovr_inds] = 0
 
             #Clear gap widths if not running gaps
             if not self.shape.parent.sim.with_vector_gaps:
@@ -124,10 +118,10 @@ class Seam(object):
     def get_normal_angles_petal(self, indt_values):
 
         #Get petal signs and angle to rotate
-        ones = np.ones(self.theta_nodes, dtype=int)
+        ones = np.ones(2*self.theta_nodes, dtype=int)
         pet_mul = np.tile(np.concatenate((ones, -ones)), self.shape.num_petals)
         pet_add = 2*(np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
-            2*self.theta_nodes) - 1)
+            4*self.theta_nodes) - 1)
 
         #Get function and derivative values at the parameter values
         Aval = self.shape.outline.func(indt_values)
@@ -166,8 +160,8 @@ class Seam(object):
         pos_angle = ((-func[:,0]*diff[:,1] + func[:,1]*diff[:,0]) / \
             (np.hypot(func[:,0],func[:,1]) * np.hypot(diff[:,0],diff[:,1])))[:,None]
 
-        #Build normal angles
-        nq = (np.ones(self.radial_nodes) * \
+        #Build normal angles (x2 for each side of edge)
+        nq = (np.ones(2*self.radial_nodes) * \
             np.arctan2(diff[:,0], -diff[:,1])[:,None]).ravel()
 
         #Pass dummy gap widths

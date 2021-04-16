@@ -34,8 +34,12 @@ def seam_petal_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
         wq = numpy array of weights
     """
 
-    #Petals width nodes and weights over [-1,1]
-    pw, ww = lgwt(n, -1, 1)
+    #Petals width nodes and weights over [0,1]
+    pw, ww = lgwt(n, 0, 1)
+
+    #Combine nodes for positive and negative sides of edge
+    pw = np.concatenate((pw, -pw[::-1]))
+    ww = np.concatenate((ww, ww[::-1]))
 
     #Petals radius nodes and weights over [0,1]
     pr, wr = lgwt(m, 0, 1)
@@ -56,7 +60,7 @@ def seam_petal_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
     #r*dr
     wi = (r1 - r0) * wr * pr
 
-    #Get trailing edge theta (divide by radius to turn seam_width into angle)
+    #Get trailing edge theta
     tt0 = np.pi/num_pet*Aval + pw*seam_width
 
     #Add leading edge (negative A+pw)
@@ -66,7 +70,7 @@ def seam_petal_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
 
     #Rotate theta to other petals
     tt = np.tile(tt0, (1, num_pet)) + \
-        np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 2*n)
+        np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 4*n) #4n = pos/neg edge + trail/lead
 
     #Build nodes
     xq = (pr * np.cos(tt)).ravel()

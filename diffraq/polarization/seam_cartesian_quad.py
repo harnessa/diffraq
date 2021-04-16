@@ -43,7 +43,11 @@ def seam_cartesian_quad(fxy, dxy, m, n, seam_width):
     wt = 2.*np.pi/n
 
     #Cartesian quadrature nodes, weights
-    pr, wr = lgwt(m, -1, 1)
+    pr, wr = lgwt(m, 0, 1)
+
+    #Combine nodes for positive and negative sides of edge
+    pr = np.concatenate((pr, -pr[::-1]))
+    wr = np.concatenate((wr, wr[::-1]))
 
     #Get function values at all theta nodes
     ft = fxy(pt)[:,:,None]

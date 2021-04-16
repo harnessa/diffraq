@@ -41,7 +41,11 @@ def seam_polar_quad(g, m, n, seam_width):
     wt = 2.*np.pi/n
 
     #Radial quadrature nodes, weights
-    pr, wr = lgwt(m, -1, 1)
+    pr, wr = lgwt(m, 0, 1)
+
+    #Combine nodes for positive and negative sides of edge
+    pr = np.concatenate((pr, -pr[::-1]))
+    wr = np.concatenate((wr, wr[::-1]))
 
     #Get radial function values at all nodes
     gtpr = g(pt) + pr * seam_width
