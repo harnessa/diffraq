@@ -65,7 +65,7 @@ class Test_Seam_Perturbations(object):
                 pert = diffraq.polarization.Seam_Notch(sim.occulter.shapes[0], **notch)
 
                 #Get perturbation quadrature
-                xq, yq, wq, dq, nq = pert.get_quadrature()
+                xq, yq, wq, dq, nq, nxq, nyq, nwq = pert.get_quadrature()
 
                 #Get full seam area
                 rmax = self.circle_rad - height*nch*(2*int(is_opq)-1)
@@ -75,14 +75,14 @@ class Test_Seam_Perturbations(object):
                 seam_area = wq.sum()
 
                 #Check seam area is close
-                # assert(abs(1 - seam_area/tru_seam_area) < self.tol)
+                assert(abs(1 - seam_area/tru_seam_area) < self.tol)
 
                 #Get area of open seam (in aperture)
                 tru_open_area = tru_seam_area/2
                 open_area = (wq * maxwell_func(dq, 0)[0].real).sum()
 
                 #Check open area is half area (performs worse)
-                # assert(abs(1 - open_area/tru_open_area) < self.tol*50)
+                assert(abs(1 - open_area/tru_open_area) < self.tol*50)
 
                 #Get full seam quadrature
                 xq, yq, wq, nq, dq, gw = \
@@ -93,74 +93,67 @@ class Test_Seam_Perturbations(object):
                     (self.circle_rad - self.seam_width)**2)
                 old_A = full_A * alp/(2.*np.pi)
                 new_A = tru_seam_area
+                tru_full_area = full_A - old_A + new_A
                 full_area = wq.sum()
 
-                # print(tru_full_area, full_area)
-                print(full_A - old_A, full_area)
-
-                import matplotlib.pyplot as plt;plt.ion()
-                plt.cla()
-                plt.scatter(xq, yq, c=wq, s=1)
-                plt.axis('equal')
-                breakpoint()
-
+                assert(abs(1 - full_area/tru_full_area) < self.tol)
 
         #Cleanup
-        sim.cleanup
-        del sim, pert, xq, yq, wq, nq, dq
+        sim.clean_up()
+        del sim, pert, xq, yq, wq, nq, dq, nxq, nyq, nwq
 
 ############################################
-
-    def _test_shifted_petal(self):
-
-        #Simulated shape
-        num_pet = 12
-        rmin, rmax = 8e-3, 10e-3
-        max_apod = 0.9
-
-        ss_Afunc = lambda r: 1 + max_apod*(np.exp(-((r-rmin)/(rmax-rmin)/0.6)**6) - 1)
-        inn_shape = {'kind':'starshade', 'is_opaque':True, 'num_petals':num_pet, \
-            'edge_func':ss_Afunc, 'min_radius':rmin, 'max_radius':rmax}
-
-        #Get nominal area
-        sim = diffraq.Simulator({}, inn_shape)
-        sim.occulter.build_quadrature()
-        area0 = -sim.occulter.wq.sum()
-        sim.clean_up()
-
-        #Petal shifts to test
-        petal_shifts = {1: 7.5e-6, 5: 25e-6, 9: 10.5e-6}
-
-        #Loop over shifts
-        for pet_num, shift in petal_shifts.items():
-
-            #Angles between petals
-            angles = np.pi/num_pet * np.array([2*(pet_num-1), 2*pet_num])
-
-            #Build shifted petal perturbation
-            pert_n = {'kind':'shifted_petal', 'angles':angles, 'shift':shift}
-
-            #Add perturbation to shape
-            inn_shape['perturbations'] = [pert_n]
-
-            #Build sim
-            sim = diffraq.Simulator({}, inn_shape)
-
-            #Get area
-            sim.occulter.build_quadrature()
-            cur_area = -sim.occulter.wq.sum()
-
-            #Get difference in area
-            darea = area0 - cur_area
-
-            #True area difference
-            da_tru = np.pi*((rmin + shift)**2 - rmin**2) / num_pet
-
-            #Cleanup
-            sim.clean_up()
-
-            #Check is true
-            assert(np.isclose(darea, da_tru))
+    #
+    # def _test_shifted_petal(self):
+    #
+    #     #Simulated shape
+    #     num_pet = 12
+    #     rmin, rmax = 8e-3, 10e-3
+    #     max_apod = 0.9
+    #
+    #     ss_Afunc = lambda r: 1 + max_apod*(np.exp(-((r-rmin)/(rmax-rmin)/0.6)**6) - 1)
+    #     inn_shape = {'kind':'starshade', 'is_opaque':True, 'num_petals':num_pet, \
+    #         'edge_func':ss_Afunc, 'min_radius':rmin, 'max_radius':rmax}
+    #
+    #     #Get nominal area
+    #     sim = diffraq.Simulator({}, inn_shape)
+    #     sim.occulter.build_quadrature()
+    #     area0 = -sim.occulter.wq.sum()
+    #     sim.clean_up()
+    #
+    #     #Petal shifts to test
+    #     petal_shifts = {1: 7.5e-6, 5: 25e-6, 9: 10.5e-6}
+    #
+    #     #Loop over shifts
+    #     for pet_num, shift in petal_shifts.items():
+    #
+    #         #Angles between petals
+    #         angles = np.pi/num_pet * np.array([2*(pet_num-1), 2*pet_num])
+    #
+    #         #Build shifted petal perturbation
+    #         pert_n = {'kind':'shifted_petal', 'angles':angles, 'shift':shift}
+    #
+    #         #Add perturbation to shape
+    #         inn_shape['perturbations'] = [pert_n]
+    #
+    #         #Build sim
+    #         sim = diffraq.Simulator({}, inn_shape)
+    #
+    #         #Get area
+    #         sim.occulter.build_quadrature()
+    #         cur_area = -sim.occulter.wq.sum()
+    #
+    #         #Get difference in area
+    #         darea = area0 - cur_area
+    #
+    #         #True area difference
+    #         da_tru = np.pi*((rmin + shift)**2 - rmin**2) / num_pet
+    #
+    #         #Cleanup
+    #         sim.clean_up()
+    #
+    #         #Check is true
+    #         assert(np.isclose(darea, da_tru))
 
 ############################################
 

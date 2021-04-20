@@ -51,10 +51,6 @@ class Seam(object):
         for pert in self.pert_list:
             xq, yq, wq, dq, nq, gw = pert.build_quadrature(xq, yq, wq, dq, nq, gw)
 
-        # import matplotlib.pyplot as plt;plt.ion()
-        # plt.scatter(xq, yq, c=wq, s=1)
-        # breakpoint()
-
         #Rotate with parent shape
         if self.shape.rot_mat is not None:
             xq, yq = np.stack((xq,yq),1).dot(self.shape.rot_mat).T
