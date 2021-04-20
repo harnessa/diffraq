@@ -27,7 +27,7 @@ class ThickScreen(object):
 #####  Main Script #####
 ############################################
 
-    def get_edge_field(self, dd, gw, wave):
+    def get_edge_field(self, dd, gw, wave, n_nodes=-1):
         if self.is_sommerfeld:
             #Solve Sommerfeld solution
             return self.sommerfeld_solution(dd, wave)
@@ -38,7 +38,7 @@ class ThickScreen(object):
 
         else:
             #Interpolate data from file
-            return self.interpolate_file(dd, gw, wave)
+            return self.interpolate_file(dd, gw, wave, n_nodes)
 
 ############################################
 ############################################
@@ -90,12 +90,12 @@ class ThickScreen(object):
 #####  Load from file #####
 ############################################
 
-    def interpolate_file(self, dd, gw, wave):
+    def interpolate_file(self, dd, gw, wave, n_nodes):
         #Split into gaps if applicable
         if len(gw) == 0:
             return self.interpolate_file_edge(dd, wave)
         else:
-            return self.interpolate_file_gap(dd, gw, wave)
+            return self.interpolate_file_gap(dd, gw, wave, n_nodes)
 
     def interpolate_file_edge(self, dd, wave):
         #Load data from file and build interpolation function for current wavelength
@@ -111,13 +111,11 @@ class ThickScreen(object):
 
         return sfld, pfld
 
-    def interpolate_file_gap(self, dd, gw, wave):
+    def interpolate_file_gap(self, dd, gw, wave, n_nodes):
 
         #Get size of other axis
-        ny = dd.size//gw.size
+        ny = n_nodes//gw.size
 
-        #FIXME: fix gw with perturbations
-        breakpoint()
         #Load data from file and build interpolation function for current wavelength
         with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
 

@@ -47,6 +47,9 @@ class Seam(object):
         #Get main shape quadrature
         xq, yq, wq, dq, nq, gw = self.build_shape_quadrature(seam_width)
 
+        #Store number of pre-perturbation points
+        n_nodes = len(xq)
+
         #Add perturbations
         for pert in self.pert_list:
             xq, yq, wq, dq, nq, gw = pert.build_quadrature(xq, yq, wq, dq, nq, gw)
@@ -61,7 +64,7 @@ class Seam(object):
             dq *= -1
             nq += np.pi
 
-        return xq, yq, wq, dq, nq, gw
+        return xq, yq, wq, dq, nq, gw, n_nodes
 
     ############################################
 

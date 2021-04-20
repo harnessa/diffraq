@@ -57,7 +57,7 @@ class Test_Vector(object):
             sim = diffraq.Simulator(params, shapes)
 
             #Build polar seam
-            xs, ys, ws, ds, ns, gw = \
+            xs, ys, ws, ds, ns, gw, nn = \
                 sim.vector.seams[0].build_seam_quadrature(self.seam_width)
 
             #Get area of open seam (in aperture)
@@ -181,7 +181,6 @@ class Test_Vector(object):
         hga, hgb, hgn = 8,5, 6
         num_pet = 12
         petal_func = lambda r: np.exp(-((r - hga)/hgb)**hgn)
-        petal_diff = lambda r: petal_func(r) * (-hgn/hgb)*((r-hga)/hgb)**(hgn-1)
 
         etch = 0.01
         seam_width = 2*abs(etch)             #run larger than etch b/c not normal to edge
@@ -227,7 +226,7 @@ class Test_Vector(object):
         vec_area = vec_sim.occulter.wq.sum()
 
         #Build polar seam
-        xs, ys, ws, ds, ns, gw = \
+        xs, ys, ws, ds, ns, gw, nn = \
             vec_sim.vector.seams[0].build_seam_quadrature(seam_width)
 
         #Build function that simulates overetch by truncating at certain distance normal to edge

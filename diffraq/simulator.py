@@ -260,8 +260,8 @@ class Simulator(object):
             lamz0 = self.waves[iw] * self.z0
 
             #Get incident field
-            sfld, pfld = self.vector.screen.get_edge_field( \
-                self.vector.dq, self.vector.gw, self.waves[iw])
+            sfld, pfld = self.vector.screen.get_edge_field(self.vector.dq, \
+                self.vector.gw, self.waves[iw], n_nodes=self.vector.n_nodes)
 
             #Loop over horizontal and vertical polarizations
             for ip in range(2):
