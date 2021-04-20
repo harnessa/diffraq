@@ -48,10 +48,6 @@ def loci_quad(locix, lociy, m):
     wx = np.roll(locix, -1) - locix         #weights are the displacement
     wy = np.roll(lociy, -1) - lociy
 
-    #Theta nodes
-    n = len(locix)
-    pt = 2.*np.pi/n * (np.arange(n)[:,None] + 1)
-
     #Radial quadrature nodes, weights
     pr, wr = lgwt(m, 0, 1)
 
@@ -63,6 +59,26 @@ def loci_quad(locix, lociy, m):
     wq = (pr * wr * (bx * wy - by * wx)).ravel()
 
     #Cleanup
-    del pt, pr, wr, bx, by, wx, wy
+    del pr, wr, bx, by, wx, wy
 
     return xq, yq, wq
+
+############################################
+############################################
+
+def loci_edge(locix, lociy, m):
+    """
+    xy = loci_edge(locix, lociy, m)
+
+    Build loci demarking the starshade edge.
+
+    Inputs:
+        locix = x-coordinates of boundary points
+        lociy = y-coordinates of boundary points
+        m = # radial nodes
+
+    Outputs:
+        xy = numpy array (2D) of x,y coordinates of starshade edge [meters]
+    """
+
+    return np.stack((locix, lociy), 1)

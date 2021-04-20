@@ -132,6 +132,18 @@ class Shifted_Petal(object):
         #Get old/new edges
         old_edge, new_edge, r0, r1 = self.get_new_edge(ang_avg)
 
+        #Get polar coordinates of edges
+        oldr = np.hypot(old_edge[:,0], old_edge[:,1])
+        newt = np.arctan2(new_edge[:,1], new_edge[:,0])
+        newr = np.hypot(new_edge[:,0], new_edge[:,1])
+
+        #Circle theta around
+        if newt[0] < -2*np.pi/self.parent.num_petals:
+            newt %= 2*np.pi
+
+        #Cleanup
+        del old_edge, new_edge
+
         #Get radial and theta nodes
         pw, ww = quad.lgwt(self.num_quad, -1, 1)
         pr, wr = quad.lgwt(self.num_quad,  0, 1)
@@ -140,19 +152,11 @@ class Shifted_Petal(object):
         wr = wr[:,None]
         pr = pr[:,None]
 
-        #Get polar coordinates of edges
-        oldr = np.hypot(old_edge[:,0], old_edge[:,1])
-        newt = np.arctan2(new_edge[:,1], new_edge[:,0])
-
-        #Circle theta around
-        if newt[0] < -2*np.pi/self.parent.num_petals:
-            newt %= 2*np.pi
-
         #Center theta nodes to current angles
         pw = pw*ang_wid/2 + ang_avg
 
         #Resample new edge onto theta nodes (flip pw to be increasing)
-        newr = np.interp(pw[::-1], newt, np.hypot(new_edge[:,0], new_edge[:,1]))
+        newr = np.interp(pw[::-1], newt, newr)
 
         #Difference in radius
         dr = newr - oldr
@@ -168,7 +172,7 @@ class Shifted_Petal(object):
         nw = (rr * wr * np.abs(dr) * ww * ang_wid/2).ravel()
 
         #Cleanup
-        del pw, ww, pr, wr, old_edge, new_edge, oldr, newt, newr, dr, rr
+        del pw, ww, pr, wr, oldr, newt, newr, dr, rr
 
         return nx, ny, nw
 

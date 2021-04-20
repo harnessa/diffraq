@@ -34,11 +34,6 @@ class ThickScreen(object):
 
         elif self.maxwell_func is not None:
             #Apply user-input function
-
-            # import matplotlib.pyplot as plt;plt.ion()
-            # dd = np.linspace(-60,60,10000) *1e-6
-            # plt.plot(dd, abs(self.maxwell_func(dd, wave)[0]))
-            # breakpoint()
             return self.maxwell_func(dd, wave)
 
         else:
@@ -121,6 +116,8 @@ class ThickScreen(object):
         #Get size of other axis
         ny = dd.size//gw.size
 
+        #FIXME: fix gw with perturbations
+        breakpoint()
         #Load data from file and build interpolation function for current wavelength
         with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
 

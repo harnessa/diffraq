@@ -13,7 +13,7 @@ Description: __init__ package for the QUADRATURE module.
 
 from diffraq.quadrature.lgwt import lgwt, fresnaq_lgwt
 from diffraq.quadrature.cartesian_quad import cartesian_quad, cartesian_edge
-from diffraq.quadrature.loci_quad import loci_quad
+from diffraq.quadrature.loci_quad import loci_quad, loci_edge
 from diffraq.quadrature.polar_quad import polar_quad, polar_edge
 from diffraq.quadrature.petal_quad import petal_quad, petal_edge
 from diffraq.quadrature.triangle_quad import triangle_quad, triangle_edge

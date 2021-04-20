@@ -1,26 +1,27 @@
 """
-test_perturbations.py
+test_seam_perturbations.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
-Created on: 02-08-2021
+Created on: 04-19-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: Test quadrature of adding various perturbations.
+Description: Test quadrature of vector seams on perturbations.
 
 """
 
 import diffraq
 import numpy as np
 
-class Test_Perturbations(object):
+class Test_Seam_Perturbations(object):
 
-    circle_rad = 12.5
-    tol = 1e-5
+    circle_rad = 12
+    seam_width = 0.1
+    tol = 2e-4
 
     def run_all_tests(self):
-        for dd in ['notch', 'shifted_petal']:
+        for dd in ['notch', 'shifted_petal'][:1]:
             getattr(self, f'test_{dd}')()
 
 ############################################
@@ -30,16 +31,19 @@ class Test_Perturbations(object):
         #Build notch
         xy0 = [self.circle_rad*np.cos(np.pi/6), self.circle_rad*np.sin(np.pi/6)]
         height = 1.25
-        width = 2
+        width = 1.75
         notch = {'kind':'notch', 'xy0':xy0, 'height':height, 'width':width, \
             'local_norm':False}
 
+        #Maxwell function
+        maxwell_func = lambda d, w: [np.heaviside(d, 1)+0j]*2
+
         #Simulation parameters
-        params = {'radial_nodes':100, 'theta_nodes':100}
+        params = {'radial_nodes':100, 'theta_nodes':100, 'do_run_vector':True, \
+            'seam_width':self.seam_width, 'maxwell_func':maxwell_func}
 
         #Areas
         disk_area = np.pi*self.circle_rad**2
-        notch_area = height * width
 
         #Loop over occulter/aperture
         for is_opq in [False, True]:
@@ -58,25 +62,56 @@ class Test_Perturbations(object):
                 sim = diffraq.Simulator(params, shapes)
 
                 #Add perturbation
-                pert = diffraq.geometry.Notch(sim.occulter.shapes[0], **notch)
+                pert = diffraq.polarization.Seam_Notch(sim.occulter.shapes[0], **notch)
 
                 #Get perturbation quadrature
-                xp, yp, wp = pert.get_quadrature()
+                xq, yq, wq, dq, nq = pert.get_quadrature()
 
-                #Get quadrature
-                sim.occulter.build_quadrature()
+                #Get full seam area
+                rmax = self.circle_rad - height*nch*(2*int(is_opq)-1)
+                alp = 2*np.arcsin(width/2/self.circle_rad)  #angle of notch
+                tru_seam_area = np.pi*((rmax + self.seam_width)**2 - \
+                    (rmax - self.seam_width)**2) * alp/(2*np.pi)
+                seam_area = wq.sum()
 
-                #Get current notch area (sign of sum is direction * opaque)
-                cur_area = -notch_area*nch * (2*int(is_opq) -1)
-                cur_disk_area = disk_area + cur_area
+                #Check seam area is close
+                # assert(abs(1 - seam_area/tru_seam_area) < self.tol)
 
-                #Assert true
-                assert(np.isclose(cur_area, wp.sum()) and \
-                    np.isclose(cur_disk_area, sim.occulter.wq.sum()))
+                #Get area of open seam (in aperture)
+                tru_open_area = tru_seam_area/2
+                open_area = (wq * maxwell_func(dq, 0)[0].real).sum()
+
+                #Check open area is half area (performs worse)
+                # assert(abs(1 - open_area/tru_open_area) < self.tol*50)
+
+                #Get full seam quadrature
+                xq, yq, wq, nq, dq, gw = \
+                    sim.vector.seams[0].build_seam_quadrature(self.seam_width)
+
+                #Full seam area (full area - original seam  + new seam)
+                full_A = np.pi*((self.circle_rad + self.seam_width)**2 - \
+                    (self.circle_rad - self.seam_width)**2)
+                old_A = full_A * alp/(2.*np.pi)
+                new_A = tru_seam_area
+                full_area = wq.sum()
+
+                # print(tru_full_area, full_area)
+                print(full_A - old_A, full_area)
+
+                import matplotlib.pyplot as plt;plt.ion()
+                plt.cla()
+                plt.scatter(xq, yq, c=wq, s=1)
+                plt.axis('equal')
+                breakpoint()
+
+
+        #Cleanup
+        sim.cleanup
+        del sim, pert, xq, yq, wq, nq, dq
 
 ############################################
 
-    def test_shifted_petal(self):
+    def _test_shifted_petal(self):
 
         #Simulated shape
         num_pet = 12
@@ -129,18 +164,7 @@ class Test_Perturbations(object):
 
 ############################################
 
-    def _test_sines(self):
-        #Load simulator
-        params = {
-            'occulter_shape':   'circle',
-            'circle_rad':       self.circle_rad,
-        }
-
-        # breakpoint()
-
-############################################
-
 if __name__ == '__main__':
 
-    tp = Test_Perturbations()
+    tp = Test_Seam_Perturbations()
     tp.run_all_tests()

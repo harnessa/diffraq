@@ -26,7 +26,7 @@ class Test_Vector(object):
     tel_diameter = 2.4
 
     seam_width = 0.1
-    circle_rad = 1
+    circle_rad = 1.5
 
     def run_all_tests(self):
         funs = ['polar', 'cartesian', 'petal']

@@ -23,6 +23,22 @@ class Seam(object):
         self.radial_nodes = radial_nodes
         self.theta_nodes = theta_nodes
 
+        #Set perturbations
+        self.set_perturbations()
+
+    def set_perturbations(self):
+        #Loop through and build perturbations
+        self.pert_list = []
+        for pert_dict in self.shape.perturbations:
+            #Get perturbation kind
+            kind = pert_dict['kind'].title()
+
+            #Build perturbation
+            pert = getattr(polar, 'Seam_'+kind)(self.shape, **pert_dict)
+
+            #Add to list
+            self.pert_list.append(pert)
+
 ############################################
 #####  Build Quadrature and Edge distances #####
 ############################################
@@ -32,8 +48,11 @@ class Seam(object):
         xq, yq, wq, dq, nq, gw = self.build_shape_quadrature(seam_width)
 
         #Add perturbations
+        for pert in self.pert_list:
+            xq, yq, wq, dq, nq, gw = pert.build_quadrature(xq, yq, wq, dq, nq, gw)
 
         # import matplotlib.pyplot as plt;plt.ion()
+        # plt.scatter(xq, yq, c=wq, s=1)
         # breakpoint()
 
         #Rotate with parent shape
@@ -47,6 +66,8 @@ class Seam(object):
             nq += np.pi
 
         return xq, yq, wq, dq, nq, gw
+
+    ############################################
 
     def build_shape_quadrature(self, seam_width):
         #Get shape specific quadrature and nodes in dependent direction (r-polar, theta-petal) and
@@ -151,6 +172,8 @@ class Seam(object):
         del indt_values, cart_func, cart_diff, pet_mul
 
         return pos_angle, nq, gw
+
+    ############################################
 
     def get_normal_angles_polar(self, indt_values):
         #Get function and derivative values at the parameter values

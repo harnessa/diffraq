@@ -274,6 +274,7 @@ class Notch(object):
 ############################################
 
     def get_quad_polar(self, t0, tf, m, n):
+        #TODO: calculate via polar quad, not loci quad
 
         #Get edge loci
         loci = self.get_pert_edge(t0, tf, m)

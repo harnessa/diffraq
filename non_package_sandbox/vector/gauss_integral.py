@@ -14,13 +14,28 @@ maxwell_file = '/home/aharness/repos/diffraq/External_Data/Vector_Edges/DW9'
 with h5py.File(f'{maxwell_file}.h5', 'r') as f:
     xx = f['xx'][()]
     sf = f[f'{wave*1e9:.0f}_s'][()]
+    pf = f[f'{wave*1e9:.0f}_p'][()]
 
-sf = sf[abs(xx) <= 50e-6]
-xx = xx[abs(xx) <= 50e-6]
+cut = 25e-6
+sf = sf[abs(xx) <= cut]
+pf = pf[abs(xx) <= cut]
+xx = xx[abs(xx) <= cut]
 
 a1 = integrate.simpson(sf, x=xx)
-a2 = integrate.trapezoid(sf, x=xx)
 
+#negative integral
+sneg = integrate.simpson(sf[xx < 0], x=xx[xx < 0])
+pneg = integrate.simpson(pf[xx < 0], x=xx[xx < 0])
+#positive
+spos = integrate.simpson(sf[xx >= 0], x=xx[xx >= 0])
+ppos = integrate.simpson(pf[xx >= 0], x=xx[xx >= 0])
+
+print(sneg)
+print(spos)
+print(pneg)
+print(ppos)
+
+breakpoint()
 # sws = range(5, int(xx.max()*1e6)+5, 5)
 sws = range(5, int(xx.max()*1e6)+2, 1)
 pw, ww = lgwt(nw, -1, 1)

@@ -7,8 +7,8 @@ Created on: 02-05-2021
 Package: DIFFRAQ
 License: Refer to $pkg_home_dir/LICENSE
 
-Description: quadrature for integrals over area with cartesian parametric functions.
-    See Barnett (2021) Eq. 11, 12, 14.
+Description: quadrature over seam of edge with cartesian function.
+
 
 """
 
@@ -54,16 +54,16 @@ def seam_cartesian_quad(fxy, dxy, m, n, seam_width):
     dt = dxy(pt)[:,:,None]
 
     #Get normal angle at all theta nodes (flipped negative to point inward to match seam_polar_quad)
-    norm = np.hypot(dt[:,0][:,0], dt[:,1][:,0])
-    nx =  dt[:,1,0] / norm
-    ny = -dt[:,0,0] / norm
+    norm = np.hypot(dt[:,0], dt[:,1])
+    nx =  dt[:,1] / norm
+    ny = -dt[:,0] / norm
 
     #Nodes (Eq. 11 Barnett 2021)
-    xq = ft[:,0] + nx[:,None]*pr*seam_width
-    yq = ft[:,1] + ny[:,None]*pr*seam_width
+    xq = ft[:,0] + nx*pr*seam_width
+    yq = ft[:,1] + ny*pr*seam_width
 
-    #Weights (Eq. 12 Barnett 2021)
-    wq = wt * seam_width * (wr * (xq * dt[:,1] - yq * dt[:,0])).ravel()
+    #Weights (Eq. 12 Barnett 2021) (nx and ny are switched and ny has negative sign)
+    wq = wt * seam_width * (wr * (xq * nx + yq * ny)).ravel()
 
     #Ravel
     xq = xq.ravel()
