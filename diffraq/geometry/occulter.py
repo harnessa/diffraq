@@ -37,21 +37,21 @@ class Occulter(object):
             #Load shape
             shapes = mod.shapes
             #Overwrite finite parameter
-            if hasattr(mod, 'is_finite'):
-                self.sim.is_finite = mod.is_finite
+            if hasattr(mod, 'occulter_is_finite'):
+                self.sim.occulter_is_finite = mod.occulter_is_finite
 
         #Turn into list
         if not isinstance(shapes, list):
             shapes = [shapes]
 
         #Finite flag
-        self.finite_flag = int(self.sim.is_finite)
+        self.finite_flag = int(self.sim.occulter_is_finite)
 
         #Multi shape flag
         self.is_multi = len(shapes) > 1
 
         #Use Babinet? (could be replaced later by single occulter)
-        self.is_babinet = not self.sim.is_finite
+        self.is_babinet = not self.sim.occulter_is_finite
 
         #Loop through and build shapes
         self.shapes = []

@@ -17,9 +17,9 @@ import diffraq
 params = {
 
     ### Loading ###
-    'load_dir_base':    f'{diffraq.results_dir}/test',
-    'session':          'M12P2',
-    'load_ext':         '2',
+    'load_dir_base':    f'{diffraq.results_dir}',
+    'session':          'test',
+    'load_ext':         '',
     'cam_analyzer':     [None, 'p', 'o'][0],
 
 }

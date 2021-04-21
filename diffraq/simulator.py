@@ -211,6 +211,11 @@ class Simulator(object):
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
 
+        #Apply uneven beam illumination to weights (could be complex)
+        if self.beam_function is not None:
+            self.occulter.wq = self.occulter.wq * \
+                self.beam_function(self.occulter.xq, self.occulter.yq)
+
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
 
@@ -246,6 +251,11 @@ class Simulator(object):
 
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), 2, self.num_pts, self.num_pts)) + 0j
+
+        #Apply uneven beam illumination to weights (could be complex)
+        if self.beam_function is not None:
+            self.vector.wq = self.vector.wq * \
+                self.beam_function(self.vector.xq, self.vector.yq)
 
         #Get edge normal components
         cosa = np.cos(self.vector.nq)

@@ -49,7 +49,7 @@ class Test_Annulus(object):
                   {'kind':'circle', 'max_radius':self.rad_out, 'is_opaque':not is_aperture}, ]
 
         #Set finite
-        params['is_finite'] = is_aperture
+        params['occulter_is_finite'] = is_aperture
 
         #Load simulator
         sim = diffraq.Simulator(params, shapes)

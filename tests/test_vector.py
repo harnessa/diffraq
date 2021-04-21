@@ -253,7 +253,7 @@ class Test_Vector(object):
             'skip_image':       True,
             'free_on_end':      False,
             'verbose':          False,
-            'is_finite':        True,
+            'occulter_is_finite':        True,
             'radial_nodes':         500,
             'theta_nodes':          50,
             'seam_radial_nodes':    500,

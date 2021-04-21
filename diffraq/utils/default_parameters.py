@@ -31,20 +31,23 @@ def_sim_params = {
     'session':              '',         #Session name (next level folder)
     'save_ext':             '',         #Save extension
     'verbose':              True,       #Print to standard output?
-    'with_log':             True,       #Record output to log?
+    'with_log':             False,      #Record output to log?
     'free_on_end':          True,       #Delete results after simulation run?
 
     ### Occulter ###
-    'is_finite':            True,       #Diffraction integral does not extend to infinity? Necessary only for multiple shapes
+    'occulter_is_finite':   True,       #Diffraction integral does not extend to infinity? Necessary only for multiple shapes
     'occulter_config':      None,       #Configuration file to point to file containing pre-specified shape dictionaries
     'spin_angle':           0,          #Spin angle of the occulter
 
     ### Observation ###
-    'waves':                0.6e-6,     #Wavelengths
     'z0':                   1e19,       #Source - Occulter distance
     'zz':                   15e6,       #Occulter - Telescope distance
     'tel_diameter':         2.4,        #Telescope diameter
     'num_pts':              256,        #Number of points across telescope
+    'waves':                0.6e-6,     #Wavelengths
+
+    ### Laser Beam ###
+    'beam_function':        None,       #lambda function that calculates beam's illumination pattern for each input x,y
 
     ### Focuser ###
     'focal_length':         240,        #Focal length of optics
@@ -61,7 +64,7 @@ def_sim_params = {
     'seam_theta_nodes':     None,       #Number of theta quadrature nodes in seam. If None, use shape's
 
     ### Polarization ###
-    'seam_width':           5e-6,       #Half-width of Braunbek seam
+    'seam_width':           25e-6,      #Half-width of Braunbek seam
     'is_sommerfeld':        False,      #Use Sommerfeld half-plane solution to calculate edge effect
     'maxwell_func':         None,       #List of lambda functions (for s + p) that hold solution to Maxwell's Eqns. for the differential field near the edge
     'maxwell_file':         None,       #Filename that holds solution to Maxwell's Eqns. for the differential field near the edge
@@ -70,6 +73,7 @@ def_sim_params = {
     'stokes_parameters':    None,       #Stokes' parameters [I,Q,U,V] describing state of polarization
     'analyzer_angle':       0,          #Angle of camera polarizing analyzer relative to Lab frame horizontal [degrees]
     'with_vector_gaps':     False,      #Use different solution for small gaps between petals?
+
 }
 
 ############################################

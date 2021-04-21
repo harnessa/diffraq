@@ -39,7 +39,7 @@ class Test_Occulter_Configuration(object):
             'verbose':          False,
             'radial_nodes':     radial_nodes,
             'theta_nodes':      theta_nodes,
-            'is_finite':        True,
+            'occulter_is_finite':        True,
         }
 
         #Load regular sim
