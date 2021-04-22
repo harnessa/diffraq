@@ -45,6 +45,7 @@ def_sim_params = {
     'tel_diameter':         2.4,        #Telescope diameter
     'num_pts':              256,        #Number of points across telescope
     'waves':                0.6e-6,     #Wavelengths
+    'target_center':        [0,0],      #Center of target grid
 
     ### Laser Beam ###
     'beam_function':        None,       #lambda function that calculates beam's illumination pattern for each input x,y

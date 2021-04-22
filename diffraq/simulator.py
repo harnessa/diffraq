@@ -175,8 +175,15 @@ class Simulator(object):
         #Build target
         grid_pts = diffraq.utils.image_util.get_grid_points(self.num_pts, self.tel_diameter)
 
+        #Decide if running off-axis
+        if not np.isclose(0, np.hypot(*self.target_center)):
+            grid_pts = self.get_target_points(grid_pts)
+            is_offaxis = True
+        else:
+            is_offaxis = False
+
         #Run scalar diffraction calculation over the occulter
-        pupil = self.scalar_diffraction_calculation(grid_pts)
+        pupil = self.scalar_diffraction_calculation(grid_pts, is_offaxis)
 
         #If vector calculation, calculate diffraction over Braunbek seam
         if self.do_run_vector:
@@ -184,7 +191,7 @@ class Simulator(object):
             self.occulter.clean_up()
 
             #Run calculation (Save, but don't return)
-            self.vec_pupil = self.vector_diffraction_calculation(grid_pts)
+            self.vec_pupil = self.vector_diffraction_calculation(grid_pts, is_offaxis)
 
             #Get incident polarization components
             self.vec_comps = np.array([self.vector.Ex_comp, self.vector.Ey_comp])
@@ -201,7 +208,7 @@ class Simulator(object):
 ####	Diffraction Calculations  ####
 ############################################
 
-    def scalar_diffraction_calculation(self, grid_pts):
+    def scalar_diffraction_calculation(self, grid_pts, is_offaxis=False):
         """Calculate the scalar diffraction of the occulter's quadrature x+y and
             quadrature weights, over the supplied grid. """
 
@@ -216,6 +223,20 @@ class Simulator(object):
             self.occulter.wq = self.occulter.wq * \
                 self.beam_function(self.occulter.xq, self.occulter.yq)
 
+        #Decide which diffraction algorithm to use (if off-axis)
+        if is_offaxis:
+            diff_calc = lambda lamzz, lamz0: \
+                diffraq.diffraction.diffract_points(self.occulter.xq, \
+                self.occulter.yq, self.occulter.wq, lamzz, grid_pts[0], grid_pts[1], \
+                self.fft_tol, is_babinet=self.occulter.is_babinet, \
+                lamz0=lamz0).reshape((self.num_pts, self.num_pts))
+
+        else:
+            diff_calc = lambda lamzz, lamz0: \
+                diffraq.diffraction.diffract_grid(self.occulter.xq, self.occulter.yq, \
+                self.occulter.wq, lamzz, grid_pts, self.fft_tol, \
+                is_babinet=self.occulter.is_babinet, lamz0=lamz0)
+
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
 
@@ -224,9 +245,7 @@ class Simulator(object):
             lamz0 = self.waves[iw] * self.z0
 
             #Calculate diffraction
-            uu = diffraq.diffraction.diffract_grid(self.occulter.xq, self.occulter.yq, \
-                self.occulter.wq, lamzz, grid_pts, self.fft_tol, \
-                is_babinet=self.occulter.is_babinet, lamz0=lamz0)
+            uu = diff_calc(lamzz, lamz0)
 
             #Multiply by plane wave
             uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
@@ -242,7 +261,7 @@ class Simulator(object):
     ############################################
     ############################################
 
-    def vector_diffraction_calculation(self, grid_pts):
+    def vector_diffraction_calculation(self, grid_pts, is_offaxis=False):
         """Calculate the scalar diffraction of the vector seam's quadrature x+y,
             quadrature weights, and additive vector field, over the supplied grid. """
 
@@ -261,6 +280,19 @@ class Simulator(object):
         cosa = np.cos(self.vector.nq)
         sina = np.sin(self.vector.nq)
         del self.vector.nq
+
+        #Decide which diffraction algorithm to use (if off-axis)
+        if is_offaxis:
+            diff_calc = lambda lamzz, lamz0, wu0: \
+                diffraq.diffraction.diffract_points(self.vector.xq, \
+                self.vector.yq, wu0, lamzz, grid_pts[0], grid_pts[1], \
+                self.fft_tol, is_babinet=False, \
+                lamz0=lamz0).reshape((self.num_pts, self.num_pts))
+
+        else:
+            diff_calc = lambda lamzz, lamz0, wu0: \
+                diffraq.diffraction.diffract_grid(self.vector.xq, self.vector.yq, \
+                wu0, lamzz, grid_pts, self.fft_tol, is_babinet=False, lamz0=lamz0)
 
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
@@ -287,8 +319,7 @@ class Simulator(object):
                          self.vector.Ex_comp * (sina*cosa * (sfld - pfld)))
 
                 #Calculate diffraction
-                uu = diffraq.diffraction.diffract_grid(self.vector.xq, self.vector.yq, \
-                    wu0, lamzz, grid_pts, self.fft_tol, is_babinet=False, lamz0=lamz0)
+                uu = diff_calc(lamzz, lamz0, wu0)
 
                 #Multiply by plane wave
                 uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
@@ -301,6 +332,13 @@ class Simulator(object):
         self.vector.clean_up()
 
         return pupil
+
+    def get_target_points(self, grid_pts):
+        grid_2D = np.tile(grid_pts, (len(grid_pts),1)).T
+        xi = grid_2D.flatten() + self.target_center[1]
+        eta = grid_2D.T.flatten() + self.target_center[0]
+        del grid_2D
+        return xi, eta
 
 ############################################
 ############################################
