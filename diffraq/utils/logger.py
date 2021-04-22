@@ -129,6 +129,7 @@ class Logger(object):
         if not is_warning:
             sys.exit(0)
         else:
+            print(txt)
             breakpoint()
 
 ############################################

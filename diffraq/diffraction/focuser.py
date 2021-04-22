@@ -53,8 +53,8 @@ class Focuser(object):
         self.true_NN = np.array([fft.next_fast_len(int(np.ceil(tn))) for tn in self.targ_NN])
 
         #Make sure not too large
-        if np.any(self.true_NN > 2**12):
-            bad = self.true_NN[self.true_NN > 2**12]
+        if np.any(self.true_NN > 2**14):
+            bad = self.true_NN[self.true_NN > 2**14]
             self.sim.logger.error(f'Large Image size: {bad}', is_warning=True)
 
         #Make sure we are always oversampling
