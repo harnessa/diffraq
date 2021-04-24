@@ -50,7 +50,13 @@ class Focuser(object):
             (self.sim.tel_diameter * self.image_res)
 
         #Find next fastest size for FFT (not necessarily 2**n)
-        self.true_NN = np.array([fft.next_fast_len(int(np.ceil(tn))) for tn in self.targ_NN])
+        self.true_NN = np.array([]).astype(int)
+        for tn in self.targ_NN:
+            #Make sure we have minimum padding
+            tar = int(max(np.ceil(tn), self.sim.num_pts * self.sim.min_padding))
+            #Get next fasest
+            tru = fft.next_fast_len(tar)
+            self.true_NN = np.concatenate((self.true_NN, [tru]))
 
         #Make sure not too large
         if np.any(self.true_NN > 2**14):

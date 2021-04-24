@@ -155,6 +155,8 @@ class Logger(object):
         if not self.do_save:
             return
 
+        #TODO: save wavelengths, basically save all parameters for easy access (dont have to run analyzer)
+
         #Are we polarized?
         is_polarized = vec_pupil is not None
 
@@ -174,6 +176,7 @@ class Logger(object):
         #Return immediately if not saving
         if not self.do_save:
             return
+        #TODO: save wavelengths, basically save all parameters for easy access (dont have to run analyzer)
 
         #Are we polarized
         is_polarized = image.ndim == 4

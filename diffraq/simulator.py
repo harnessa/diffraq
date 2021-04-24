@@ -98,7 +98,7 @@ class Simulator(object):
             return
 
         #Delete trash
-        trash_list = ['pupil' 'image', 'vec_pupil']
+        trash_list = ['pupil', 'image', 'vec_pupil']
         for att in trash_list:
             if hasattr(self, att):
                 delattr(self, att)

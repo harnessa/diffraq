@@ -74,7 +74,7 @@ def set_default_params(parent, params, def_pms, skip_keys=[]):
         #Print and exit
         col_str = color_string(bad_key, neutral_color)
         print(f'\n{bad_str} New Parameter not in Defaults: {col_str} {bad_str}\n')
-        import sys; sys.exit(0)
+        # import sys; sys.exit(0)
 
     #Combine parameters
     use_params = {**def_pms, **params}

@@ -56,6 +56,7 @@ def_sim_params = {
     'pixel_size':           13e-6,      #Width of square pixels
     'defocus':              0.,         #Amount of defocus (can be + or -)
     'image_size':           128,        #Width (# pixels) of square image
+    'min_padding':          4,          #Minimum padding in FFT
 
     ### Numerics ###
     'radial_nodes':         50,         #Number of radial quadrature nodes
