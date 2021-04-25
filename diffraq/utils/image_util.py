@@ -27,6 +27,7 @@ def crop_image(img, cen, wid):
     return sub_img
 
 def pad_array(inarr, NN):
+    #Assumes even number
     return np.pad(inarr, (NN - inarr.shape[-1])//2)
 
 def round_aperture(img):

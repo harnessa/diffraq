@@ -54,8 +54,11 @@ class Focuser(object):
         for tn in self.targ_NN:
             #Make sure we have minimum padding
             tar = int(max(np.ceil(tn), self.sim.num_pts * self.sim.min_padding))
-            #Get next fasest
-            tru = fft.next_fast_len(tar)
+            #Get next fasest (even)
+            tru, dn = 1, 0
+            while (tru % 2) != 0:
+                tru = fft.next_fast_len(tar+dn)
+                dn += 1
             self.true_NN = np.concatenate((self.true_NN, [tru]))
 
         #Make sure not too large
@@ -96,7 +99,7 @@ class Focuser(object):
         pupil, NN_full = image_util.round_aperture(pupil)
 
         #Create input plane indices
-        et = np.tile(np.arange(NN0)/NN0 - 0.5, (NN0,1)) * NN0
+        et = (np.arange(NN0)/NN0 - 0.5) * NN0
 
         #Loop through pad groups and calculate images that are the same size
         for NN in self.unq_true_NN:
@@ -104,12 +107,15 @@ class Focuser(object):
             #Fine wavelengths in this pad group
             cur_inds = np.where(self.true_NN == NN)[0]
 
+            #Create focal plane indices
+            xx = (np.arange(NN)/NN - 0.5) * NN
+
             #Loop through wavelengths in this pad group and calculate image
             for iw in cur_inds:
 
                 #Propagate to image plane
                 img, dx = self.propagate_lens_diffraction(pupil[iw], \
-                    self.sim.waves[iw], et, NN, NN_full)
+                    self.sim.waves[iw], et, xx, NN, NN_full)
 
                 #Turn into intensity
                 img = np.real(img.conj()*img)
@@ -128,7 +134,7 @@ class Focuser(object):
         grid_pts /= self.image_distance
 
         #Cleanup
-        del et, pupil, img
+        del et, pupil, img, xx
 
         return image, grid_pts
 
@@ -139,7 +145,7 @@ class Focuser(object):
 ####	Image Propagation ####
 ############################################
 
-    def propagate_lens_diffraction(self, pupil, wave, et, NN, NN_full):
+    def propagate_lens_diffraction(self, pupil, wave, et, xx, NN, NN_full):
 
         #Get output plane sampling
         dx = wave*self.image_distance/(self.dx0*NN)
@@ -154,11 +160,8 @@ class Focuser(object):
         #Run FFT
         FF = self.do_FFT(pupil)
 
-        #Trim back to normal size   #TODO: what is max extent from nyquist?
-        FF = image_util.crop_image(FF, None, self.sim.num_pts//2)
-
         #Multiply by Fresnel diffraction phase prefactor
-        FF *= self.propagation_kernel(et, dx, wave, self.image_distance)
+        FF *= self.propagation_kernel(xx, dx, wave, self.image_distance)
 
         #Multiply by constant phase term
         FF *= np.exp(1j * 2.*np.pi/wave * self.image_distance)
@@ -179,7 +182,7 @@ class Focuser(object):
 ############################################
 
     def propagation_kernel(self, et, dx0, wave, distance):
-        return np.exp(1j * 2.*np.pi/wave * dx0**2. * (et.T**2 + et**2) / (2.*distance))
+        return np.exp(1j * 2.*np.pi/wave * dx0**2. * (et[:,None]**2 + et**2) / (2.*distance))
 
     def do_FFT(self, MM):
         return fft.ifftshift(fft.fft2(fft.fftshift(MM), workers=-1))
@@ -187,6 +190,8 @@ class Focuser(object):
     def finalize_image(self, img, num_img, targ_NN, true_NN, dx):
         #Resample onto theoretical resolution through affine transform
         scaling = true_NN / targ_NN
+
+        #TODO: leads to bad results when scaling >> 1
 
         #Make sure scaling leads to even number (will lead to small difference in sampling)
         NN = len(img)
