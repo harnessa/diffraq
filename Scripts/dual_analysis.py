@@ -18,10 +18,10 @@ import matplotlib.pyplot as plt;plt.ion()
 params = {
 
     ### Dual Parameters ###
-    'load_dir_base_1':  f'{diffraq.results_dir}',
-    'session_1':        'test',
-    'load_ext_1':       'x0y0_120',
-    'load_ext_2':       'x0y2_120',
+    'load_dir_base_1':  f'{diffraq.results_dir}/new_OSS_journal',
+    'session_1':        '',
+    'load_ext_1':       '300nm',
+    'load_ext_2':       '512',
 
     ### Analyzer Parameters ###
     'cam_analyzer':     ['p','o'][0],

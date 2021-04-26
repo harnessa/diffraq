@@ -17,25 +17,31 @@ import numpy as np
 #User-input parameters
 params = {
 
-    ### Observation ###
-    'waves':            0.6e-6,
-    'tel_diameter':     2.4,
-    'num_pts':          256,
+    ### World ###
+    'num_pts':              512,
+    'zz':                   49.986,
+    'z0':                   27.455,
+    'tel_diameter':         5e-3,
+    'waves':                405e-9,
+    'focal_length':         0.499,
+    'defocus':              3e-3,
+    'image_size':           64,
+
+    ### Numerics ###
+    'radial_nodes':         400,
+    'theta_nodes':          50,
+
+    ### Occulter ###
+    'occulter_config':      f'{diffraq.occulter_dir}/bb_2017.cfg',
 
     ### Saving ###
     'do_save':          True,
     'save_dir_base':    f'{diffraq.results_dir}',
     'session':          'test',
-    'save_ext':         'x0y2_120',
+    'save_ext':         '512',
 
 }
 
-params['beam_function'] = lambda x,y: np.exp(-((x-0)**2 + (y-2)**2)/(2.*120))
-
-
-#Circle shape
-shape = {'kind':'circle', 'is_opaque':True, 'max_radius':12}
-
 #Load simulation class and run sim
-sim = diffraq.Simulator(params, shape)
+sim = diffraq.Simulator(params)
 sim.run_sim()

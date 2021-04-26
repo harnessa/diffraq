@@ -27,7 +27,7 @@ class Test_Focuser(object):
 
     def test_sampling(self):
         waves = [0.3e-6, 0.6e-6, 1.2e-6]
-        true_NN = [594, 1188, 2376]
+        true_NN = [1024, 1188, 2376]            #min_padding=4
         targ_NN = [590.76923077, 1181.53846154, 2363.07692308]  #D=2.4, f=240
 
         #Build simulator

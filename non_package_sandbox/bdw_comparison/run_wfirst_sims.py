@@ -35,7 +35,7 @@ mm = 6000
 nn = 300
 
 shape = {'kind':'starshade', 'is_opaque':True,  \
-    'num_petals':num_pet,'edge_file':f'{diffraq.apod_dir}/wfirst_ni2.txt'}
+    'num_petals':num_pet,'edge_file':f'{diffraq.apod_dir}/wfirst_ni2.h5'}
 
 dif_params = {
 
