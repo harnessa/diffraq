@@ -71,7 +71,7 @@ class Analyzer(object):
         return sim_params
 
     def clean_up(self):
-        att_list = ['pupil', 'image', 'sim']
+        att_list = ['pupil', 'image', 'sim', 'image_waves']
 
         #Cleanup sim
         if hasattr(self, 'sim'):
@@ -147,8 +147,13 @@ class Analyzer(object):
     def show_results(self):
 
         plt.ion()
-        plt.imshow(self.image)
-        print(self.image.max())
+        if hasattr(self, 'image'):
+            plt.imshow(self.image)
+            print(self.image.max())
+        else:
+            pupil = np.abs(self.pupil[self.wave_ind])**2
+            plt.imshow(pupil)
+            print(pupil.max())
         breakpoint()
 
 ############################################

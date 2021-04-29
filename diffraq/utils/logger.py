@@ -164,6 +164,7 @@ class Logger(object):
         with h5py.File(self.filename('pupil','h5'), 'w') as f:
             f.create_dataset('field', data=pupil)
             f.create_dataset('grid_pts', data=grid_pts)
+            f.create_dataset('waves', data=self.sim.waves)
             #Save vector pupil
             f.create_dataset('is_polarized', data=is_polarized)
             if is_polarized:
@@ -185,6 +186,7 @@ class Logger(object):
         with h5py.File(self.filename('image','h5'), 'w') as f:
             f.create_dataset('intensity', data=image)
             f.create_dataset('grid_pts', data=grid_pts)
+            f.create_dataset('waves', data=self.sim.waves)
             f.create_dataset('is_polarized', data=is_polarized)
 
 ############################################

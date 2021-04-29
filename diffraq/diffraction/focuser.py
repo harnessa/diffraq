@@ -160,7 +160,7 @@ class Focuser(object):
         #Run FFT
         FF = self.do_FFT(pupil)
 
-        #Multiply by Fresnel diffraction phase prefactor
+        #Multiply by Fresnel diffraction phase postfactor
         FF *= self.propagation_kernel(xx, dx, wave, self.image_distance)
 
         #Multiply by constant phase term
