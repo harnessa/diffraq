@@ -9,11 +9,11 @@ def get_image():
 
     focal_length = 0.499
     image_distance = focal_length
-    wave = [400e-9, 641e-9][0]
+    wave = [400e-9, 641e-9][1]
     num_pts = 512
     tel_diameter = 5e-3
     image_res = 13e-6/focal_length
-    min_padding = 1
+    min_padding = 4
     dx0 = tel_diameter / num_pts
     num_img = 512
 
@@ -26,10 +26,9 @@ def get_image():
     while (NN % 2) != 0:
         NN = fft.next_fast_len(tar+dn)
         dn += 1
-        print(NN, dn)
     print('done', NN)
-
     breakpoint()
+
 #################################################
 
     pupil = np.ones((num_pts, num_pts)) + 0j
@@ -71,9 +70,13 @@ def get_image():
     # tok = time.perf_counter()
     # print(f'time: {tok-tik:.2f}')
 
-    fig, axes = plt.subplots(2, figsize=(7,7), sharex=True,sharey=True)
-    axes[0].imshow(img1)
-    axes[1].imshow(img2)
+    # fig, axes = plt.subplots(2, figsize=(7,7), sharex=True,sharey=True)
+    # axes[0].imshow(img1)
+    # axes[1].imshow(img2)
+    plt.figure()
+    plt.semilogy(img1[len(img1)//2])
+    plt.semilogy(img2[len(img2)//2], '--')
+
     breakpoint()
 
 def finish_up(pupil, num_img, targ_NN, NN, dx, xx, wave, image_distance, NN_full):
@@ -128,8 +131,6 @@ def finalize_image(img, num_img, targ_NN, true_NN, dx):
     affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
     out_shape = (np.ones(2) * NN / scaling).astype(int)
 
-    # import matplotlib.pyplot as plt;plt.ion()
-    # breakpoint()
     #Do affine transform
     img = affine_transform(img, affmat, output_shape=out_shape, order=5)
 
