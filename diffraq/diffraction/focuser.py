@@ -13,8 +13,14 @@ Description: Class to propagate the diffracted field to the focal plane of the
 
 import numpy as np
 from diffraq.utils import image_util
-from scipy.ndimage import affine_transform
 import scipy.fft as fft
+#If CV2 available, use that for the affine transform. Otherwise use scipy
+try:
+    import cv2
+    has_cv2 = True
+except ImportError:
+    from scipy.ndimage import affine_transform
+    has_cv2 = False
 
 class Focuser(object):
 
@@ -191,8 +197,6 @@ class Focuser(object):
         #Resample onto theoretical resolution through affine transform
         scaling = true_NN / targ_NN
 
-        #TODO: leads to bad results when scaling >> 1
-
         #Make sure scaling leads to even number (will lead to small difference in sampling)
         NN = len(img)
         N2 = NN / scaling
@@ -203,10 +207,14 @@ class Focuser(object):
 
         #Affine matrix
         affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
-        out_shape = (np.ones(2) * NN / scaling).astype(int)
+        out_shape = (int(NN/scaling),) * 2
 
-        #Do affine transform
-        img = affine_transform(img, affmat, output_shape=out_shape, order=5)
+        #Do affine transform (with different packages)
+        if has_cv2:
+            img = cv2.warpAffine(img, affmat, out_shape, \
+                flags=cv2.WARP_INVERSE_MAP + cv2.INTER_LANCZOS4)
+        else:
+            img = affine_transform(img, affmat, output_shape=out_shape, order=3)
 
         #Crop to match image size
         img = image_util.crop_image(img, None, num_img//2)

@@ -58,12 +58,6 @@ class Shape(object):
             else:
                 edge_data = self.load_edge_file(self.edge_file)
 
-            #Trim opaque center points
-            if edge_data[0][1] == 1:
-                edge_data = edge_data[edge_data[:,1] < 1]
-            elif edge_data[0][1] == 0:
-                edge_data = edge_data[edge_data[:,1] > 0]   #Lab starshade
-
             #Replace min/max radius
             self.min_radius = edge_data[:,0].min()
             self.max_radius = edge_data[:,0].max()

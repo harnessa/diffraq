@@ -7,8 +7,7 @@ from PIL import Image
 import cv2
 import time
 
-def get_image():
-
+def run_sim():
     wave = [400e-9, 641e-9][1]
     num_pts = 512
     tel_diameter = 5e-3
@@ -16,27 +15,27 @@ def get_image():
     dx0 = tel_diameter / num_pts
     num_img = 512
 
-    upsamp = [False, True][1]
+    down_sample = [False, True][1]
 
-    dsamp = 2.3
+    msamp = 2.8
 
-    if upsamp:
-        NN = num_img * min_padding * int(dsamp)
-        targ_NN = NN / dsamp
+    if down_sample:
+        NN = num_img * min_padding * int(np.ceil(msamp))    #number to run (make sure target is also min padded for truth calc)
+        targ_NN = NN / msamp                                #Where we want to end at
     else:
-        NN = num_img * min_padding
-        targ_NN = NN * dsamp
+        NN = num_img  * min_padding
+        targ_NN = NN  * msamp
 
     #new image res
     image_res = num_pts * wave / (tel_diameter * targ_NN)
     focal_length = 13e-6/image_res
     image_distance = focal_length
 
-    # breakpoint()
     print(NN, targ_NN)
 
-#################################################
+    #################################################
 
+    #Get pupil
     pupil = np.ones((num_pts, num_pts)) + 0j
 
     NN0 = pupil.shape[-1]
@@ -53,6 +52,7 @@ def get_image():
     pupil *= propagation_kernel(et, dx0, wave, -focal_length)
     pupil *= propagation_kernel(et, dx0, wave, image_distance)
 
+    #Save for later
     tru_pupil = pupil.copy()
 
     #Pad pupil
@@ -74,12 +74,16 @@ def get_image():
     tok2 = time.perf_counter()
     print(f'PIL: {tok2-tik2:.3f}')
 
-    #Get truth
-    tru_pupil = image_util.pad_array(tru_pupil, int(targ_NN))
-    dxtru = wave*image_distance/(dx0*int(targ_NN))
-    xxtru = (np.arange(int(targ_NN))/int(targ_NN) - 0.5) * int(targ_NN)
-    irdx = image_res * image_distance
+    #Get integral targ_NN
+    Ntt = int(np.round(targ_NN))
+    Ntt += Ntt % 2
+    #Get truth (not really truth with fractional targ_NN b/c we must make integer)
+    tru_pupil = image_util.pad_array(tru_pupil, Ntt)
+    dxtru = wave*image_distance/(dx0*Ntt)
+    xxtru = (np.arange(Ntt)/Ntt - 0.5) * Ntt
+    irdx = image_res * image_distance   #True image dx
 
+    #Propage tru image
     tru = do_prop(tru_pupil, num_img, dxtru, xxtru, wave, image_distance, NN_full)
     tru = image_util.crop_image(tru, None, num_img//2)
 
@@ -88,16 +92,17 @@ def get_image():
     pdif = np.abs(tru - pimg).sum()
 
     print(f'Adif: {adif:.3e}, Pdif: {pdif:.3e}')
-    # print(f'Adx: {adx:.3e}, Pdx: {pdx:.3e}, True dx: {dxtru:.3e}, Image Res: {irdx:.3e}')
+    print(f'Adx: {adx-irdx:.3e}, Pdx: {pdx-irdx:.3e}, True dx: {dxtru-irdx:.3e}')
 
     #Plot
     pxx = xx[NN//2-len(aimg)//2:NN//2+len(aimg)//2]
-    pxt = xxtru[int(targ_NN)//2-len(tru)//2:int(targ_NN)//2+len(tru)//2]
+    pxt = xxtru[Ntt//2-len(tru)//2:Ntt//2+len(tru)//2]
     plt.figure()
     plt.semilogy(pxx, aimg[len(aimg)//2], '-',  label='AFF')
     plt.semilogy(pxx, pimg[len(pimg)//2], '--', label='PIL')
     plt.semilogy(pxt, tru[len(tru)//2], ':', label='tru')
     plt.axvline(1.22*wave/tel_diameter/image_res, color='k', linestyle=':')
+    plt.axvline(0, color='c', linestyle=':')
     plt.legend()
     plt.xlim([-20,20])
     plt.ylim(bottom=1e-5)
@@ -116,9 +121,6 @@ def do_prop(pupil, num_img, dx, xx, wave, image_distance, NN_full):
 
     #Multiply by constant phase term
     FF *= np.exp(1j * 2.*np.pi/wave * image_distance)
-
-    #(not used) Normalize by FFT + normalizations to match Fresnel diffraction
-    # FF *= self.dx0**2./(wave*self.image_distance) / NN_full
 
     #Normalize such that peak is 1. Needs to scale for wavelength relative to other images
     FF /= NN_full
@@ -150,10 +152,10 @@ def finalize_aff(img, num_img, targ_NN, true_NN, dx):
 
     #Affine matrix
     affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
-    out_shape = (np.ones(2) * NN / scaling).astype(int)
+    out_shape = (int(NN/scaling),) * 2
 
     #Do affine transform
-    img = affine_transform(img, affmat, output_shape=out_shape, order=5)
+    img = affine_transform(img, affmat, output_shape=out_shape, order=3)
 
     #Crop to match image size
     img = image_util.crop_image(img, None, num_img//2)
@@ -174,12 +176,13 @@ def finalize_cv2(img, num_img, targ_NN, true_NN, dx):
 
     #Affine matrix
     affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
+    out_shape = (int(NN/scaling),) * 2
 
     #FIXME: not great interpolation when scaling not integer. but it is 20x faster
 
     #Do affine transform
-    img = cv2.warpAffine(img, affmat, (int(N2),int(N2)), \
-        flags=cv2.WARP_INVERSE_MAP + cv2.WARP_FILL_OUTLIERS + cv2.INTER_LANCZOS4)
+    img = cv2.warpAffine(img, affmat, out_shape, \
+        flags=cv2.WARP_INVERSE_MAP + cv2.INTER_LANCZOS4)
 
     #Crop to match image size
     img = image_util.crop_image(img, None, num_img//2)
@@ -202,7 +205,7 @@ def finalize_pil(img, num_img, targ_NN, true_NN, dx):
     #Scale sampling
     dx *= scaling
 
-    rs = [Image.NEAREST, Image.BILINEAR, Image.HAMMING, Image.BICUBIC, Image.LANCZOS][-2]
+    rs = [Image.NEAREST, Image.BILINEAR, Image.HAMMING, Image.BICUBIC, Image.LANCZOS][-1]
 
     #Resize image
     img = np.array(Image.fromarray(img).resize((N2, N2), reducing_gap=5, \
@@ -213,5 +216,4 @@ def finalize_pil(img, num_img, targ_NN, true_NN, dx):
 
     return img, dx
 
-
-get_image()
+run_sim()

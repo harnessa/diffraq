@@ -56,8 +56,8 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq_pw',
-    'skip_image':       True,
+    'save_ext':         f'diffraq',
+    # 'skip_image':       True,
 }
 
 if [False, True][1]:

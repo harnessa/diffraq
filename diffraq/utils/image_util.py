@@ -13,6 +13,10 @@ Description: Image utility functions to be used by DIFFRAQ.
 
 import numpy as np
 
+#Constants
+rad2arcsec = (180.*3600)/np.pi
+arcsec2rad = np.pi/(180*3600)
+
 ##############################################
 ###		Cropping / Padding / Masking		###
 ##############################################
