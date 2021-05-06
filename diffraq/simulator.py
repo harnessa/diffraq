@@ -98,7 +98,7 @@ class Simulator(object):
             return
 
         #Delete trash
-        trash_list = ['pupil', 'image', 'vec_pupil']
+        trash_list = ['pupil', 'image', 'vec_pupil', 'image_pts']
         for att in trash_list:
             if hasattr(self, att):
                 delattr(self, att)
@@ -365,14 +365,15 @@ class Simulator(object):
             #Calculate image for each polarization component
             self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
             for i in range(2):
-                self.image[:,i], grid_pts = self.focuser.calculate_image(pupil[:,i])
+                self.image[:,i], self.image_pts = \
+                    self.focuser.calculate_image(pupil[:,i])
 
         else:
             #Calculate scalar image
-            self.image, grid_pts = self.focuser.calculate_image(self.pupil)
+            self.image, self.image_pts = self.focuser.calculate_image(self.pupil)
 
         #Save image
-        self.logger.save_image_field(self.image, grid_pts)
+        self.logger.save_image_field(self.image, self.image_pts)
 
 ############################################
 ############################################

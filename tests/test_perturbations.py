@@ -20,7 +20,7 @@ class Test_Perturbations(object):
     tol = 1e-5
 
     def run_all_tests(self):
-        for dd in ['notch', 'shifted_petal', 'pinhole', 'clipped_radius'][-1:]:
+        for dd in ['notch', 'shifted_petal', 'pinhole']:
             getattr(self, f'test_{dd}')()
 
 ############################################
@@ -168,83 +168,6 @@ class Test_Perturbations(object):
             #Assert true
             assert(np.isclose(cur_area, wp.sum()) and \
                 np.isclose(cur_disk_area, sim.occulter.wq.sum()))
-
-############################################
-
-    def test_clipped_radius(self):
-
-        #Simulated shape
-        num_pet = 12
-        rmin, rmax = 8e-3, 10e-3
-        max_apod = 0.9
-
-        ss_Afunc = lambda r: 1 + max_apod*(np.exp(-((r-rmin)/(rmax-rmin)/0.6)**6) - 1)
-        inn_shape = {'kind':'starshade', 'is_opaque':True, 'num_petals':num_pet, \
-            'edge_func':ss_Afunc, 'min_radius':rmin, 'max_radius':rmax}
-
-        #Get nominal area
-        sim = diffraq.Simulator({}, inn_shape)
-        sim.occulter.build_quadrature()
-        area0 = -sim.occulter.wq.sum()
-        sim.clean_up()
-
-        #Clipped radii to test
-        radius_clips = {0: (0, 9.99e-3), 5: (8.25e-3, 30e-3), 9: (8.25e-3, 9.75e-3)}
-
-        #Loop over radii
-        for pet_num, radii in radius_clips.items():
-
-            #Get radii and clips
-            min_rad, max_rad = radii
-            min_clip = min_rad - rmin
-            max_clip = max_rad - rmax
-
-            #Loop over radii vs clip amount
-            for is_rad in [False, True]:
-
-                #Angles between petals (add 1/2 petal since opaque)
-                angles = np.pi/num_pet * np.array([2*pet_num-1, 2*pet_num + 1])
-
-                #Build clipped radius perturbation
-                if is_rad:
-                    pert_n = {'kind':'clipped_radius', 'angles':angles, \
-                        'min_radius':min_rad, 'max_radius':max_rad}
-                else:
-                    pert_n = {'kind':'clipped_radius', 'angles':angles, \
-                        'min_clip':min_clip, 'max_clip':max_clip}
-
-                #Add perturbation to shape
-                inn_shape['perturbations'] = [pert_n]
-
-                #Build sim
-                sim = diffraq.Simulator({}, inn_shape)
-
-                #Get area
-                sim.occulter.build_quadrature()
-                cur_area = -sim.occulter.wq.sum()
-
-                #Get difference in area
-                darea = area0 - cur_area
-
-                #True area difference
-                r1 = min(rmax, max_rad) # outer radius
-                tip_area = ss_Afunc(r1) * 2*np.pi*r1/num_pet * (r1 - rmax)
-                da_tru = np.pi*(rmax**2 - r1**2) * 2*ss_Afunc(r1) * \
-                    np.pi/num_pet / (2.*np.pi)
-                # da_tru = np.pi*((rmax**2 - min(rmax, max_rad)**2) + \
-                    # (rmin**2 - max(rmin, min_rad)**2)) * the/np.pi**2
-
-                #Check is true
-                # assert(np.isclose(darea, da_tru))
-
-                print(darea, tip_area, da_tru)
-                import matplotlib.pyplot as plt;plt.ion()
-                plt.cla()
-                plt.plot(sim.occulter.xq, sim.occulter.yq,'x')
-                breakpoint()
-
-                #Cleanup
-                sim.clean_up()
 
 ############################################
 
