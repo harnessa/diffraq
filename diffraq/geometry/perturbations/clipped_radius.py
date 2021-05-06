@@ -26,6 +26,8 @@ class Clipped_Radius(object):
             - min_clip:     amount to clipper minimum radius [m],
             - max_clip:     amount to clipper maximum radius [m],
                             > 0 = radially out, < 0 = radially in,
+            - min_radius':  minimum radius at which to clip [m],
+            - max_radius':  maximum radius at which to clip [m],
         """
 
         #Point to parent [shape]
@@ -33,13 +35,19 @@ class Clipped_Radius(object):
 
         #Set Default parameters
         def_params = {'kind':'Clipped_Radius', 'angles':[0,0], \
-            'min_clip':0, 'max_clip':0}
+            'min_clip':0, 'max_clip':0, 'min_radius':None, 'max_radius':None}
         for k,v in {**def_params, **kwargs}.items():
             setattr(self, k, v)
 
         #Shift angles if parent is clocked
         if self.parent.is_clocked:
             self.angles -= self.parent.clock_angle
+
+        #Set min/max radii if clipped amount is supplied
+        if self.min_radius is None:
+            self.min_radius = self.parent.min_radius + self.min_clip
+        if self.max_radius is None:
+            self.max_radius = self.parent.max_radius + self.max_clip
 
 ############################################
 #####  Main Scripts #####
@@ -76,14 +84,30 @@ class Clipped_Radius(object):
         rads = np.hypot(xp, yp)
 
         #Find points outside clipped bounds
-        rad_inds = (rads < self.parent.min_radius + self.min_clip) & \
-                   (rads > self.parent.max_radius + self.max_clip)
+        rad_inds = (rads < self.min_radius) | (rads > self.max_radius)
+
+        import matplotlib.pyplot as plt;plt.ion()
+        ox = xp.copy()
+        oy = yp.copy()
 
         #Keep only good points
-        xp = xp[~(ang_inds & rad_inds)]
-        yp = yp[~(ang_inds & rad_inds)]
+        keep_inds = ~(ang_inds & rad_inds)
+
+
+        print(wp[~keep_inds].sum())
+
+        xp = xp[keep_inds]
+        yp = yp[keep_inds]
         if wp is not None:
-            wp = wp[~(ang_inds & rad_inds)]
+            wp = wp[keep_inds]
+
+
+        # plt.cla()
+        # plt.plot(ox, oy, 'x')
+        # plt.plot(ox[~keep_inds], oy[~keep_inds], '+')
+        # # plt.plot(xp, yp, '+')
+        # print(ox.size-xp.size)
+        # breakpoint()
 
         #Cleanup
         del ang_inds, rad_inds, rads
@@ -102,8 +126,8 @@ class Clipped_Radius(object):
         det = xx*np.sin(mang) - yy*np.cos(mang)
         diff_angs = np.abs(np.arctan2(det, dot))
 
-        #Indices are where angles are <= dang/2 away
-        inds = diff_angs <= dang/2
+        #Indices are where angles are < dang/2 away
+        inds = diff_angs < dang/2
 
         #Cleanup
         del dot, det, diff_angs
