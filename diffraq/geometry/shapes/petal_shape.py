@@ -92,9 +92,9 @@ class PetalShape(Shape):
         del func, diff, cf, sf
         return ans
 
-    def cart_diff_2nd(self, t, func=None, diff=None, diff_2nd=None):
+    def cart_diff_2nd(self, r, func=None, diff=None, diff_2nd=None):
         if func is None or diff is None:
-            r, pet, pet_mul, pet_add = self.unpack_param(t)
+            r, pet, pet_mul, pet_add = self.unpack_param(r)
             func = self.outline.func(r)*pet_mul + pet_add
             diff = self.outline.diff(r)*pet_mul
             diff_2nd = self.outline.diff_2nd(r)*pet_mul

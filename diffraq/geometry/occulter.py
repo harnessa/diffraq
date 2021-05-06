@@ -56,8 +56,8 @@ class Occulter(object):
         #Loop through and build shapes
         self.shapes = []
         for shp in shapes:
-            #Get shape kind
-            kind = shp['kind'].capitalize()
+            #Get shape kind (capitalize first letter only)
+            kind = shp['kind'][0].capitalize() + shp['kind'][1:]
 
             #Build shape
             shp_inst = getattr(geometry, f'{kind}Shape')(self, **shp)
@@ -90,7 +90,6 @@ class Occulter(object):
                 #We flip weights to subtract opaque region overlapping transparent region
                 if not (self.finite_flag ^ int(shape.is_opaque)):
                     ws *= -1
-
             else:
 
                 #Set babinet flag to single occulter opaque flag

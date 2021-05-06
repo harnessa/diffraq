@@ -12,5 +12,5 @@ Description: __init__ package for the OCCULTER.PERTURBATIONS module.
 """
 
 from diffraq.geometry.perturbations.notch import Notch
-from diffraq.geometry.perturbations.shifted_petal import Shifted_Petal
 from diffraq.geometry.perturbations.pinhole import Pinhole
+from diffraq.geometry.perturbations.shifted_petal import Shifted_Petal

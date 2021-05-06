@@ -66,8 +66,8 @@ class Pinhole(object):
         #Get quadrature (less theta nodes)
         xq, yq, wq = quad.polar_quad(func, self.num_quad, self.num_quad//4)
 
-        #Use parent's opacity sign
-        wq *= self.parent.opq_sign
+        #Pinhole is always negativd
+        wq *= -1
 
         #Shift center
         xq += self.xy0[0]
@@ -92,7 +92,7 @@ class Pinhole(object):
         func = lambda t: self.radius * np.ones_like(t)
 
         #Get quadrature (less theta nodes)
-        xy = quad.polar_edge(func, self.num_quad, self.num_quad//4)
+        xy = quad.polar_edge(func, self.num_quad//4)
 
         #Shift center
         xy += self.xy0

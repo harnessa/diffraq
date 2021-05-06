@@ -12,4 +12,5 @@ Description: __init__ package for the POLARIZATION.PERTURBATIONS module.
 """
 
 from diffraq.polarization.perturbations.seam_notch import Seam_Notch
+from diffraq.polarization.perturbations.seam_pinhole import Seam_Pinhole
 from diffraq.polarization.perturbations.seam_shifted_petal import Seam_Shifted_Petal

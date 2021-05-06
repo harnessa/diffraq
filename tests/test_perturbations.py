@@ -142,32 +142,29 @@ class Test_Perturbations(object):
         disk_area = np.pi*self.circle_rad**2
         hole_area = np.pi * pinhole['radius']**2
 
-        #Loop over occulter/aperture
-        for is_opq in [False, True]:
+        #Build shape
+        shapes = {'kind':'circle', 'max_radius':self.circle_rad, \
+            'is_opaque':True, 'perturbations':pinhole}
 
-            #Build shape
-            shapes = {'kind':'circle', 'max_radius':self.circle_rad, \
-                'is_opaque':is_opq, 'perturbations':pinhole}
+        #Build simulator
+        sim = diffraq.Simulator(params, shapes)
 
-            #Build simulator
-            sim = diffraq.Simulator(params, shapes)
+        #Add perturbation
+        pert = diffraq.geometry.Pinhole(sim.occulter.shapes[0], **pinhole)
 
-            #Add perturbation
-            pert = diffraq.geometry.Pinhole(sim.occulter.shapes[0], **pinhole)
+        #Get perturbation quadrature
+        xp, yp, wp = pert.get_quadrature()
 
-            #Get perturbation quadrature
-            xp, yp, wp = pert.get_quadrature()
+        #Get quadrature
+        sim.occulter.build_quadrature()
 
-            #Get quadrature
-            sim.occulter.build_quadrature()
+        #Get current notch area
+        cur_area = -hole_area
+        cur_disk_area = disk_area + cur_area
 
-            #Get current notch area
-            cur_area = -hole_area * (2*int(is_opq)-1)
-            cur_disk_area = disk_area + cur_area
-
-            #Assert true
-            assert(np.isclose(cur_area, wp.sum()) and \
-                np.isclose(cur_disk_area, sim.occulter.wq.sum()))
+        #Assert true
+        assert(np.isclose(cur_area, wp.sum()) and \
+            np.isclose(cur_disk_area, sim.occulter.wq.sum()))
 
 ############################################
 

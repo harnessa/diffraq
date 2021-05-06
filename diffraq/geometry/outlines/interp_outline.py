@@ -50,7 +50,7 @@ class InterpOutline(object):
 
     def add_etch_error(self, etch):
         #Return if etch is 0
-        if np.abs(etch) < 1e-9:
+        if np.all(np.abs(etch) < 1e-9):
             return
 
         #Get old function and diff (radius if polar parent, apodization if petal parent)
@@ -64,6 +64,26 @@ class InterpOutline(object):
         normal = cart_diff[:,::-1]
         normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
 
+        #Get new etch function
+        if np.atleast_1d(etch).size == 1:
+            self.func, self.diff = self.get_etch_func(cart_func, normal, etch)
+        else:
+            #Get individual etches
+            self.func = []
+            self.diff = []
+            for ee in etch:
+                cur_func, cur_diff = self.get_etch_func(cart_func, normal, ee)
+                self.func.append(cur_func)
+                self.diff.append(cur_diff)
+
+            #Cleanup
+            del cur_func, cur_diff
+
+        #Cleanup
+        del func, diff, cart_func, cart_diff, normal, etch
+
+    def get_etch_func(self, cart_func, normal, etch):
+
         #Build new data (negative etch adds more material)
         new_cart_func = cart_func + etch*normal*np.array([1,-1])*self.parent.opq_sign
 
@@ -75,13 +95,15 @@ class InterpOutline(object):
         new_para = new_para[np.argsort(new_para)]
 
         #Reinterpolate new function
-        self.func = InterpolatedUnivariateSpline(new_para, new_func, k=self.k, ext=3)
+        cur_func = InterpolatedUnivariateSpline(new_para, new_func, k=self.k, ext=3)
 
         #Derivatives are easy
-        self.diff = self.func.derivative(1)
+        cur_diff = cur_func.derivative(1)
 
         #Cleanup
-        del func, diff, cart_func, cart_diff, normal, etch, new_cart_func, new_para, new_func
+        del new_cart_func, new_para, new_func
+
+        return cur_func, cur_diff
 
 ############################################
 ############################################
