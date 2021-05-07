@@ -30,7 +30,7 @@ class DistinctPetalShape(PetalShape):
         #Grab function if not specified (usually by etch_error)
         if func is None:
             r, pet, pet_mul, pet_add = self.unpack_param(np.atleast_1d(r))
-            func = np.array([])
+            func = np.empty((0,) + (1,)*(r.ndim-1))
             for p in np.unique(pet_add):
                 func = np.concatenate((func, self.outline.func[int(p)//2](r) ))
             func = func*pet_mul + pet_add
@@ -42,7 +42,8 @@ class DistinctPetalShape(PetalShape):
         #Grab function and derivative if not specified (usually by etch_error)
         if func is None or diff is None:
             r, pet, pet_mul, pet_add = self.unpack_param(np.atleast_1d(r))
-            func, diff = np.array([]), np.array([])
+            func = np.empty((0,) + (1,)*(r.ndim-1))
+            diff = np.empty_like(func)
             for p in np.unique(pet_add):
                 func = np.concatenate((func, self.outline.func[int(p)//2](r) ))
                 diff = np.concatenate((diff, self.outline.diff[int(p)//2](r) ))
@@ -59,7 +60,9 @@ class DistinctPetalShape(PetalShape):
     def cart_diff_2nd(self, r, func=None, diff=None, diff_2nd=None):
         if func is None or diff is None:
             r, pet, pet_mul, pet_add = self.unpack_param(np.atleast_1d(r))
-            func, diff, diff_2nd = np.array([]), np.array([]), np.array([])
+            func = np.empty((0,) + (1,)*(r.ndim-1))
+            diff = np.empty_like(func)
+            diff_2nd = np.empty_like(func)
             for p in np.unique(pet_add):
                 func = np.concatenate((func, self.outline.func[int(p)//2](r) ))
                 diff = np.concatenate((diff, self.outline.diff[int(p)//2](r) ))
@@ -82,7 +85,9 @@ class DistinctPetalShape(PetalShape):
         """Same functions as above, just calculate all at once to save time"""
         if func is None:
             r, pet, pet_mul, pet_add = self.unpack_param(np.atleast_1d(r))
-            func, diff, diff_2nd = np.array([]), np.array([]), np.array([])
+            func = np.empty((0,) + (1,)*(r.ndim-1))
+            diff = np.empty_like(func)
+            diff_2nd = np.empty_like(func)
             for p in np.unique(pet_add):
                 func = np.concatenate((func, self.outline.func[int(p)//2](r) ))
                 diff = np.concatenate((diff, self.outline.diff[int(p)//2](r) ))

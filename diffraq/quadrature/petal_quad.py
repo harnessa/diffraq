@@ -122,18 +122,19 @@ def petal_edge(Afunc, num_pet, r0, r1, m):
     #Add axis
     pr = pr[:,None]
 
-    #Apodization value at nodes
-    if not isinstance(Afunc, list):
-        Aval = np.tile(Afunc(pr), (1, num_pet))
-    else:
-        Aval = np.array([af(pr) for af in Afunc])
-
     #Theta nodes (only at edges on each side)
     pw = np.array([1, -1])
 
+    #Apodization value at nodes and weights
+    if not isinstance(Afunc, list):
+        Aval = (np.pi/num_pet) * Afunc(pr)
+        Apw = np.tile(Aval*pw, (1, num_pet))
+    else:
+        Aval = [(np.pi/num_pet)*af(pr) for af in Afunc]
+        Apw = np.hstack(([Av*pw for Av in Aval]))
+
     #thetas
-    tt = np.pi/num_pet * Aval * pw + \
-         np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 2)
+    tt = Apw + np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 2)
 
     #Cartesian coords
     xx = (pr * np.cos(tt)).ravel()
@@ -143,6 +144,6 @@ def petal_edge(Afunc, num_pet, r0, r1, m):
     xy = np.stack((xx, yy),1)
 
     #Cleanup
-    del xx, yy, tt, pr, wr, Aval
+    del xx, yy, tt, pr, wr, Aval, Apw
 
     return xy

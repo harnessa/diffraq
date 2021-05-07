@@ -51,17 +51,22 @@ def seam_petal_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
     #Scale radius quadrature nodes to physical size
     pr = r0 + (r1 - r0) * pr
 
-    #Apodization value at nodes
-    Aval = Afunc(pr)
-
     #Turn seam_width into angle
     seam_width = seam_width / pr
 
+    #Apodization value at nodes and weights
+    if not isinstance(Afunc, list):
+        Aval = (np.pi/num_pet) * Afunc(pr)
+        tt0 = np.tile(Aval + pw*seam_width, (1, num_pet))
+    else:
+        Aval = [(np.pi/num_pet)*af(pr) for af in Afunc]
+        tt0 = np.hstack(([Av + pw*seam_width for Av in Aval]))
+
+    #Cleanup
+    del Aval
+
     #r*dr
     wi = (r1 - r0) * wr * pr
-
-    #Get trailing edge theta
-    tt0 = np.pi/num_pet*Aval + pw*seam_width
 
     #Add leading edge (negative A+pw)
     tt0 = np.hstack((tt0, -tt0))
@@ -69,7 +74,7 @@ def seam_petal_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
     ww = np.hstack((ww, ww))
 
     #Rotate theta to other petals
-    tt = np.tile(tt0, (1, num_pet)) + \
+    tt = tt0 + \
         np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 4*n) #4n = pos/neg edge + trail/lead
 
     #Build nodes
@@ -83,7 +88,7 @@ def seam_petal_quad(Afunc, num_pet, r0, r1, m, n, seam_width):
     pw = np.tile(pw, (1, num_pet))[0]
 
     #Cleanup
-    del ww, Aval, wi, wr, tt, tt0
+    del ww, wi, wr, tt, tt0
 
     #Return nodes along primary axis (theta) and values along orthogonal axis (radius)
     return xq, yq, wq, pw, pr
