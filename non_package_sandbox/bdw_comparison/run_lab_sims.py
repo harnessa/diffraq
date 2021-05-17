@@ -10,12 +10,12 @@ num_pts = 256
 num_pet = 12
 focal_length = 0.498
 
-apod = 'M12P2'
+apod = 'M12P9'
 
 session = apod
 save_dir_base = f'{diffraq.results_dir}/bdw_compare_new'
 
-dec_ext = '_1x'
+dec_ext = '_4x'
 bdw_params = {
         'wave':             wave,
         'z0':               z0,
@@ -34,8 +34,8 @@ bdw_params = {
         'save_ext':         'bdw' + dec_ext,
 }
 
-mm = 6000
-nn = 300
+mm = 100
+nn = 30
 
 dif_params = {
 
@@ -60,7 +60,7 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'newnotch_diffraq_2',
+    'save_ext':         f'diffraq',
 }
 
 if [False, True][1]:

@@ -20,7 +20,7 @@ class Test_Perturbations(object):
     tol = 1e-5
 
     def run_all_tests(self):
-        for dd in ['notch', 'shifted_petal', 'pinhole']:
+        for dd in ['notch', 'shifted_petal', 'pinhole', 'sines']:
             getattr(self, f'test_{dd}')()
 
 ############################################
@@ -168,14 +168,52 @@ class Test_Perturbations(object):
 
 ############################################
 
-    def _test_sines(self):
-        #Load simulator
-        params = {
-            'occulter_shape':   'circle',
-            'circle_rad':       self.circle_rad,
-        }
+    def test_sines(self):
+        #Simulation parameters
+        params = {'radial_nodes':100, 'theta_nodes':100}
 
-        # breakpoint()
+        #Sine wave
+        xy0 = [self.circle_rad*np.cos(np.pi/3), self.circle_rad*np.sin(np.pi/3)]
+        sine = {'kind':'sines', 'xy0':xy0, 'amplitude':1.5, 'frequency':10,
+            'num_cycles':5}
+
+        #Loop over occulter/aperture
+        for is_opq in [False, True]:
+
+            #Build shape
+            shape = {'kind':'circle', 'max_radius':self.circle_rad, \
+                'is_opaque':is_opq}
+
+            #Get nominal area
+            sim = diffraq.Simulator(params, shape)
+            sim.occulter.build_quadrature()
+            area0 = sim.occulter.wq.sum()
+            sim.clean_up()
+
+            #Add perturbation
+            shape['perturbations'] = sine
+
+            #Build simulator
+            sim = diffraq.Simulator(params, shape)
+
+            #Add perturbation
+            pert = diffraq.geometry.Sines(sim.occulter.shapes[0], **sine)
+
+            #Get perturbation quadrature
+            t0 = pert.get_start_point()
+            xp, yp, wp = pert.get_quad_polar(t0, do_test=True)
+
+            #Get quadrature
+            sim.occulter.build_quadrature()
+
+            #Get sine area
+            sin_area = wp.sum()
+
+            #Get total area
+            area = sim.occulter.wq.sum()
+
+            #Assert areas are close
+            assert(np.isclose(area0 + sin_area, area))
 
 ############################################
 
