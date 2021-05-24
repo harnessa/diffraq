@@ -16,13 +16,15 @@ else:
     ncycles = 5
 
 
-#Scale to 12 petals
+#Scale to 16 petals
 def scale(pet, scl):
     rr = np.hypot(*pet.T)
     aa = np.arctan2(*pet[:,::-1].T) * scl
     new = rr[:,None] * np.stack((np.cos(aa), np.sin(aa)), 1)
     return new
 
+r0 = np.hypot(*nom.T)
+x0 = nom[:,0].copy()
 nom = scale(nom, 12/16)
 pet = scale(pet, 12/16)
 
@@ -37,6 +39,7 @@ pet = scale(pet, 12/16)
 
 rads = np.hypot(*nom.T)
 
+breakpoint()
 norms = np.diff(nom, axis=0)
 norms = np.vstack((norms[0], norms))
 # norms = util.compute_derivative(nom)

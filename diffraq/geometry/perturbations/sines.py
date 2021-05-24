@@ -43,7 +43,7 @@ class Sines(object):
 
         #Set default number of nodes
         if self.num_quad is None:
-            self.num_quad = int(max(50, self.num_cycles/self.frequency/ \
+            self.num_quad = int(max(100, self.num_cycles/self.frequency/ \
                 self.parent.max_radius*self.parent.radial_nodes))
 
         #Out of edge quad is less
@@ -135,13 +135,13 @@ class Sines(object):
         #Nodes along half-wave
         pa, wa = quad.lgwt(self.num_quad, 0, 1)
 
-        #Add second half of wave (weights are negative on bottom half)
+        #Add second half of wave
         pa = np.concatenate((pa[::-1], 1+pa[::-1]))
-        wa = np.concatenate((wa[::-1],  -wa[::-1]))
+        wa = np.concatenate((wa[::-1],   wa[::-1]))
 
         #Build all cycles
         pa = (pa + 2*np.arange(self.num_cycles)[:,None]).ravel()
-        wa = (wa * np.ones(self.num_cycles)[:,None]).ravel()
+        wa = (wa *     np.ones(self.num_cycles)[:,None]).ravel()
 
         #Build parameters across all cycles
         ts = t0 + dt * pa
@@ -158,7 +158,7 @@ class Sines(object):
         #Use kluge to get new edge
         if self.is_kluge:
             #Fix normal with Kluge to replicate lab notches which have issues from scaling to 12 petals
-            old_edge, new_edge = self.get_kluge_edge(pa, ts_use, p0)
+            old_edge, new_edge = self.get_kluge_edge(pa, ts, ts_use)
 
         else:
 
@@ -177,6 +177,13 @@ class Sines(object):
 
             #Cleanup
             del normal, sine
+
+        #If petal, rotate back to original petal position
+        if p0 is not None:
+            rot_ang = 2*np.pi/self.parent.num_petals*(abs(p0) - 1)
+            rot_mat = self.parent.parent.build_rot_matrix(rot_ang)
+            old_edge = old_edge.dot(rot_mat)
+            new_edge = new_edge.dot(rot_mat)
 
         return old_edge, new_edge, ts, wa
 
@@ -198,25 +205,20 @@ class Sines(object):
         #Get new edge at theta nodes
         old_edge, new_edge, pr, wr = self.get_new_edge(r0, p0, dr)
 
-        #Get radial and theta nodes
-        pw, ww = quad.lgwt(self.num_quad_perp, 0, 1)
-
         #Add axis
         wr = wr[:,None]
         pr = pr[:,None]
+
+        #Get theta nodes
+        pw, ww = quad.lgwt(self.num_quad_perp, 0, 1)
 
         #Get polar coordinates of edges
         oldt = np.arctan2(old_edge[:,1], old_edge[:,0])[:,None]
         newt = np.arctan2(new_edge[:,1], new_edge[:,0])
         newr = np.hypot(new_edge[:,0], new_edge[:,1])
 
-        #Do we need to flip to increasing radius? (for interpolation)
-        dir_sign = int(np.sign(newr[1] - newr[0]))
-        pr_sign = int(np.sign(pr[:,0][1] - pr[:,0][0]))
-
-        #Resample new edge onto radial nodes (need to flip b/c of decreasing rad)
-        newt = np.interp(pr[:,0][::pr_sign], \
-            newr[::dir_sign], newt[::dir_sign])[::dir_sign][:,None]
+        #Resample new edge onto radial nodes
+        newt = np.interp(pr[:,0], newr, newt)[:,None]
 
         #Difference in theta
         dt = newt - oldt
@@ -228,8 +230,8 @@ class Sines(object):
         xq = (pr*np.cos(tt)).ravel()
         yq = (pr*np.sin(tt)).ravel()
 
-        #Get weights (theta change is absolute) rdr = wr*pr, dtheta = ww*dt
-        wq = self.parent.opq_sign * (ww * pr * wr * np.abs(dt)).ravel()
+        #Get weights rdr = wr*pr, dtheta = ww*dt
+        wq = self.parent.opq_sign * (pr * wr * ww * dt).ravel()
 
         #Cleanup
         del pw, ww, pr, wr, old_edge, new_edge, oldt, newt, newr, dt, tt
@@ -246,7 +248,7 @@ class Sines(object):
     def get_quad_polar(self, t0, do_test=False):
 
         #Get change in parameter for one half-cycle (need to convert from spatial to angle for polar)
-        dt = 1/(self.frequency*np.hypot(*self.xy0))/2
+        dt = 0.5/(self.frequency*np.hypot(*self.xy0))
 
         #Get new edge at theta nodes
         old_edge, new_edge, pw, ww = self.get_new_edge(t0, None, dt)
@@ -279,11 +281,11 @@ class Sines(object):
         xq = (rr*np.cos(pw)).ravel()
         yq = (rr*np.sin(pw)).ravel()
 
-        #Get weights (radius change is absolute) r*dr = rr *dr*wr, dtheta = ww
-        wq = (rr * wr * np.abs(dr) * ww).ravel() * self.parent.opq_sign
+        #Get weights r*dr = rr *dr*wr, dtheta = ww
+        wq = (rr * wr * dr * ww).ravel() * self.parent.opq_sign
 
         if do_test:
-            assert(np.isclose(ww.sum(), 0) & np.isclose(abs(ww).sum(), 2*dt*self.num_cycles))
+            assert(np.isclose(abs(ww).sum(), 2*dt*self.num_cycles))
 
         #Cleanup
         del old_edge, new_edge, oldr, rr, dr, pw, ww, pr, wr
@@ -297,12 +299,28 @@ class Sines(object):
 #####  Lab Kluge #####
 ############################################
 
-    def get_kluge_edge(self, pa, ts, p0):
+    def get_kluge_edge(self, pa, ts, ts_use):
         #Scale factor 16 -> 12 petals
         scale = 12/16
 
         #Build old edge
-        old_edge = self.parent.cart_func(ts[:,None])
+        old_edge = self.parent.cart_func(ts_use[:,None])
+
+        #####
+        #Get cycle phase location at loci r positions for uniformly spaced x values in 16 petal space
+        #uniformly spaced x's in 16 petal space
+        cos_theta = lambda r: np.cos(scale * self.parent.outline.func(r) * \
+            np.pi/self.parent.num_petals)
+        x0 = ts.min()*cos_theta(ts.min())
+        x1 = ts.max()*cos_theta(ts.max())
+        xs = np.linspace(x0, x1, len(ts))
+        #turn xs into rs (use ts as rough guess of r in theta. should really use newton)
+        ur = xs/cos_theta(ts)
+        #uniform cycle nodes
+        uxx = 2*self.num_cycles*np.linspace(0, 1, len(ts))
+        #interpolated cycle nodes at location of loci r values
+        pa = np.interp(ts, ur, uxx)
+        #####
 
         #Build new old edge w/ 16 petals
         a0 = np.arctan2(old_edge[:,1], old_edge[:,0]) * scale
@@ -331,12 +349,6 @@ class Sines(object):
 
         #New edge
         new_edge = scale*nch + old_edge*(1-scale)
-
-        #Rotate back to original petal position
-        rot_ang = 2*np.pi/self.parent.num_petals*(abs(p0) - 1)
-        rot_mat = self.parent.parent.build_rot_matrix(rot_ang)
-        old_edge = old_edge.dot(rot_mat)
-        new_edge = new_edge.dot(rot_mat)
 
         #Cleanup
         del a0, pet0, normal, edge0, anch, nch, sine

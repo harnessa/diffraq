@@ -258,7 +258,7 @@ class Notch(object):
         qd_sign = -(self.parent.opq_sign * self.direction)
 
         #Get weights (theta change is absolute) rdr = wr*pr, dtheta = ww*dt
-        wq = qd_sign * (ww * pr * wr * np.abs(dt)).ravel()
+        wq = qd_sign * (pr * wr * ww * np.abs(dt)).ravel()
 
         #Cleanup
         del pw, ww, pr, wr, old_edge, new_edge, oldt, newt, ts, dt, tt, \
@@ -272,6 +272,96 @@ class Notch(object):
 ############################################
 #####  Polar Specific Quad #####
 ############################################
+
+    def _get_quad_polar(self, t0, tf, m, n):
+
+        #Get parameters of test region
+        pw = np.linspace(t0, tf, n)[:,None]
+        ww = 2.*np.pi/n
+
+        #Get old edge at radial node points, and etch and normal
+        old_edge, etch, normal = self.get_new_edge(pw)
+
+
+        #Get parameters outside bounds of old edge
+        pw_big = np.linspace(pw.min()-pw.ptp()*.05, pw.max()+pw.ptp()*.05, \
+            int(len(pw)*1.1))[::-1][:,None]
+        #Sort to be same direction as ts
+        pw_big = pw_big[::int(np.sign(pw[1]-pw[0]))]
+        #Get new edge outside of bounds of old edge
+        old_big, dummy, normal_big = self.get_new_edge(pw_big)
+
+        #Create new edge
+        new_edge = old_big + etch*normal_big
+
+
+        # #Create new edge
+        # new_edge = old_edge + etch*normal
+
+        #Get radial and theta nodes
+        pr, wr = quad.lgwt(m, 0, 1)
+
+        #Get polar coordinates of edges
+        oldr = np.hypot(old_edge[:,0], old_edge[:,1])[:,None]
+        newt = np.arctan2(new_edge[:,1], new_edge[:,0])
+        newr = np.hypot(new_edge[:,0], new_edge[:,1])
+
+        #Do we need to flip to increasing theta? (for interpolation)
+        dir_sign = int(np.sign(newt[1] - newt[0]))
+        pw_sign = int(np.sign(pw[:,0][1] - pw[:,0][0]))
+
+        oldt = np.arctan2(old_edge[:,1], old_edge[:,0])
+        newr2=newr.copy()
+
+        #Resample new edge onto theta nodes
+        newr = np.interp(pw[:,0][::pw_sign], newt[::dir_sign], \
+            newr[::dir_sign])[::dir_sign][:,None]
+
+        #Difference in radius
+        dr = newr - oldr
+        # breakpoint()
+
+        #Cleanup
+        # del newt, newr, old_edge, normal, new_edge
+
+        #Radial points
+        rr = oldr + pr*dr
+
+        #Get cartesian nodes
+        xq = (rr*np.cos(pw)).ravel()
+        yq = (rr*np.sin(pw)).ravel()
+
+        #Get quadrature sign depending if same opaqueness as parent
+        qd_sign = -(self.parent.opq_sign * self.direction)
+
+        #Get weights (radius change is absolute) rdr = wr*pr, dtheta = ww*dt
+        wq = qd_sign * (rr * wr * ww * np.abs(dr)).ravel()
+
+        import matplotlib.pyplot as plt;plt.ion()
+        # plt.plot(newt,newr2)
+        # plt.plot(pw[:,0],newr, 'x')
+
+        loci = self.get_pert_edge(t0, tf, m)
+
+        #Shift to center
+        loci_shift = loci.mean(0)
+        loci -= loci_shift
+
+        #Get quadrature from loci points
+        xq2, yq2, wq2 = quad.loci_quad(loci[:,0], loci[:,1], max(m,n))
+
+        #Shift back to edge
+        xq2 += loci_shift[0]
+        yq2 += loci_shift[1]
+
+        plt.plot(xq, yq, 'x')
+        plt.plot(xq2, yq2, '+')
+        # plt.plot(*(loci + loci_shift).T)
+        breakpoint()
+        #Cleanup
+        # del rr, oldr, pr, dr, ww
+
+        return xq, yq, wq
 
     def get_quad_polar(self, t0, tf, m, n):
         #TODO: calculate via polar quad, not loci quad

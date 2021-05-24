@@ -6,7 +6,7 @@ loci_dir = '/home/aharness/repos/Milestone_2/diffraq_analysis/modeling/M12P9/mak
 
 nom = np.genfromtxt(f'{loci_dir}/nompetal12p.txt', delimiter='  ')
 
-use_inn = [False, True][1]
+use_inn = [False, True][0]
 
 if use_inn:
     pet = np.genfromtxt(f'{loci_dir}/petal4_sine12p.txt', delimiter='  ')
@@ -43,7 +43,6 @@ use = use[inds]
 pet = pet[inds]
 nom = nom[inds]
 rads = np.hypot(*nom.T)
-
 
 num_quad = npts//ncycles//2
 import diffraq.quadrature as quad
@@ -99,7 +98,7 @@ print(f"\n{['Out', 'Inn'][use_inn]} - Ncycles: {ncycles}, XY0: {xy0[0]*1e3:.4f},
 rad2 = np.hypot(*use.T)
 
 #Compare
-diff = np.hypot(*(pet - new).T)
+# diff = np.hypot(*(pet - new).T)
 
 plt.figure()
 plt.plot(rads, (pet - nom)[:,0], 'b')
