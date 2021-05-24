@@ -13,7 +13,7 @@ Description: Test of shifting the target off-axis using diffract_grid.
 
 import diffraq
 import numpy as np
-
+import time
 
 class Test_Offaxis(object):
 
@@ -37,7 +37,7 @@ class Test_Offaxis(object):
 
         shape = {'kind':'circle', 'max_radius':1}
 
-        for x0 in [-0.1*10, 0.25]:
+        for x0 in [-1, 0.25]:
             for y0 in [-0.5, 0.17]:
 
                 #Add target center
@@ -58,8 +58,8 @@ class Test_Offaxis(object):
 
                     #Theoretical value
                     utru = diffraq.utils.solution_util.direct_integration( \
-                        fresnums[i], pupil[i].shape, sim.occulter.xq, sim.occulter.yq, \
-                        sim.occulter.wq, gx_2D, gy_2D=gy_2D)
+                        fresnums[i], pupil[i].shape, sim.occulter.xq+x0, \
+                        sim.occulter.yq+y0, sim.occulter.wq, gx_2D, gy_2D=gy_2D)
 
                     #Assert max difference is close to specified tolerance
                     max_diff = tol * fresnums[i]
