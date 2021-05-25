@@ -216,11 +216,12 @@ class Simulator(object):
 
         #Apply uneven beam illumination to weights (could be complex)
         #TODO: don't change occulter values or store original (same with off_axis)
+        #TODO: combine this and off-axis into additional wq term to multiply 
         if self.beam_function is not None:
             self.occulter.wq = self.occulter.wq * \
                 self.beam_function(self.occulter.xq, self.occulter.yq)
 
-        #Adjust occulter values if off_axis
+        #Adjust occulter values if off_axis (shift doesn't go into beam illumination)
         if not np.isclose(0, np.hypot(*self.target_center)):
             self.occulter.xq -= self.target_center[0]
             self.occulter.yq -= self.target_center[1]
@@ -267,7 +268,7 @@ class Simulator(object):
             self.vector.wq = self.vector.wq * \
                 self.beam_function(self.vector.xq, self.vector.yq)
 
-        #Adjust occulter values if off_axis
+        #Adjust occulter values if off_axis (shift doesn't go into beam illumination)
         if not np.isclose(0, np.hypot(*self.target_center)):
             self.vector.xq -= self.target_center[0]
             self.vector.yq -= self.target_center[1]
