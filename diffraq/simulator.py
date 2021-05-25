@@ -216,7 +216,7 @@ class Simulator(object):
 
         #Apply uneven beam illumination to weights (could be complex)
         #TODO: don't change occulter values or store original (same with off_axis)
-        #TODO: combine this and off-axis into additional wq term to multiply 
+        #TODO: combine this and off-axis into additional wq term to multiply
         if self.beam_function is not None:
             self.occulter.wq = self.occulter.wq * \
                 self.beam_function(self.occulter.xq, self.occulter.yq)

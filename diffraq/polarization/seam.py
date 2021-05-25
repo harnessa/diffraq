@@ -15,6 +15,7 @@ Description: Class representing the narrow seam around the edge of an occulter/a
 
 import numpy as np
 import diffraq.polarization as polar
+import copy
 
 class Seam(object):
 
@@ -33,8 +34,8 @@ class Seam(object):
             #Get perturbation kind
             kind = pert_dict['kind'].title()
 
-            #Build perturbation
-            pert = getattr(polar, 'Seam_'+kind)(self.shape, **pert_dict)
+            #Build perturbation (need to copy dictionary b/c shared with shape)
+            pert = getattr(polar, 'Seam_'+kind)(self.shape, **copy.deepcopy(pert_dict))
 
             #Add to list
             self.pert_list.append(pert)
