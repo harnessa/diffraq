@@ -214,17 +214,13 @@ class Simulator(object):
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
 
-        #Apply uneven beam illumination to weights (could be complex)
-        #TODO: don't change occulter values or store original (same with off_axis)
-        #TODO: combine this and off-axis into additional wq term to multiply
-        if self.beam_function is not None:
-            self.occulter.wq = self.occulter.wq * \
-                self.beam_function(self.occulter.xq, self.occulter.yq)
-
-        #Adjust occulter values if off_axis (shift doesn't go into beam illumination)
+        #Adjust occulter values if off_axis (shift doesn't go into beam function)
         if not np.isclose(0, np.hypot(*self.target_center)):
-            self.occulter.xq -= self.target_center[0]
-            self.occulter.yq -= self.target_center[1]
+            xq = self.occulter.xq - self.target_center[0]
+            yq = self.occulter.yq - self.target_center[1]
+        else:
+            xq = self.occulter.xq
+            yq = self.occulter.yq
 
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
@@ -233,10 +229,16 @@ class Simulator(object):
             lamzz = self.waves[iw] * self.zz
             lamz0 = self.waves[iw] * self.z0
 
+            #Apply input beam function
+            if self.beam_function is not None:
+                wq = self.occulter.wq * self.beam_function(self.occulter.xq, \
+                    self.occulter.yq, self.waves[iw])
+            else:
+                wq = self.occulter.wq
+
             #Calculate diffraction
-            uu = diffraq.diffraction.diffract_grid(self.occulter.xq, self.occulter.yq, \
-                self.occulter.wq, lamzz, grid_pts, self.fft_tol, \
-                is_babinet=self.occulter.is_babinet, lamz0=lamz0)
+            uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
+                self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
 
             #Multiply by plane wave
             uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
@@ -245,7 +247,7 @@ class Simulator(object):
             pupil[iw] = uu
 
         #Cleanup
-        del uu
+        del uu, xq, yq, wq
 
         return pupil
 
@@ -262,16 +264,13 @@ class Simulator(object):
         #Create empty pupil field array
         pupil = np.empty((len(self.waves), 2, self.num_pts, self.num_pts)) + 0j
 
-        #Apply uneven beam illumination to weights (could be complex)
-        #TODO: don't change occulter values or store original (same with off_axis)
-        if self.beam_function is not None:
-            self.vector.wq = self.vector.wq * \
-                self.beam_function(self.vector.xq, self.vector.yq)
-
-        #Adjust occulter values if off_axis (shift doesn't go into beam illumination)
+        #Adjust occulter values if off_axis (shift doesn't go into beam function)
         if not np.isclose(0, np.hypot(*self.target_center)):
-            self.vector.xq -= self.target_center[0]
-            self.vector.yq -= self.target_center[1]
+            xq = self.vector.xq - self.target_center[0]
+            yq = self.vector.yq - self.target_center[1]
+        else:
+            xq = self.vector.xq
+            yq = self.vector.yq
 
         #Get edge normal components
         cosa = np.cos(self.vector.nq)
@@ -289,6 +288,14 @@ class Simulator(object):
             sfld, pfld = self.vector.screen.get_edge_field(self.vector.dq, \
                 self.vector.gw, self.waves[iw], n_nodes=self.vector.n_nodes)
 
+            #Apply input beam function
+            if self.beam_function is not None:
+                w_beam = self.beam_function(self.vector.xq, self.vector.yq, self.waves[iw])
+                sfld *= w_beam
+                pfld *= w_beam
+            else:
+                w_beam = None       #for cleanup
+
             #Loop over horizontal and vertical polarizations
             for ip in range(2):
 
@@ -303,9 +310,8 @@ class Simulator(object):
                          self.vector.Ex_comp * (sina*cosa * (sfld - pfld)))
 
                 #Calculate diffraction
-                uu = diffraq.diffraction.diffract_grid( \
-                    self.vector.xq, self.vector.yq, wu0, lamzz, grid_pts, \
-                    self.fft_tol, is_babinet=False, lamz0=lamz0)
+                uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
+                    grid_pts, self.fft_tol, is_babinet=False, lamz0=lamz0)
 
                 #Multiply by plane wave
                 uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
@@ -314,7 +320,7 @@ class Simulator(object):
                 pupil[iw,ip] = uu
 
         #Cleanup
-        del wu0, uu, sfld, pfld, cosa, sina
+        del wu0, uu, sfld, pfld, cosa, sina, xq, yq, w_beam
         self.vector.clean_up()
 
         return pupil

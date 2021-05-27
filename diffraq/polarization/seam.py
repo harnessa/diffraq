@@ -135,6 +135,7 @@ class Seam(object):
 ############################################
 #####  Shape Specific Normals + Distances #####
 ############################################
+
     def get_normal_angles_petal(self, indt_values):
 
         #Get petal signs and angle to rotate
@@ -144,7 +145,7 @@ class Seam(object):
             4*self.theta_nodes) - 1)
 
         #Get function and derivative values at the parameter values
-        #FIXME: for now, ignore overetch and assume all petals have the same normal
+        #FIXME: for now, ignore individual overetch and assume all petals have the same normal
         if not isinstance(self.shape.outline.func, list):
             Aval = self.shape.outline.func(indt_values)
             func = Aval*pet_mul + pet_add
@@ -167,8 +168,9 @@ class Seam(object):
         del func, diff, pet_add, ones, Aval
 
         #Calculate angle between normal and theta vector (orthogonal to position vector)
-        pos_angle = -(cart_func[...,0]*cart_diff[...,0] + cart_func[...,1]*cart_diff[...,1]) / \
-            (np.hypot(cart_func[...,0], cart_func[...,1]) * np.hypot(cart_diff[...,0], cart_diff[...,1]))
+        pos_angle = -(cart_func[...,0]*cart_diff[...,0] + \
+            cart_func[...,1]*cart_diff[...,1]) / (np.hypot(cart_func[...,0], \
+            cart_func[...,1]) * np.hypot(cart_diff[...,0], cart_diff[...,1]))
 
         #Build normal angle
         nq = np.arctan2(pet_mul*cart_diff[...,0], -pet_mul*cart_diff[...,1]).ravel()
@@ -177,60 +179,6 @@ class Seam(object):
         del indt_values, cart_func, cart_diff, pet_mul
 
         return pos_angle, nq, gw
-
-    # def get_normal_angles_petal(self, indt_values):
-    #
-    #     #Get petal signs and angle to rotate
-    #     ones = np.ones(2*self.theta_nodes, dtype=int)
-    #     pet_mul = np.tile(np.concatenate((ones, -ones)), self.shape.num_petals)
-    #     pet_add = 2*(np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
-    #         4*self.theta_nodes) - 1)
-    #
-    #     #Get function and derivative values at the parameter values
-    #     if not isinstance(self.shape.outline.func, list):
-    #         Aval = pet_mul*self.shape.outline.func(indt_values)
-    #         func = np.tile(Aval + pet_add, (1, self.shape.num_petals))
-    #         Aval = np.tile(Aval, (1, self.shape.num_petals))
-    #         diff = np.tile(pet_mul*self.shape.outline.diff(indt_values), (1, self.shape.num_petals))
-    #     else:
-    #         Aval = [pet_mul*af(indt_values) for af in self.shape.outline.func]
-    #         func = np.hstack(([Av + pet_add for Av in Aval]))
-    #         Aval = np.hstack(([Av for Av in Aval]))
-    #         diff = np.hstack(([pet_mul*df(indt_values) for df in self.shape.outline.diff]))
-    #
-    #     # Aval = self.shape.outline.func(indt_values)
-    #     # func = Aval*pet_mul + pet_add
-    #     # diff = self.shape.outline.diff(indt_values)*pet_mul
-    #
-    #     #Get gaps widths
-    #     if self.shape.is_opaque:
-    #         Aval = 1 - Aval
-    #     gw = (2*Aval*np.pi/self.shape.num_petals*indt_values).ravel()
-    #
-    #     #Get cartesian function and derivative values at the parameter values
-    #     cart_func, cart_diff = self.shape.cart_func_diffs( \
-    #         indt_values, func=func, diff=diff)
-    #
-    #     #Cleanup
-    #     # del func, diff, pet_add, ones, Aval
-    #
-    #     #Calculate angle between normal and theta vector (orthogonal to position vector)
-    #     pos_angle = -(cart_func[...,0]*cart_diff[...,0] + cart_func[...,1]*cart_diff[...,1]) / \
-    #         (np.hypot(cart_func[...,0], cart_func[...,1]) * np.hypot(cart_diff[...,0], cart_diff[...,1]))
-    #     # breakpoint()
-    #
-    #     #Build normal angle
-    #     nmul = pet_mul.shape[0]
-    #     nq = np.hstack(([np.arctan2(pet_mul*cart_diff[:,nmul*i:nmul*(i+1),0], \
-    #         -pet_mul*cart_diff[:,nmul*i:nmul*(i+1),1]) for i in range(self.shape.num_petals)]))
-    #     nq = nq.ravel()
-    #     breakpoint()
-    #     # nq = np.arctan2(pet_mul*cart_diff[...,0], -pet_mul*cart_diff[...,1]).ravel()
-    #
-    #     #Cleanup
-    #     del indt_values, cart_func, cart_diff, pet_mul
-    #
-    #     return pos_angle, nq, gw
 
     ############################################
 

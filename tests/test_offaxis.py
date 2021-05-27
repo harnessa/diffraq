@@ -56,10 +56,10 @@ class Test_Offaxis(object):
                 #Compare to theoretical value for each Fresnel number
                 for i in range(len(fresnums)):
 
-                    #Theoretical value (add x0, y0 to restore occulter xy)
+                    #Theoretical value
                     utru = diffraq.utils.solution_util.direct_integration( \
-                        fresnums[i], pupil[i].shape, sim.occulter.xq+x0, \
-                        sim.occulter.yq+y0, sim.occulter.wq, gx_2D, gy_2D=gy_2D)
+                        fresnums[i], pupil[i].shape, sim.occulter.xq, \
+                        sim.occulter.yq, sim.occulter.wq, gx_2D, gy_2D=gy_2D)
 
                     #Assert max difference is close to specified tolerance
                     max_diff = tol * fresnums[i]
