@@ -72,7 +72,7 @@ class Sines(object):
         t0 = self.get_start_point()
 
         #Get perturbation specifc quadrature
-        xq, yq, wq = getattr(self, f'get_quad_{self.parent.kind}')(t0)
+        xq, yq, wq = getattr(self, f'get_quad_{self.parent.kind[:5]}')(t0)
 
         return xq, yq, wq
 

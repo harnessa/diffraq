@@ -110,7 +110,7 @@ class Focuser(object):
         #Loop through pad groups and calculate images that are the same size
         for NN in self.unq_true_NN:
 
-            #Fine wavelengths in this pad group
+            #Find wavelengths in this pad group
             cur_inds = np.where(self.true_NN == NN)[0]
 
             #Create focal plane indices

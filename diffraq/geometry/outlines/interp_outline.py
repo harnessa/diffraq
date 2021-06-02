@@ -50,7 +50,7 @@ class InterpOutline(object):
 
     def add_etch_error(self, etch):
         #Return if etch is 0
-        if np.all(np.abs(etch) < 1e-9):
+        if np.abs(etch) < 1e-9:
             return
 
         #Get old function and diff (radius if polar parent, apodization if petal parent)
@@ -58,26 +58,15 @@ class InterpOutline(object):
         diff = self.diff(self._data[:,0])
 
         #Get cartesian coordinates and derivative from parent
-        cart_func, cart_diff = self.parent.cart_func_diffs(self._data[:,0], func=func, diff=diff)
+        cart_func, cart_diff = self.parent.cart_func_diffs(self._data[:,0], \
+            func=func, diff=diff)
 
         #Create normal from derivative
         normal = cart_diff[:,::-1]
         normal /= np.hypot(normal[:,0], normal[:,1])[:,None]
 
         #Get new etch function
-        if np.atleast_1d(etch).size == 1:
-            self.func, self.diff = self.get_etch_func(cart_func, normal, etch)
-        else:
-            #Get individual etches
-            self.func = []
-            self.diff = []
-            for ee in etch:
-                cur_func, cur_diff = self.get_etch_func(cart_func, normal, ee)
-                self.func.append(cur_func)
-                self.diff.append(cur_diff)
-
-            #Cleanup
-            del cur_func, cur_diff
+        self.func, self.diff = self.get_etch_func(cart_func, normal, etch)
 
         #Cleanup
         del func, diff, cart_func, cart_diff, normal, etch

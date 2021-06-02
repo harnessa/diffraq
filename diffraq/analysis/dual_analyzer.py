@@ -33,17 +33,24 @@ class Dual_Analyzer(object):
             'load_dir_base_2':      None,
             'session_2':            None,
             'load_ext_2':           '',
+            'calibration_file_1':   None,
+            'calibration_file_2':   None,
             'show_images':          False,
         }
 
         #Get full parameter set
         params = {**def_duo, **params}
 
+        #Replace calibration file
+        if params['calibration_file_1'] is None:
+            if 'calibration_file' in params.keys():
+                params['calibration_file_1'] = params['calibration_file']
+
         #Build new params for the analyzers
         pms1 = copy.deepcopy(params)
         pms2 = copy.deepcopy(params)
 
-        for k in ['load_dir_base', 'session', 'load_ext']:
+        for k in ['load_dir_base', 'session', 'load_ext', 'calibration_file']:
             #Copy over with number stripped
             pms1[k] = params[f'{k}_1']
 

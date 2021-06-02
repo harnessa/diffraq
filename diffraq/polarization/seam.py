@@ -78,6 +78,8 @@ class Seam(object):
         #Get normal and position angles and gap widths depending on shape
         if self.shape.kind == 'petal':
             pos_angle, nq, gw = self.get_normal_angles_petal(indt_values)
+        elif self.shape.kind == 'petal_unique':
+            pos_angle, nq, gw = self.get_normal_angles_petal_unique(indt_values)
         else:
             pos_angle, nq, gw = self.get_normal_angles_polar(indt_values)
 
@@ -129,6 +131,11 @@ class Seam(object):
             self.shape.min_radius, self.shape.max_radius, self.radial_nodes, \
             self.theta_nodes, seam_width)
 
+    def get_quad_petal_unique(self, seam_width):
+        return polar.seam_unique_petal_quad(self.shape.outline.func, self.shape.edge_keysm, \
+            self.shape.num_petals, self.shape.min_radius, self.shape.max_radius, \
+            self.radial_nodes, self.theta_nodes, seam_width)
+
 ############################################
 ############################################
 
@@ -143,7 +150,56 @@ class Seam(object):
         pet_mul = np.tile(np.concatenate((ones, -ones)), self.shape.num_petals)
         pet_add = 2*(np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
             4*self.theta_nodes) - 1)
+        #FIXME: with unique petals
+        # breakpoint()
+        #Get function and derivative values at the parameter values
+        #FIXME: for now, ignore individual overetch and assume all petals have the same normal
+        if not isinstance(self.shape.outline.func, list):
+            Aval = self.shape.outline.func(indt_values)
+            func = Aval*pet_mul + pet_add
+            diff = self.shape.outline.diff(indt_values)*pet_mul
+        else:
+            Aval = self.shape.outline.func[0](indt_values)
+            func = Aval*pet_mul + pet_add
+            diff = self.shape.outline.diff[0](indt_values)*pet_mul
 
+        #Get gaps widths
+        if self.shape.is_opaque:
+            Aval = 1 - Aval
+        gw = (2*Aval*np.pi/self.shape.num_petals*indt_values).ravel()
+
+        #Get cartesian function and derivative values at the parameter values
+        cart_func, cart_diff = self.shape.cart_func_diffs( \
+            indt_values, func=func, diff=diff)
+
+        #Cleanup
+        del func, diff, pet_add, ones, Aval
+
+        #Calculate angle between normal and theta vector (orthogonal to position vector)
+        pos_angle = -(cart_func[...,0]*cart_diff[...,0] + \
+            cart_func[...,1]*cart_diff[...,1]) / (np.hypot(cart_func[...,0], \
+            cart_func[...,1]) * np.hypot(cart_diff[...,0], cart_diff[...,1]))
+
+        #Build normal angle
+        nq = np.arctan2(pet_mul*cart_diff[...,0], -pet_mul*cart_diff[...,1]).ravel()
+
+        #Cleanup
+        del indt_values, cart_func, cart_diff, pet_mul
+
+        return pos_angle, nq, gw
+
+    ############################################
+
+    def get_normal_angles_petal_unique(self, indt_values):
+
+        breakpoint()
+        #Get petal signs and angle to rotate
+        ones = np.ones(2*self.theta_nodes, dtype=int)
+        pet_mul = np.tile(np.concatenate((ones, -ones)), self.shape.num_petals)
+        pet_add = 2*(np.repeat(np.roll(np.arange(self.shape.num_petals) + 1, -1), \
+            4*self.theta_nodes) - 1)
+        #FIXME: with unique petals
+        breakpoint()
         #Get function and derivative values at the parameter values
         #FIXME: for now, ignore individual overetch and assume all petals have the same normal
         if not isinstance(self.shape.outline.func, list):

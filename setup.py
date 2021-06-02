@@ -17,7 +17,7 @@ setup(
     license='',
     package_data={},
     requires=['numpy', 'scipy', 'finufft', 'h5py'],
-	extras_require={'with_plot':['matplotlib'], 'with_test':['pytest']},
+	extras_require={'with_cv2':['cv2'], 'with_plot':['matplotlib'], 'with_test':['pytest']},
     )
 
 ##

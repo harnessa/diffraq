@@ -188,14 +188,22 @@ class Analyzer(object):
         else:
             fcorr = self.freespace_corr
 
+        #Store calibration value
+        self.cal_val = fcorr * cal_val * self.max_apod**2.
+
         #Convert to contrast
-        self.image /= (fcorr * cal_val * self.max_apod**2.)[:,None,None]
+        self.image /= self.cal_val[:,None,None]
 
     def get_calibration_value(self):
         #Load calibration image
         with h5py.File(self.calibration_file, 'r') as f:
             cal_img = f['intensity'][()]
             cal_wvs = f['waves'][()]
+            is_polarized = f['is_polarized'][()]
+
+        #Apply polarizer
+        if is_polarized:
+            cal_img = self.apply_cam_analyzer(cal_img)
 
         #Get matching wavelengths
         if len(cal_wvs) != len(self.sim.waves):

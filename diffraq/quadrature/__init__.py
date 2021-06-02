@@ -17,3 +17,4 @@ from diffraq.quadrature.loci_quad import loci_quad, loci_edge
 from diffraq.quadrature.polar_quad import polar_quad, polar_edge
 from diffraq.quadrature.petal_quad import petal_quad, petal_edge
 from diffraq.quadrature.triangle_quad import triangle_quad, triangle_edge
+from diffraq.quadrature.unique_petal_quad import unique_petal_quad, unique_petal_edge

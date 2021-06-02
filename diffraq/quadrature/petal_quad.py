@@ -60,37 +60,29 @@ def petal_quad(Afunc, num_pet, r0, r1, m, n, has_center=True):
     #Scale radius quadrature nodes to physical size
     pr = r0 + (r1 - r0) * pr
 
-    #Apodization value at nodes and weights
-    if not isinstance(Afunc, list):
-        Aval = (np.pi/num_pet) * Afunc(pr)
-        Apw = np.tile(Aval*pw, (1, num_pet))
-        Aww = np.tile(Aval*ww, (1, num_pet))
-    else:
-        Aval = [(np.pi/num_pet)*af(pr) for af in Afunc]
-        Apw = np.hstack(([Av*pw for Av in Aval]))
-        Aww = np.hstack(([Av*ww for Av in Aval]))
-
-    #Cleanup
-    del Aval, pw, ww
+    #Apodization value at nodes
+    Aval = Afunc(pr)
 
     #r*dr
     wi = (r1 - r0) * wr * pr
 
-    #Add Petal weights (rdr * dtheta)
-    wq = np.concatenate(( wq, (wi * Aww).ravel() ))
-
-    #Cleanup
-    del Aww, wi
-
     #thetas
-    tt = Apw + np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), n)
+    tt = np.tile((np.pi/num_pet) * Aval * pw, (1, num_pet)) + \
+         np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), n)
 
     #Add Petal nodes
     xq = np.concatenate(( xq, (pr * np.cos(tt)).ravel() ))
     yq = np.concatenate(( yq, (pr * np.sin(tt)).ravel() ))
 
     #Cleanup
-    del Apw, pr, wr, tt
+    del pr, wr, tt
+
+    #Add Petal weights (rdr * dtheta)
+    wq = np.concatenate(( wq, (np.pi/num_pet) * \
+        np.tile(wi * Aval * ww, (1, num_pet)).ravel() ))
+
+    #Cleanup
+    del pw, ww, Aval, wi
 
     return xq, yq, wq
 
@@ -122,19 +114,15 @@ def petal_edge(Afunc, num_pet, r0, r1, m):
     #Add axis
     pr = pr[:,None]
 
+    #Apodization value at nodes
+    Aval = Afunc(pr)
+
     #Theta nodes (only at edges on each side)
     pw = np.array([1, -1])
 
-    #Apodization value at nodes and weights
-    if not isinstance(Afunc, list):
-        Aval = (np.pi/num_pet) * Afunc(pr)
-        Apw = np.tile(Aval*pw, (1, num_pet))
-    else:
-        Aval = [(np.pi/num_pet)*af(pr) for af in Afunc]
-        Apw = np.hstack(([Av*pw for Av in Aval]))
-
     #thetas
-    tt = Apw + np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 2)
+    tt = np.tile((np.pi/num_pet) * Aval * pw, (1, num_pet)) + \
+         np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 2)
 
     #Cartesian coords
     xx = (pr * np.cos(tt)).ravel()
@@ -144,6 +132,6 @@ def petal_edge(Afunc, num_pet, r0, r1, m):
     xy = np.stack((xx, yy),1)
 
     #Cleanup
-    del xx, yy, tt, pr, wr, Aval, Apw
+    del xx, yy, tt, pr, wr, Aval
 
     return xy

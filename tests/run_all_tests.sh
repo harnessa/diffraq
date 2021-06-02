@@ -16,4 +16,5 @@ pytest test_starshades.py
 pytest test_annulus.py
 pytest test_perturbations.py
 pytest test_etching_error.py
+pytest test_unique_petal.py
 pytest test_vector.py

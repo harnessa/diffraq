@@ -18,7 +18,7 @@ params = {
 
     ### Saving ###
     'do_save':              True,
-    'save_dir_base':        f'{diffraq.results_dir}/ind_etch_test',
+    'save_dir_base':        f'{diffraq.results_dir}/new_ind_etch_test',
     'session':              'first',
 
 }
@@ -37,7 +37,7 @@ manf_pert = {'xy0':[16.944e-3, 4.067e-3], 'height':40.2e-6, 'width':30.0e-6,
     'kind':'notch', 'direction':1, 'local_norm':False, 'num_quad':50}
 starshade['perturbations'] = [manf_pert]
 
-if [False, True][1]:
+if [False, True][0]:
 
     #Run single etch
     starshade['etch_error'] = etch_error
@@ -46,13 +46,13 @@ if [False, True][1]:
     sim.run_sim()
 
     #Run separate etches
-    starshade['kind'] = 'DistinctPetal'
+    starshade['kind'] = 'uniquePetal'
     starshade['etch_error'] = etch_error*np.ones(num_pet)
     params['save_ext'] = 'separate'
     sim = diffraq.Simulator(params, starshade)
     sim.run_sim()
 
-    starshade['kind'] = 'DistinctPetal'
+    starshade['kind'] = 'uniquePetal'
     starshade['etch_error'] = np.linspace(0, etch_error, num_pet)
     params['save_ext'] = 'distinct'
     sim = diffraq.Simulator(params, starshade)
@@ -69,8 +69,8 @@ else:
         'load_dir_base_1':   params['save_dir_base'],
         'session_1':         params['session'],
         'load_ext_1':       'single',
-        # 'load_ext_2':       'separate',
-        'load_ext_2':       'distinct',
+        'load_ext_2':       'separate',
+        # 'load_ext_2':       'distinct',
     }
 
     #Load analysis class and plot results

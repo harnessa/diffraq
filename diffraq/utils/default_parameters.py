@@ -104,6 +104,7 @@ def_shape_params = {
     'has_center':           True,       #Has central disk? (for petal/starshade only)
     'rotation':             0,          #Angle to rotate individual shape by [radians]
     'perturbations':        [],         #List of dictionaries describing perturbations to be added to the shape
+    'unique_edges':         None,       #Separate edge files for unique petals. {edge file: [edge_numbers]}
     'etch_error':           None,       #Uniform edge etching error [m]. < 0: removal of material, > 0: extra material.
 
     ### Numerics ###

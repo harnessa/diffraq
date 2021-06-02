@@ -15,4 +15,4 @@ from diffraq.geometry.shapes.cartesian_shape import CartesianShape
 from diffraq.geometry.shapes.loci_shape import LociShape
 from diffraq.geometry.shapes.polar_shape import PolarShape, CircleShape
 from diffraq.geometry.shapes.petal_shape import PetalShape, StarshadeShape
-from diffraq.geometry.shapes.distinct_petal_shape import DistinctPetalShape
+from diffraq.geometry.shapes.unique_petal_shape import UniquePetalShape

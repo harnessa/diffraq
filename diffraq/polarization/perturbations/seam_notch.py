@@ -109,11 +109,7 @@ class Seam_Notch(Notch):
         wq = (wr * pr * ww * seam_width).ravel()
 
         #Get normal angle at all theta nodes (flipped negative to point inward to match seam_polar_quad)
-        #FIXME: for now, ignore overetch and assume all petals have the same normal
         dt = self.parent.cart_diff(ts)[:,:,None]
-        # if not isinstance(self.parent.outline.func, list):
-        # else:
-            # dt = self.parent.cart_diff[0](ts)[:,:,None]
         dt /= np.hypot(dt[:,0], dt[:,1])[:,None]
 
         #Build normal angles (x2 for each side of edge)
@@ -167,13 +163,7 @@ class Seam_Notch(Notch):
         wr = np.concatenate((wr, wr[::-1]))
 
         #Get normal angle at all theta nodes (flipped negative to point inward to match seam_polar_quad)
-        #FIXME: for now, ignore overetch and assume all petals have the same normal
         dt = self.parent.cart_diff(ts)[:,:,None]
-        # if not isinstance(self.parent.outline.func, list):
-        # else:
-#
-            # breakpoint()
-            # dt = self.parent.cart_diff[0](ts)[:,:,None]
         dt /= np.hypot(dt[:,0], dt[:,1])[:,None]
 
         #dtheta

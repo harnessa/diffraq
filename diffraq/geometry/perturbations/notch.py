@@ -67,7 +67,7 @@ class Notch(object):
         t0, tf, m, n = self.get_param_locs()
 
         #Get perturbation specifc quadrature
-        xq, yq, wq = getattr(self, f'get_quad_{self.parent.kind}')( \
+        xq, yq, wq = getattr(self, f'get_quad_{self.parent.kind[:5]}')( \
             t0, tf, m, n)
 
         return xq, yq, wq
