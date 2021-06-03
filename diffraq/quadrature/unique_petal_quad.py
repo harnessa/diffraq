@@ -76,9 +76,9 @@ def unique_petal_quad(Afunc, edge_keys, num_pet, r0, r1, m, n, has_center=True):
         Aww = np.tile(Aval*ww, (1, len(kinds)))
 
         #Flip odd edges to negative dtheta
-        Apw *= np.repeat(np.array([1,-1])[kinds%2], n//2)
+        Apw *= np.repeat(np.array([-1,1])[kinds%2], n//2)
 
-        tt = Apw + np.repeat((2.*np.pi/num_pet) * (kinds//2 + 1), n//2)
+        tt = Apw + np.repeat(2.*np.pi/num_pet * (kinds//2), n//2)
 
         #Add Petal weights (rdr * dtheta)
         wq = np.concatenate(( wq, (wi * Aww).ravel() ))
@@ -137,9 +137,9 @@ def unique_petal_edge(Afunc, edge_keys, num_pet, r0, r1, m):
         Apw = np.tile(Aval, (1, len(kinds)))
 
         #Flip odd edges to negative dtheta
-        Apw *= np.repeat(np.array([1,-1])[kinds%2], n//2)
+        Apw *= np.array([-1,1])[kinds%2]
 
-        tt = Apw + np.repeat((2.*np.pi/num_pet) * (kinds//2 + 1), n//2)
+        tt = Apw + 2.*np.pi/num_pet * (kinds//2)
 
         #Cartesian coords
         xx = np.concatenate(( xx, (pr * np.cos(tt)).ravel() ))
@@ -149,6 +149,6 @@ def unique_petal_edge(Afunc, edge_keys, num_pet, r0, r1, m):
     xy = np.stack((xx, yy),1)
 
     #Cleanup
-    del xx, yy, tt, pr, wr, Aval, Apw, pr0, wr0, kinds
+    del xx, yy, tt, pr, Aval, Apw, pr0, wr0, kinds
 
     return xy

@@ -16,7 +16,7 @@ import numpy as np
 import diffraq.quadrature as quad
 from diffraq.geometry.shapes import PetalShape
 from diffraq.geometry.outlines import Unique_InterpOutline
-from scipy.optimize import fmin
+from scipy.optimize import fminbound
 
 class UniquePetalShape(PetalShape):
 
@@ -117,6 +117,8 @@ class UniquePetalShape(PetalShape):
 ############################################
 
     def cart_func(self, r, func=None):
+        #TODO: speed this up since I don't need to accomodate single petals
+
         #Grab function if not specified (usually by etch_error)
         if func is None:
             r, pet, pet_mul, pet_add = self.unpack_param(np.atleast_1d(r))
@@ -220,65 +222,6 @@ class UniquePetalShape(PetalShape):
             del func, diff, cf, sf
 
             return func_ans, diff_ans
-
-############################################
-############################################
-
-############################################
-#####  Overwritten Perturbation Functions #####
-############################################
-
-    def find_closest_point(self, point):
-        #Build minimizing function (distance equation)
-        min_diff = lambda r, pet: \
-            np.hypot(*(self.cart_func(self.pack_param(r, pet)) - point))
-
-        #Get initial guess
-        r_guess = np.hypot(*point)
-
-        #Find best fit to equation
-        r0, p0 = self.minimize_over_petals(min_diff, r_guess)
-
-        #Get best fit parameter
-        t0 = self.pack_param(r0, p0)
-
-        return t0
-
-    def find_width_point(self, t0, width):
-        #Start radius
-        r0 = self.unpack_param(t0)[0]
-
-        #Build |distance - width| equation (force increasing radius w/ heaviside)
-        min_diff = lambda r, pet:  1/(1+1e-9-np.heaviside(r0-r, 0.5)) * \
-            np.abs(np.hypot(*(self.cart_func(self.pack_param(r, pet)) - \
-            self.cart_func(t0))) - width)
-
-        #Find best fit to equation (guess with nudge towards positive radius)
-        rf, pf = self.minimize_over_petals(min_diff, r0 + width/2)
-
-        #Get best fit parameter
-        tf = self.pack_param(rf, pf)
-
-        #Check that width is within 1% of requested width
-        if np.abs(np.hypot(*(self.cart_func(tf) - \
-            self.cart_func(t0))) - width)/width > 0.01:
-            print('\n!Closest point (width) not Converged!\n')
-
-        return tf
-
-    def minimize_over_petals(self, min_eqn, x0):
-        #Loop over petals and find roots
-        fits = np.empty((0,3))
-        pets = np.arange(1, 1 + self.num_petals)
-        pets = np.concatenate((pets, -pets[::-1]))
-        for i in pets:
-            out = fmin(min_eqn, x0, args=(i,), disp=0, xtol=1e-8, ftol=1e-8)[0]
-            fits = np.concatenate((fits, [[out, i, min_eqn(out, i)]]))
-
-        #Find best fit index
-        ind = np.argmin(np.abs(fits[:,2]))
-
-        return fits[ind][:2]
 
 ############################################
 ############################################

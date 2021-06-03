@@ -101,7 +101,8 @@ class Test_Unique_Petal(object):
 ############################################
 
     def test_unique(self):
-        return self.run_test(unq_edge={self.reg_edge:[10,11]})
+        two = self.run_test(unq_edge={self.reg_edge:[10,11]})
+        one = self.run_test(unq_edge={self.reg_edge:[10,11], self.reg_edge:[3,4]})
 
     def test_etch_error(self):
         return self.run_test(reg_etch=self.etch_error, unq_etch=np.ones(self.num_pet)*self.etch_error)

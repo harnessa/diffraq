@@ -176,9 +176,11 @@ class Test_Cart_Transforms(object):
                     else:
                         d1, d2 = None, None
                     sf1 = diffraq.geometry.PetalShape(sim.occulter, \
-                        **{'edge_func':petal_func, 'edge_diff':d1, 'num_petals':num_pet})
+                        **{'edge_func':petal_func, 'edge_diff':d1, 'num_petals':num_pet, \
+                        'min_radius':r0, 'max_radius':r1})
                     sf2 = diffraq.geometry.CartesianShape(sim.occulter, \
-                        **{'edge_func':cart_rfunc, 'edge_diff':d2})
+                        **{'edge_func':cart_rfunc, 'edge_diff':d2, \
+                        'min_radius':r0, 'max_radius':r1})
                     point = np.array([11.97, 1.117])
 
                 #Get closest point

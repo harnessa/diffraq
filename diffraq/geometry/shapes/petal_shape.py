@@ -14,7 +14,7 @@ Description: Derived class of Shape with outline parameterized in radial coordin
 import numpy as np
 import diffraq.quadrature as quad
 from diffraq.geometry import Shape
-from scipy.optimize import fmin
+from scipy.optimize import fminbound
 
 class PetalShape(Shape):
 
@@ -70,6 +70,7 @@ class PetalShape(Shape):
     ################################
 
     def cart_func(self, r, func=None):
+        #TODO: speed this up since I don't need to accomodate multiple petals
         #Grab function if not specified (usually by etch_error)
         if func is None:
             r, pet, pet_mul, pet_add = self.unpack_param(r)
@@ -171,7 +172,7 @@ class PetalShape(Shape):
         r_guess = np.hypot(*point)
 
         #Find best fit to equation
-        r0, p0 = self.minimize_over_petals(min_diff, r_guess)
+        r0, p0 = self.minimize_over_petals(min_diff, np.min(self.min_radius))
 
         #Get best fit parameter
         t0 = self.pack_param(r0, p0)
@@ -182,13 +183,12 @@ class PetalShape(Shape):
         #Start radius
         r0 = self.unpack_param(t0)[0]
 
-        #Build |distance - width| equation (force increasing radius w/ heaviside)
-        min_diff = lambda r, pet:  1/(1+1e-9-np.heaviside(r0-r, 0.5)) * \
-            np.abs(np.hypot(*(self.cart_func(self.pack_param(r, pet)) - \
-            self.cart_func(t0))) - width)
+        #Build |distance - width| equation
+        min_diff = lambda r, pet: np.abs(np.hypot(*(self.cart_func( \
+            self.pack_param(r, pet)) - self.cart_func(t0))) - width)
 
-        #Find best fit to equation (guess with nudge towards positive radius)
-        rf, pf = self.minimize_over_petals(min_diff, r0 + width/2)
+        #Find best fit to equation (set r0 as minimum radius to force increasing radius)
+        rf, pf = self.minimize_over_petals(min_diff, r0)
 
         #Get best fit parameter
         tf = self.pack_param(rf, pf)
@@ -200,13 +200,14 @@ class PetalShape(Shape):
 
         return tf
 
-    def minimize_over_petals(self, min_eqn, x0):
+    def minimize_over_petals(self, min_eqn, r0):
         #Loop over petals and find roots
         fits = np.empty((0,3))
         pets = np.arange(1, 1 + self.num_petals)
         pets = np.concatenate((pets, -pets[::-1]))
+        r1 = np.max(self.max_radius)
         for i in pets:
-            out = fmin(min_eqn, x0, args=(i,), disp=0, xtol=1e-8, ftol=1e-8)[0]
+            out = fminbound(min_eqn, r0, r1, args=(i,), disp=0, xtol=1e-8)
             fits = np.concatenate((fits, [[out, i, min_eqn(out, i)]]))
 
         #Find best fit index
