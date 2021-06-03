@@ -69,12 +69,33 @@ class PetalShape(Shape):
 
     ################################
 
+    def grab_func(self, r):
+        r, pet, pet_mul, pet_add = self.unpack_param(r)
+        func = self.outline.func(r)*pet_mul + pet_add
+        return r, func
+
+    def grab_diff(self, r):
+        r, pet, pet_mul, pet_add = self.unpack_param(r)
+        func = self.outline.func(r)*pet_mul + pet_add
+        diff = self.outline.diff(r)*pet_mul
+        return r, func, diff
+
+    def grab_diff_2nd(self, r, with_2nd=True):
+        r, pet, pet_mul, pet_add = self.unpack_param(r)
+        func = self.outline.func(r)*pet_mul + pet_add
+        diff = self.outline.diff(r)*pet_mul
+        if with_2nd:
+            diff_2nd = self.outline.diff_2nd(r)*pet_mul
+        else:
+            diff_2nd = None
+        return r, func, diff, diff_2nd
+
+    ################################
+
     def cart_func(self, r, func=None):
-        #TODO: speed this up since I don't need to accomodate multiple petals
         #Grab function if not specified (usually by etch_error)
         if func is None:
-            r, pet, pet_mul, pet_add = self.unpack_param(r)
-            func = self.outline.func(r)*pet_mul + pet_add
+            r, func = self.grab_func(r)
 
         pang = np.pi/self.num_petals
         return r * np.stack((np.cos(func*pang), np.sin(func*pang)), func.ndim).squeeze()
@@ -82,9 +103,7 @@ class PetalShape(Shape):
     def cart_diff(self, r, func=None, diff=None):
         #Grab function and derivative if not specified (usually by etch_error)
         if func is None or diff is None:
-            r, pet, pet_mul, pet_add = self.unpack_param(r)
-            func = self.outline.func(r)*pet_mul + pet_add
-            diff = self.outline.diff(r)*pet_mul
+            r, func, diff = self.grab_diff(r)
 
         pang = np.pi/self.num_petals
         cf = np.cos(func*pang)
@@ -95,10 +114,7 @@ class PetalShape(Shape):
 
     def cart_diff_2nd(self, r, func=None, diff=None, diff_2nd=None):
         if func is None or diff is None:
-            r, pet, pet_mul, pet_add = self.unpack_param(r)
-            func = self.outline.func(r)*pet_mul + pet_add
-            diff = self.outline.diff(r)*pet_mul
-            diff_2nd = self.outline.diff_2nd(r)*pet_mul
+            r, func, diff, diff_2nd = self.grab_diff_2nd(r, with_2nd=True)
 
         pang = np.pi/self.num_petals
         cf = np.cos(func*pang)
@@ -113,11 +129,7 @@ class PetalShape(Shape):
     def cart_func_diffs(self, r, func=None, diff=None, diff_2nd=None, with_2nd=False):
         """Same functions as above, just calculate all at once to save time"""
         if func is None:
-            r, pet, pet_mul, pet_add = self.unpack_param(r)
-            func = self.outline.func(r)*pet_mul + pet_add
-            diff = self.outline.diff(r)*pet_mul
-            if with_2nd:
-                diff_2nd = self.outline.diff_2nd(r)*pet_mul
+            r, func, diff, diff_2nd = self.grab_diff_2nd(r, with_2nd=with_2nd)
 
         #Calculate intermediaries
         pang = np.pi/self.num_petals
