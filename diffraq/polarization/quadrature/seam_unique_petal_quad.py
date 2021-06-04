@@ -40,59 +40,68 @@ def seam_unique_petal_quad(Afunc, edge_keys, num_pet, r0, r1, m, n, seam_width):
 
     #Combine nodes for positive and negative sides of edge
     pw = np.concatenate((pw, -pw[::-1]))
-    ww = np.concatenate((ww, ww[::-1]))
+    ww = np.concatenate((ww,  ww[::-1]))
 
     #Petals radius nodes and weights over [0,1]
-    pr, wr = lgwt(m, 0, 1)
+    pr0, wr0 = lgwt(m, 0, 1)
 
     #Add axis
-    wr = wr[:,None]
-    pr = pr[:,None]
+    wr0 = wr0[:,None]
+    pr0 = pr0[:,None]
 
-    #Scale radius quadrature nodes to physical size
-    pr = r0 + (r1 - r0) * pr
+    #Initiate
+    xq, yq, wq = np.array([]), np.array([]), np.array([])
 
-    #Turn seam_width into angle
-    seam_width = seam_width / pr
+    #Also radii for each function
+    all_pr = []
 
-    #Apodization value at nodes and weights
-    if not isinstance(Afunc, list):
-        Aval = (np.pi/num_pet) * Afunc(pr)
-        tt0 = np.tile(Aval + pw*seam_width, (1, num_pet))
-    else:
-        Aval = [(np.pi/num_pet)*af(pr) for af in Afunc]
-        tt0 = np.hstack(([Av + pw*seam_width for Av in Aval]))
+    #Loop through each edge combo and build
+    for ic in range(len(Afunc)):
 
-    #Cleanup
-    del Aval
+        #Get edge keys that match
+        kinds = np.where(edge_keys == ic)[0]
 
-    #r*dr
-    wi = (r1 - r0) * wr * pr
+        #Scale radius quadrature nodes to physical size
+        pr = r0[ic] + (r1 - r0)[ic] * pr0
 
-    #Add leading edge (negative A+pw)
-    tt0 = np.hstack((tt0, -tt0))
-    pw = np.hstack((pw, pw))
-    ww = np.hstack((ww, ww))
+        #Turn seam_width into angle
+        seam_width_angle = seam_width / pr
 
-    #Rotate theta to other petals
-    tt = tt0 + \
-        np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), 4*n) #4n = pos/neg edge + trail/lead
+        #Apodization value at nodes and weights for all petals
+        tt = np.tile((np.pi/num_pet)*Afunc[ic](pr) + pw*seam_width_angle, \
+            (1, len(kinds)))
 
-    #Build nodes
-    xq = (pr * np.cos(tt)).ravel()
-    yq = (pr * np.sin(tt)).ravel()
+        #Flip odd edges to negative theta
+        tt *= np.repeat(np.array([-1,1])[kinds%2], 2*n)
 
-    #Build Petal weights (rdr * dtheta)
-    wq = np.tile(wi * ww * seam_width, (1, num_pet)).ravel()
+        #Rotate to other petals
+        tt += np.repeat((2.*np.pi/num_pet) * (kinds//2), 2*n)
+
+        #r*dr
+        wi = (r1 - r0)[ic] * wr0 * pr
+
+        #rdr * dtheta
+        wgt = np.tile(wi * ww * seam_width_angle, (1, len(kinds)))
+
+        # breakpoint()
+        #Add Petal weights (rdr * dtheta)
+        wq = np.concatenate(( wq, wgt.ravel() ))
+
+        #Add Petal nodes
+        xq = np.concatenate(( xq, (pr * np.cos(tt)).ravel() ))
+        yq = np.concatenate(( yq, (pr * np.sin(tt)).ravel() ))
+
+        #Append
+        all_pr.append(pr)
 
     #Add theta nodes for all petals for edge distances and normal angles
-    pw = np.tile(pw, (1, num_pet))[0]
+    pw = np.tile(pw, 2*num_pet)
 
     #Cleanup
-    del ww, wi, wr, tt, tt0
+    del ww, wr0, wi, tt, kinds, seam_width_angle, wgt, pr
 
     #Return nodes along primary axis (theta) and values along orthogonal axis (radius)
-    return xq, yq, wq, pw, pr
+    return xq, yq, wq, pw, all_pr
 
 ############################################
 ############################################
@@ -114,36 +123,57 @@ def seam_unique_petal_edge(Afunc, edge_keys, num_pet, r0, r1, m, seam_width):
     Outputs:
         xy = numpy array (2D) of x,y coordinates of starshade edge [meters]
     """
-    #Petals radius nodes and weights over [0,1]
-    pr, wr = lgwt(m, 0, 1)
 
-    #Scale radius quadrature nodes to physical size
-    pr = r0 + (r1 - r0) * pr
-
-    #Add axis
-    pr = pr[:,None]
-
-    #Apodization value at nodes
-    Aval = Afunc(pr)
-
-    #Get trailing edge theta
-    tt0 = (np.pi/num_pet) * (Aval + np.array([1,-1])*seam_width)
-
-    #Add leading edge (negative A+pw)
-    tt0 = np.hstack((tt0, -tt0))
-
-    #Rotate theta to other petals
-    tt = np.tile(tt0, (1, num_pet)) + \
-        np.repeat((2.*np.pi/num_pet) * (np.arange(num_pet) + 1), tt0.shape[-1])
-
-    #Cartesian coords
-    xx = (pr * np.cos(tt)).ravel()
-    yy = (pr * np.sin(tt)).ravel()
-
-    #Stack
-    xy = np.stack((xx, yy),1)
-
-    #Cleanup
-    del xx, yy, tt, pr, wr, Aval, tt0
+    #FIXME: seams not tested
+    # #Petals radius nodes and weights over [0,1]
+    # pr0, wr0 = lgwt(m, 0, 1)
+    #
+    # #Add axis
+    # wr0 = wr0[:,None]
+    # pr0 = pr0[:,None]
+    #
+    # #Loop through each edge combo and build
+    # xx, yy = np.empty(0), np.empty(0)
+    # for ic in range(len(Afunc)):
+    #
+    #     #Get edge keys that match
+    #     kinds = np.where(edge_keys == ic)[0]
+    #
+    #     #Scale radius quadrature nodes to physical size
+    #     pr = r0[ic] + (r1 - r0)[ic] * pr0
+    #
+    #     #Turn seam_width into angle
+    #     seam_width_angle = seam_width / pr
+    #
+    #     #Apodization value at nodes and weights for all petals
+    #     # Aval = (np.pi/num_pet)*Afunc[ic](pr) + np.array()
+    #     tt = np.tile((np.pi/num_pet)*Afunc[ic](pr) + pw*seam_width_angle, \
+    #         (1, len(kinds)))
+    #
+    #     #Flip odd edges to negative theta
+    #     tt *= np.repeat(np.array([-1,1])[kinds%2], 2*n)
+    #
+    #     #Rotate to other petals
+    #     tt += np.repeat((2.*np.pi/num_pet) * (kinds//2), 2*n)
+    #
+    #     #r*dr
+    #     wi = (r1 - r0)[ic] * wr0 * pr
+    #
+    #     #rdr * dtheta
+    #     wgt = np.tile(wi * ww * seam_width_angle, (1, len(kinds)))
+    #
+    #     # breakpoint()
+    #     #Add Petal weights (rdr * dtheta)
+    #     wq = np.concatenate(( wq, wgt.ravel() ))
+    #
+    #     #Add Petal nodes
+    #     xq = np.concatenate(( xq, (pr * np.cos(tt)).ravel() ))
+    #     yq = np.concatenate(( yq, (pr * np.sin(tt)).ravel() ))
+    #
+    #     #Append
+    #     all_pr.append(pr)
+    #
+    # #Add theta nodes for all petals for edge distances and normal angles
+    # pw = np.tile(pw, 2*num_pet)
 
     return xy

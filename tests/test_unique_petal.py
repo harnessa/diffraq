@@ -23,7 +23,7 @@ class Test_Unique_Petal(object):
     reg_edge = f'{diffraq.int_data_dir}/Test_Data/inv_apod_file.h5'
 
     def run_all(self):
-        for tt in ['unique', 'test_etch_error', 'notch', 'all', 'vector'][-1:]:
+        for tt in ['unique', 'test_etch_error', 'notch', 'all', 'vector']:
             getattr(self, f'test_{tt}')()
 
     def get_params(self, w_vector):
@@ -43,13 +43,14 @@ class Test_Unique_Petal(object):
         if w_vector:
             new_params = {
                 'seam_radial_nodes':    100,
-                'seam_theta_nodes':     100,
+                'seam_theta_nodes':     80,
 
                 ### Vector ###
                 'seam_width':           5e-6,
                 'do_run_vector':        True,
                 'is_sommerfeld':        True,
             }
+
         else:
             new_params = {
                 'do_run_vector':        False,
@@ -77,18 +78,26 @@ class Test_Unique_Petal(object):
             'perturbations':pert}
         reg_sim = diffraq.Simulator(params, reg_shape)
         reg_sim.run_sim()
-        reg_pupil = reg_sim.pupil[0].copy()
 
         #Load unique sim
         unq_shape = {'kind':'uniquePetal', 'is_opaque':False, 'num_petals':self.num_pet, \
-            'edge_file':self.reg_edge, 'has_center':False, 'perturbations':pert, \
-            'unique_edges':unq_edge, 'etch_error':unq_etch}
+            'edge_file':self.reg_edge, 'has_center':False, 'etch_error':unq_etch, \
+            'perturbations':pert, 'unique_edges':unq_edge}
         unq_sim = diffraq.Simulator(params, unq_shape)
         unq_sim.run_sim()
-        unq_pupil = unq_sim.pupil[0].copy()
+
+        if reg_sim.do_run_vector:
+            reg_pupil = reg_sim.vec_pupil[0,0].copy()
+            unq_pupil = unq_sim.vec_pupil[0,0].copy()
+        else:
+            reg_pupil = reg_sim.pupil[0].copy()
+            unq_pupil = unq_sim.pupil[0].copy()
 
         #Make sure weights are the same
-        assert(np.isclose(reg_sim.occulter.wq.sum(), unq_sim.occulter.wq.sum()))
+        if reg_sim.do_run_vector:
+            assert(np.isclose(reg_sim.vector.wq.sum(), unq_sim.vector.wq.sum()))
+        else:
+            assert(np.isclose(reg_sim.occulter.wq.sum(), unq_sim.occulter.wq.sum()))
 
         #Make sure pupils are the same
         assert(np.allclose(reg_pupil, unq_pupil))
@@ -114,9 +123,9 @@ class Test_Unique_Petal(object):
         return self.run_test(unq_edge={self.reg_edge:[10,11]}, reg_etch=self.etch_error, \
             unq_etch=np.ones(self.num_pet)*self.etch_error, w_pert=True)
 
-    # def test_vector(self):
-    #     return self.run_test(unq_edge={self.reg_edge:[10,11]}, reg_etch=self.etch_error, \
-    #         unq_etch=np.ones(self.num_pet)*self.etch_error, w_vector=True)
+    def test_vector(self):
+        return self.run_test(unq_edge={self.reg_edge:[10,11]}, reg_etch=self.etch_error, \
+            unq_etch=np.ones(self.num_pet)*self.etch_error, w_vector=True)
 
 ############################################
 

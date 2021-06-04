@@ -67,9 +67,6 @@ def unique_petal_quad(Afunc, edge_keys, num_pet, r0, r1, m, n, has_center=True):
         #Scale radius quadrature nodes to physical size
         pr = r0[ic] + (r1 - r0)[ic] * pr0
 
-        #r*dr
-        wi = (r1 - r0)[ic] * wr0 * pr
-
         #Apodization value at nodes and weights
         Aval = (np.pi/num_pet)*Afunc[ic](pr)
         Apw = np.tile(Aval*pw, (1, len(kinds)))
@@ -78,7 +75,11 @@ def unique_petal_quad(Afunc, edge_keys, num_pet, r0, r1, m, n, has_center=True):
         #Flip odd edges to negative dtheta
         Apw *= np.repeat(np.array([-1,1])[kinds%2], n//2)
 
+        #Theta
         tt = Apw + np.repeat(2.*np.pi/num_pet * (kinds//2), n//2)
+
+        #r*dr
+        wi = (r1 - r0)[ic] * wr0 * pr
 
         #Add Petal weights (rdr * dtheta)
         wq = np.concatenate(( wq, (wi * Aww).ravel() ))

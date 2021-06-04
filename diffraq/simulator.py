@@ -321,7 +321,8 @@ class Simulator(object):
 
         #Cleanup
         del wu0, uu, sfld, pfld, cosa, sina, xq, yq, w_beam
-        self.vector.clean_up()
+        if self.free_on_end:
+            self.vector.clean_up()
 
         return pupil
 

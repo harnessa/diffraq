@@ -20,7 +20,7 @@ class Test_Vector(object):
 
     num_pts = 256
     radial_nodes = 400
-    theta_nodes = 400
+    theta_nodes = 300
     zz = 1e5
     z0 = 1e19
     tel_diameter = 2.4
