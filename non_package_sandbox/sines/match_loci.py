@@ -31,12 +31,14 @@ use = nom.copy()
 #Build sine wave
 dd = np.hypot(*(pet - nom).T)
 the = np.zeros(len(dd))
-inds = np.where(dd != 0)[0]
+# inds = np.where(dd != 0)[0]
+inds = np.where(abs(dd)>1e-8)[0]
 
 if use_inn:
     inds = inds[:-2]
 else:
-    inds = inds[:-7]
+    # inds = inds[:-7]
+    inds = inds[:-8]
 npts = len(inds)
 
 use = use[inds]

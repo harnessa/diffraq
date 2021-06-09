@@ -6,8 +6,8 @@ from scipy.interpolate import interp1d
 from utilities import util
 from scipy.optimize import newton
 
-use_inn = [False, True][1]
-use_raw = [False, True][1]
+use_inn = [False, True][0]
+use_raw = [False, True][0]
 
 if use_inn:
     ncycles = 4

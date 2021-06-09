@@ -53,7 +53,7 @@ class Seam_Notch(Notch):
         self.t0, self.tf = t0, tf
 
         #Get perturbation specifc quadrature
-        return getattr(self, f'get_quad_{self.parent.kind}')( \
+        return getattr(self, f'get_quad_{self.parent.kind[:5]}')( \
             t0, tf, m, n)
 
 ############################################

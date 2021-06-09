@@ -6,9 +6,10 @@ from scipy.ndimage import affine_transform, shift
 from PIL import Image
 import cv2
 import time
+import h5py
 
 def run_sim():
-    wave = [400e-9, 641e-9][1]
+    wave = [400e-9, 641e-9, 725e-9][2]
     num_pts = 512
     tel_diameter = 5e-3
     min_padding = 4
@@ -17,7 +18,7 @@ def run_sim():
 
     down_sample = [False, True][1]
 
-    msamp = 2.8
+    msamp = 2.1
 
     if down_sample:
         NN = num_img * min_padding * int(np.ceil(msamp))    #number to run (make sure target is also min padded for truth calc)
@@ -28,6 +29,7 @@ def run_sim():
 
     #new image res
     image_res = num_pts * wave / (tel_diameter * targ_NN)
+
     focal_length = 13e-6/image_res
     image_distance = focal_length
 
@@ -36,7 +38,10 @@ def run_sim():
     #################################################
 
     #Get pupil
-    pupil = np.ones((num_pts, num_pts)) + 0j
+    # pupil = np.ones((num_pts, num_pts)) + 0j
+    mask = 'm12p9'
+    with h5py.File(f'./pupil__{mask}__mask_1a.h5', 'r') as f:
+        pupil = f['field'][3]
 
     NN0 = pupil.shape[-1]
     pupil, NN_full = image_util.round_aperture(pupil)
@@ -70,42 +75,43 @@ def run_sim():
 
     #Finalize PIL
     tik2 = time.perf_counter()
-    pimg, pdx = finalize_cv2(img.copy(), num_img, targ_NN, NN, dx)
+    cimg, cdx = finalize_cv2(img.copy(), num_img, targ_NN, NN, dx)
     tok2 = time.perf_counter()
-    print(f'PIL: {tok2-tik2:.3f}')
+    print(f'CV2: {tok2-tik2:.3f}')
 
     #Get integral targ_NN
     Ntt = int(np.round(targ_NN))
     Ntt += Ntt % 2
+
     #Get truth (not really truth with fractional targ_NN b/c we must make integer)
     tru_pupil = image_util.pad_array(tru_pupil, Ntt)
     dxtru = wave*image_distance/(dx0*Ntt)
     xxtru = (np.arange(Ntt)/Ntt - 0.5) * Ntt
     irdx = image_res * image_distance   #True image dx
 
-    #Propage tru image
+    #Propagate tru image
     tru = do_prop(tru_pupil, num_img, dxtru, xxtru, wave, image_distance, NN_full)
     tru = image_util.crop_image(tru, None, num_img//2)
 
     #Difference
     adif = np.abs(tru - aimg).sum()
-    pdif = np.abs(tru - pimg).sum()
+    cdif = np.abs(tru - cimg).sum()
 
-    print(f'Adif: {adif:.3e}, Pdif: {pdif:.3e}')
-    print(f'Adx: {adx-irdx:.3e}, Pdx: {pdx-irdx:.3e}, True dx: {dxtru-irdx:.3e}')
+    print(f'Adif: {adif:.3e}, Cdif: {cdif:.3e}')
+    print(f'Adx: {adx-irdx:.3e}, Cdx: {cdx-irdx:.3e}, True dx: {dxtru-irdx:.3e}')
 
     #Plot
     pxx = xx[NN//2-len(aimg)//2:NN//2+len(aimg)//2]
     pxt = xxtru[Ntt//2-len(tru)//2:Ntt//2+len(tru)//2]
     plt.figure()
     plt.semilogy(pxx, aimg[len(aimg)//2], '-',  label='AFF')
-    plt.semilogy(pxx, pimg[len(pimg)//2], '--', label='PIL')
+    plt.semilogy(pxx, cimg[len(cimg)//2], '--', label='PIL')
     plt.semilogy(pxt, tru[len(tru)//2], ':', label='tru')
     plt.axvline(1.22*wave/tel_diameter/image_res, color='k', linestyle=':')
     plt.axvline(0, color='c', linestyle=':')
     plt.legend()
     plt.xlim([-20,20])
-    plt.ylim(bottom=1e-5)
+    # plt.ylim(bottom=1e-5)
     breakpoint()
 
 def do_prop(pupil, num_img, dx, xx, wave, image_distance, NN_full):

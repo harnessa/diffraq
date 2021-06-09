@@ -6,7 +6,7 @@ loci_dir = '/home/aharness/repos/Milestone_2/diffraq_analysis/modeling/M12P9/mak
 
 nom = np.genfromtxt(f'{loci_dir}/nompetal12p.txt', delimiter='  ')
 
-use_inn = [False, True][0]
+use_inn = [False, True][1]
 
 if use_inn:
     pet = np.genfromtxt(f'{loci_dir}/petal4_sine12p.txt', delimiter='  ')
@@ -39,7 +39,7 @@ pet = scale(pet, 12/16)
 
 rads = np.hypot(*nom.T)
 
-breakpoint()
+# breakpoint()
 norms = np.diff(nom, axis=0)
 norms = np.vstack((norms[0], norms))
 # norms = util.compute_derivative(nom)
@@ -57,7 +57,7 @@ npts = np.count_nonzero(dd)
 
 the = np.zeros(len(dd))
 
-freq = ncycles/nom[:,0][dd!=0].ptp()
+freq = ncycles/rads[dd!=0].ptp()
 
 # the[dd != 0] = 2.*np.pi*ncycles/npts * np.arange(npts)
 the[dd != 0] = 2.*np.pi*ncycles*(nom[:,0][dd!=0]-nom[:,0][dd!=0].min())/nom[:,0][dd!=0].ptp()

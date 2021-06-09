@@ -13,6 +13,7 @@ Description: Class of the sine wave perturbation.
 
 import numpy as np
 import diffraq.quadrature as quad
+from scipy.optimize import newton
 
 class Sines(object):
 
@@ -231,7 +232,7 @@ class Sines(object):
         yq = (pr*np.sin(tt)).ravel()
 
         #Get weights rdr = wr*pr, dtheta = ww*dt
-        wq = self.parent.opq_sign * (pr * wr * ww * dt).ravel()
+        wq = -self.parent.opq_sign * (pr * wr * ww * dt).ravel()
 
         #Cleanup
         del pw, ww, pr, wr, old_edge, new_edge, oldt, newt, newr, dt, tt
@@ -314,8 +315,9 @@ class Sines(object):
         x0 = ts.min()*cos_theta(ts.min())
         x1 = ts.max()*cos_theta(ts.max())
         xs = np.linspace(x0, x1, len(ts))
-        #turn xs into rs (use ts as rough guess of r in theta. should really use newton)
-        ur = xs/cos_theta(ts)
+        #turn xs into rs
+        min_diff = lambda r: r - xs/cos_theta(r)
+        ur = newton(min_diff, ts, full_output=False)
         #uniform cycle nodes
         uxx = 2*self.num_cycles*np.linspace(0, 1, len(ts))
         #interpolated cycle nodes at location of loci r values
