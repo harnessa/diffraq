@@ -38,6 +38,7 @@ class Simulator(object):
             self.save_dir_base = f"{diffraq.pkg_home_dir}/Results"
 
         self.waves = np.atleast_1d(self.waves)
+        self.z_scl = self.z0 / (self.z0 + self.zz)
 
     def load_children(self, shapes):
         #Logging + Saving
@@ -216,11 +217,14 @@ class Simulator(object):
 
         #Adjust occulter values if off_axis (shift doesn't go into beam function)
         if not np.isclose(0, np.hypot(*self.target_center)):
-            xq = self.occulter.xq - self.target_center[0]
-            yq = self.occulter.yq - self.target_center[1]
+            xq = self.occulter.xq - self.target_center[0] * self.z_scl
+            yq = self.occulter.yq - self.target_center[1] * self.z_scl
+            xoff = 2*(grid_pts*self.target_center[0] + grid_pts[:,None]*self.target_center[1])
+            xoff += np.hypot(*self.target_center)**2
         else:
             xq = self.occulter.xq
             yq = self.occulter.yq
+            xoff = 0
 
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
@@ -239,6 +243,9 @@ class Simulator(object):
             #Calculate diffraction
             uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
                 self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
+
+            #Account for extra phase added by off_axis
+            uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
 
             #Multiply by plane wave
             uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
@@ -266,11 +273,14 @@ class Simulator(object):
 
         #Adjust occulter values if off_axis (shift doesn't go into beam function)
         if not np.isclose(0, np.hypot(*self.target_center)):
-            xq = self.vector.xq - self.target_center[0]
-            yq = self.vector.yq - self.target_center[1]
+            xq = self.vector.xq - self.target_center[0] * self.z_scl
+            yq = self.vector.yq - self.target_center[1] * self.z_scl
+            xoff = 2*(grid_pts*self.target_center[0] + grid_pts[:,None]*self.target_center[1])
+            xoff += np.hypot(*self.target_center)**2
         else:
             xq = self.vector.xq
             yq = self.vector.yq
+            xoff = 0
 
         #Get edge normal components
         cosa = np.cos(self.vector.nq)
@@ -312,6 +322,9 @@ class Simulator(object):
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
                     grid_pts, self.fft_tol, is_babinet=False, lamz0=lamz0)
+
+                #Account for extra phase added by off_axis
+                uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
 
                 #Multiply by plane wave
                 uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
