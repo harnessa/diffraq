@@ -21,7 +21,7 @@ class Seam_Sines(Sines):
 ############################################
 
     def build_quadrature(self, sxq, syq, swq, sdq, snq, sgw):
-        #TODO: add pinhole seam
+        #TODO: add sines seam
         return sxq, syq, swq, sdq, snq, sgw
 
 ############################################

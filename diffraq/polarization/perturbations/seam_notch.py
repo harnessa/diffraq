@@ -23,6 +23,9 @@ class Seam_Notch(Notch):
 ############################################
 
     def build_quadrature(self, sxq, syq, swq, sdq, snq, sgw):
+        #TODO: reinstate
+        return sxq, syq, swq, sdq, snq, sgw
+
         #Get quadrature + negating quadrature
         xq, yq, wq, dq, nq, nxq, nyq, nwq = self.get_quadrature()
 

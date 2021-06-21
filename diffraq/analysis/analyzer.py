@@ -13,6 +13,7 @@ Description: Class to analyze results of DIFFRAQ simulation.
 import numpy as np
 from diffraq.utils import image_util, misc_util, def_alz_params, Logger
 from diffraq import pkg_home_dir, Simulator
+from diffraq.polarization import VectorSim
 import h5py
 import matplotlib.pyplot as plt
 
@@ -71,7 +72,8 @@ class Analyzer(object):
         return sim_params
 
     def clean_up(self):
-        att_list = ['pupil', 'image', 'sim', 'image_waves']
+        att_list = ['sim', 'pupil', 'image', 'pupil_waves', 'image_waves',\
+            'pupil_xx', 'image_xx', 'pupil_image']
 
         #Cleanup sim
         if hasattr(self, 'sim'):
@@ -113,12 +115,31 @@ class Analyzer(object):
             return
 
         #Load pupil data
-        self.pupil, self.pupil_xx, self.vec_pupil, self.vec_comps = \
+        pupil, self.pupil_xx, vec_pupil, vec_comps, is_polarized = \
             self.sim.logger.load_pupil_field()
+
+        #If polarized, apply camera analyzer
+        if is_polarized:
+            #Get full polarized field
+            field = VectorSim.build_polarized_field(self.sim, pupil, vec_pupil, \
+                vec_comps, self.sim.analyzer_angle)
+            #Apply analyzer
+            self.pupil = self.apply_cam_analyzer(field)
+        else:
+            self.pupil = pupil
 
         #TODO: add pupil calibration
         #Normalize with calibration data
         # self.calibrate_pupil()
+
+        #Store all waves
+        self.pupil_waves = self.pupil.copy()
+
+        #Take one wavelength only
+        self.pupil = self.pupil_waves[self.wave_ind]
+        self.pupil_image = np.abs(self.pupil)**2
+
+    ############################################
 
     def load_image_data(self):
         #Return if skipping or sim didn't run image

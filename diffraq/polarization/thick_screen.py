@@ -100,7 +100,7 @@ class ThickScreen(object):
     def interpolate_file_edge(self, dd, wave):
         #Load data from file and build interpolation function for current wavelength
         with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
-            xx = f['xx'][()]
+            xx = f[f'{wave*1e9:.0f}_x'][()]
             sf = f[f'{wave*1e9:.0f}_s'][()]
             pf = f[f'{wave*1e9:.0f}_p'][()]
             sfld = np.interp(dd, xx, sf, left=0j, right=0j)
@@ -120,7 +120,7 @@ class ThickScreen(object):
         with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
 
             #Interpolate edge data for all (gaps will be overwritten -- just easier this way)
-            xx = f['xx'][()]
+            xx = f[f'{wave*1e9:.0f}_x'][()]
             sf = f[f'{wave*1e9:.0f}_s'][()]
             pf = f[f'{wave*1e9:.0f}_p'][()]
             sfld = np.interp(dd, xx, sf, left=0j, right=0j)
@@ -132,7 +132,7 @@ class ThickScreen(object):
             #Loop through widths and interpolate over gaps
             for i in range(len(widths)-1):
                 #Get gap data
-                xx = f[f'xx_gap_{i}'][()]
+                xx = f[f'{wave*1e9:.0f}_gap_{i}_x'][()]
                 sf = f[f'{wave*1e9:.0f}_gap_{i}_s'][()]
                 pf = f[f'{wave*1e9:.0f}_gap_{i}_p'][()]
 

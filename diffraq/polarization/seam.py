@@ -199,7 +199,7 @@ class Seam(object):
             func = Aval*pet_mul + pet_add
             diff = self.shape.outline.diff[ic](indt_values[ic])*pet_mul
 
-            #Get gaps widths (FIXME: this assumes Aval is the same for gaps)
+            #Get gaps widths
             if self.shape.is_opaque:
                 Aval = 1 - Aval
             gw = (2*Aval*np.pi/self.shape.num_petals*indt_values[ic]).ravel()

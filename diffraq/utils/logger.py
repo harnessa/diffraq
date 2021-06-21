@@ -235,7 +235,7 @@ class Logger(object):
             else:
                 vec_pupil, vec_comps = None, None
 
-        return pupil, grid_pts, vec_pupil, vec_comps
+        return pupil, grid_pts, vec_pupil, vec_comps, is_polarized
 
     ###########################
 

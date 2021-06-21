@@ -29,7 +29,7 @@ class Test_Vector(object):
     circle_rad = 1.5
 
     def run_all_tests(self):
-        funs = ['polar', 'cartesian', 'petal']
+        funs = ['polar', 'cartesian', 'petal', 'petal_diffraction']
         for f in funs:
             getattr(self, f'test_{f}')()
 
@@ -302,5 +302,3 @@ if __name__ == '__main__':
 
     tv = Test_Vector()
     tv.run_all_tests()
-    tv.test_petal()
-    tv.test_petal_diffraction()

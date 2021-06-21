@@ -42,7 +42,7 @@ class Focuser(object):
         self.image_distance += self.sim.defocus
 
         #Resolution
-        self.image_res = self.sim.pixel_size / self.sim.focal_length
+        self.image_res = self.sim.pixel_size / self.image_distance
 
         #Input Spacing
         self.dx0 = self.sim.tel_diameter / self.sim.num_pts

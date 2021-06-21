@@ -37,7 +37,8 @@ def_sim_params = {
     ### Occulter ###
     'occulter_is_finite':   True,       #Diffraction integral does not extend to infinity? Necessary only for multiple shapes
     'occulter_config':      None,       #Configuration file to point to file containing pre-specified shape dictionaries
-    'spin_angle':           0,          #Spin angle of the occulter
+    'spin_angle':           0,          #Spin (in-plane) angle of the occulter. [degrees]
+    'tilt_angle':           [0,0],      #Pitch (out-of-plane vertical) and roll (out-of-plane horizontal) angles of the occulter. [degrees]
 
     ### Observation ###
     'z0':                   1e19,       #Source - Occulter distance

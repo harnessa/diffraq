@@ -25,6 +25,11 @@ class Occulter(object):
         #Load shapes
         self.load_shapes(shapes)
 
+        #Check if occulter has non-zero attitude
+        self.has_spin = not np.isclose(self.sim.spin_angle, 0)
+        self.has_tilt = not np.isclose(np.hypot(*self.sim.tilt_angle), 0)
+        self.has_attitude = self.has_spin or self.has_tilt
+
 ############################################
 #####  Shapes #####
 ############################################
@@ -103,9 +108,9 @@ class Occulter(object):
         #Cleanup
         del xs, ys, ws
 
-        #Add occulter motion
-        if not np.isclose(self.sim.spin_angle, 0):
-            self.xq, self.yq = self.spin_occulter(self.xq, self.yq)
+        #Add occulter attitude
+        if self.has_attitude:
+            self.xq, self.yq = self.add_occulter_attitude(self.xq, self.yq)
 
 ############################################
 ############################################
@@ -131,9 +136,9 @@ class Occulter(object):
         #Cleanup
         del ee
 
-        #Add occulter motion
-        if not np.isclose(self.sim.spin_angle, 0):
-            self.edge = self.spin_occulter(self.edge)
+        #Add occulter attitude
+        if self.has_attitude:
+            self.edge = self.add_occulter_attitude(self.edge)
 
 ############################################
 ############################################
@@ -141,6 +146,14 @@ class Occulter(object):
 ############################################
 #####  Occulter Motion #####
 ############################################
+
+    def add_occulter_attitude(self, xx, yy=None):
+        #If only spin, return simple rotation
+        if self.has_spin and not self.has_tilt:
+            return self.spin_occulter(xx, yy=yy)
+        else:
+            #Do full attitude rotation
+            return self.tilt_occulter(xx, yy=yy)
 
     def spin_occulter(self, xx, yy=None):
         #Rotation matrix
@@ -150,7 +163,9 @@ class Occulter(object):
         if yy is not None:
             #Separate xy (i.e., quad)
             new = np.stack((xx, yy),1).dot(rot_mat)
-            return new[:,0], new[:,1]
+            xx, yy = new[:,0], new[:,1]
+            del new
+            return xx, yy
 
         else:
             #Edge
@@ -159,6 +174,39 @@ class Occulter(object):
     def build_rot_matrix(self, angle):
         return np.array([[ np.cos(angle), np.sin(angle)],
                          [-np.sin(angle), np.cos(angle)]])
+
+    ############################################
+
+    def tilt_occulter(self, xx, yy=None):
+        #Rotation matrix
+        rot_mat = self.build_full_rot_matrix(np.radians(self.sim.spin_angle), \
+            *np.radians(self.sim.tilt_angle))
+
+        #Rotate
+        if yy is not None:
+            #Separate xy and add 3rd dimension
+            new = np.stack((xx, yy, np.zeros_like(xx)),1).dot(rot_mat)
+            xx, yy = new[:,0], new[:,1]
+            del new
+            return xx, yy
+
+        else:
+            #Add 3rd dimension to edge
+            new = np.hstack((xx, np.zeros_like(xx[:,:1])))
+            edge = new[:,:2]
+            del new
+            return edge
+
+    def build_full_rot_matrix(self, yaw, pit, rol):
+        yaw_mat = np.array([[np.cos(yaw), -np.sin(yaw), 0.], \
+            [np.sin(yaw), np.cos(yaw), 0], [0,0,1]])
+        pit_mat = np.array([[np.cos(pit), 0.,  np.sin(pit)], [0,1,0], \
+            [-np.sin(pit), 0, np.cos(pit)]])
+        rol_mat = np.array([[1,0,0], [0, np.cos(rol), -np.sin(rol)], \
+            [0, np.sin(rol), np.cos(rol)]])
+        full_rot_mat = np.linalg.multi_dot((yaw_mat, pit_mat, rol_mat))
+
+        return full_rot_mat
 
 ############################################
 ############################################

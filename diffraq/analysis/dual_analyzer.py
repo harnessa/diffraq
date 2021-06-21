@@ -85,6 +85,14 @@ class Dual_Analyzer(object):
             axes[i].imshow(getattr(self, f'alz{i+1}').image)
             axes[i].set_title(getattr(self, f'load_ext_{i+1}'))
 
+    def show_results_pupil(self):
+
+        plt.ion()
+        fig, axes = plt.subplots(1,2, figsize=(8,5), sharex=True, sharey=True)
+
+        for i in range(2):
+            axes[i].imshow(getattr(self, f'alz{i+1}').pupil_image)
+            axes[i].set_title(getattr(self, f'load_ext_{i+1}'))
 
     def clean_up(self):
         self.alz1.clean_up()
