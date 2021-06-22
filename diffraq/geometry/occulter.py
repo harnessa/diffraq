@@ -198,12 +198,13 @@ class Occulter(object):
             return edge
 
     def build_full_rot_matrix(self, yaw, pit, rol):
-        yaw_mat = np.array([[np.cos(yaw), -np.sin(yaw), 0.], \
-            [np.sin(yaw), np.cos(yaw), 0], [0,0,1]])
-        pit_mat = np.array([[np.cos(pit), 0.,  np.sin(pit)], [0,1,0], \
-            [-np.sin(pit), 0, np.cos(pit)]])
-        rol_mat = np.array([[1,0,0], [0, np.cos(rol), -np.sin(rol)], \
-            [0, np.sin(rol), np.cos(rol)]])
+        #Note that this is a clockwise rotation -euler angles
+        yaw_mat = np.array([[np.cos(yaw), np.sin(yaw), 0.], \
+            [-np.sin(yaw), np.cos(yaw), 0], [0,0,1]])
+        pit_mat = np.array([[np.cos(pit), 0.,  -np.sin(pit)], [0,1,0], \
+            [np.sin(pit), 0, np.cos(pit)]])
+        rol_mat = np.array([[1,0,0], [0, np.cos(rol), np.sin(rol)], \
+            [0, -np.sin(rol), np.cos(rol)]])
         full_rot_mat = np.linalg.multi_dot((yaw_mat, pit_mat, rol_mat))
 
         return full_rot_mat

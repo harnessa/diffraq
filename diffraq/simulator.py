@@ -163,7 +163,7 @@ class Simulator(object):
             return False
 
         #Load pupil
-        self.pupil, grid_pts, self.vec_pupil, self.vec_comps = \
+        self.pupil, grid_pts, self.vec_pupil, self.vec_comps, is_polarized = \
             self.logger.load_pupil_field()
 
         #Return True
