@@ -112,6 +112,11 @@ class Occulter(object):
         if self.has_attitude:
             self.xq, self.yq = self.add_occulter_attitude(self.xq, self.yq)
 
+        #Shift occulter
+        if self.sim.occulter_shift is not None:
+            self.xq += self.sim.occulter_shift[0]
+            self.yq += self.sim.occulter_shift[1]
+
 ############################################
 ############################################
 
@@ -139,6 +144,10 @@ class Occulter(object):
         #Add occulter attitude
         if self.has_attitude:
             self.edge = self.add_occulter_attitude(self.edge)
+
+        #Shift occulter
+        if self.sim.occulter_shift is not None:
+            self.edge += np.array(self.sim.occulter_shift)
 
 ############################################
 ############################################

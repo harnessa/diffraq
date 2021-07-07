@@ -67,6 +67,7 @@ class BDW(object):
             'num_occ_pts':      1000,           #Number of points in occulter (per petal edge if starshade)
             'is_illuminated':   False,          #Is illuminated by source? i.e., not completely in the geometric shadow?
             'is_connected':     False,          #Starshade petals are connected to each other. WFIRST = connected, LAB_SS = not connected
+            'rounded_valleys':  False,          #Gaps between valley are rounded
             ### Focuser ###
             'focus_point':     'source',        #Where the camera is focused. Options = ['source', 'occulter']
             'focal_length':    0.5,             #Focal length [m]
@@ -176,7 +177,8 @@ class BDW(object):
         locr = np.concatenate((loci[1:], loci[:1]))
 
         #Get midpoint values
-        mid_pt = (loci + locr)/2.
+        # mid_pt = (loci + locr)/2.
+        mid_pt = loci.copy()        #This agrees better than midpoint
 
         #Calculate edge lengths
         dls = locr - loci
@@ -200,6 +202,7 @@ class BDW(object):
         #Convert to meters and angle
         rads *= 1e-6
         apod *= np.pi/self.num_petals
+        r0 = rads.min()
 
         #Resample onto smaller grid
         newr = np.linspace(rads.min(), rads.max(), self.num_occ_pts)
@@ -212,6 +215,24 @@ class BDW(object):
         #Flip over y to add other petal edge
         xx = np.concatenate((xx,  xx[::-1]))
         yy = np.concatenate((yy, -yy[::-1]))
+
+        #Join petals with rounded valley
+        if self.rounded_valleys and self.is_connected:
+            #Start angle at other petal
+            rot_ang = -2*np.pi/self.num_petals
+            x0 =  xx[-1]*np.cos(rot_ang) + yy[-1]*np.sin(rot_ang)
+            y0 = -xx[-1]*np.sin(rot_ang) + yy[-1]*np.cos(rot_ang)
+            t0 = np.arctan2(y0, x0)
+            #End angle
+            t1 = np.arctan2(yy[0], xx[0])
+            #Build theta arc (but don't keep values arleady in petal)
+            tt = np.linspace(t0, t1, 100)[1:-1]
+            #Cartesians
+            ax = r0*np.cos(tt)
+            ay = r0*np.sin(tt)
+            #Append to front of petal
+            xx = np.concatenate((ax, xx))
+            yy = np.concatenate((ay, yy))
 
         #Rotate and build each petal
         occ_pts = np.empty((0, len(xx), 2))

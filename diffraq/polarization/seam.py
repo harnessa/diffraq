@@ -75,8 +75,6 @@ class Seam(object):
         xq, yq, wq, dept_nodes, indt_values = getattr(self, \
             f'get_quad_{self.shape.kind}')(seam_width)
 
-        self.xq, self.yq = xq, yq
-
         #Get normal and position angles and gap widths depending on shape
         pos_angle, nq, gw = getattr(self, \
             f'get_normal_angles_{self.shape.kind}')(indt_values)

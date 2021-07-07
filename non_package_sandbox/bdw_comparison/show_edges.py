@@ -39,7 +39,7 @@ def get_bdw_edge(apod):
                                  # [-np.sin(angle), np.cos(angle)]]) )
     return edges
 
-apod = 'M12P6'
+apod = 'M12P2'
 
 dedg, sim = get_dif_edge(apod)
 bedg = get_bdw_edge(apod)

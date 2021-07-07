@@ -19,16 +19,19 @@ bdw_params = {
         'z0':               z0,
         'z1':               z1,
         'tel_diameter':     tel_diameter,
+        'focal_length':     focal_length,
         'num_tel_pts':      num_pts,
         'num_petals':       num_pet,
         'num_occ_pts':      2000,
         'image_pad':        0,
         'apod_name':        'wfirst',
         'is_connected':     True,
+        'rounded_valleys':  True,
         'do_save':          True,
         'save_dir_base':    save_dir_base,
         'session':          session,
-        'save_ext':         'bdw_2k',
+        'save_ext':         'bdw_2ke',
+        'skip_image':       True,
 }
 
 mm = 6000
@@ -56,14 +59,14 @@ dif_params = {
     'do_save':          True,
     'save_dir_base':    save_dir_base,
     'session':          session,
-    'save_ext':         f'diffraq',
-    # 'skip_image':       True,
+    'save_ext':         f'diffraq2',
+    'skip_image':       True,
 }
 
-if [False, True][1]:
+if [False, True][0]:
     sim = diffraq.Simulator(dif_params, shape)
     sim.run_sim()
 
-if [False, True][0]:
+if [False, True][1]:
     bdw = BDW(bdw_params)
     bdw.run_sim()
