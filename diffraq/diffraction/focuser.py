@@ -41,6 +41,10 @@ class Focuser(object):
         #Add defocus to image distance
         self.image_distance += self.sim.defocus
 
+        #Effective lens propagation distance
+        self.lens_prop_zz = -self.image_distance * self.sim.focal_length / \
+            (self.image_distance - self.sim.focal_length)
+
         #Resolution
         self.image_res = self.sim.pixel_size / self.image_distance
 
@@ -157,8 +161,7 @@ class Focuser(object):
         dx = wave*self.image_distance/(self.dx0*NN)
 
         #Multiply by propagation kernels (lens and Fresnel)
-        pupil *= self.propagation_kernel(et, self.dx0, wave, -self.sim.focal_length)
-        pupil *= self.propagation_kernel(et, self.dx0, wave, self.image_distance)
+        pupil *= self.propagation_kernel(et, self.dx0, wave, self.lens_prop_zz)
 
         #Pad pupil
         pupil = image_util.pad_array(pupil, NN)
