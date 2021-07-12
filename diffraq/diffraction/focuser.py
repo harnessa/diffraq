@@ -210,7 +210,7 @@ class Focuser(object):
 
         #Affine matrix
         affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
-        out_shape = (int(NN/scaling),) * 2
+        out_shape = (int(np.round(NN/scaling)),) * 2
 
         #Do affine transform (with different packages)
         if has_cv2:
