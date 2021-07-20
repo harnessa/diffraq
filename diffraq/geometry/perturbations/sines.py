@@ -45,7 +45,7 @@ class Sines(object):
         #Set default number of nodes
         if self.num_quad is None:
             self.num_quad = int(max(100, self.num_cycles/self.frequency/ \
-                self.parent.max_radius*self.parent.radial_nodes))
+                np.max(np.atleast_1d(self.parent.max_radius))*self.parent.radial_nodes))
 
         #Out of edge quad is less
         self.num_quad_perp = self.num_quad
@@ -159,7 +159,7 @@ class Sines(object):
         #Use kluge to get new edge
         if self.is_kluge:
             #Fix normal with Kluge to replicate lab notches which have issues from scaling to 12 petals
-            old_edge, new_edge = self.get_kluge_edge(pa, ts, ts_use)
+            old_edge, new_edge = self.get_kluge_edge(pa, ts, ts_use, p0)
 
         else:
 
@@ -300,7 +300,7 @@ class Sines(object):
 #####  Lab Kluge #####
 ############################################
 
-    def get_kluge_edge(self, pa, ts, ts_use):
+    def get_kluge_edge(self, pa, ts, ts_use, p0):
         #Scale factor 16 -> 12 petals
         scale = 12/16
 
@@ -310,8 +310,12 @@ class Sines(object):
         #####
         #Get cycle phase location at loci r positions for uniformly spaced x values in 16 petal space
         #uniformly spaced x's in 16 petal space
-        cos_theta = lambda r: np.cos(scale * self.parent.outline.func(r) * \
-            np.pi/self.parent.num_petals)
+        if len(np.atleast_1d(self.parent.outline.func)) > 1:
+            cos_theta = lambda r: np.cos(scale * \
+                self.parent.outline.func[int(abs(p0))](r) * np.pi/self.parent.num_petals)
+        else:
+            cos_theta = lambda r: np.cos(scale * self.parent.outline.func(r) * \
+                np.pi/self.parent.num_petals)
         x0 = ts.min()*cos_theta(ts.min())
         x1 = ts.max()*cos_theta(ts.max())
         xs = np.linspace(x0, x1, len(ts))
