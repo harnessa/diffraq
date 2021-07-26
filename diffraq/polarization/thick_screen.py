@@ -61,7 +61,7 @@ class ThickScreen(object):
         #Polar angle from Incident field (heaviside)
         phi = (2 - np.heaviside(dd, 1))*np.pi
 
-        #Build arguments of calculation
+        #Build arguments of calculation (assumes z=0)
         uu = -np.sqrt(2.*kk*abs(dd))*np.cos(0.5*(phi - np.pi/2.))
         vv = -np.sqrt(2.*kk*abs(dd))*np.cos(0.5*(phi + np.pi/2.))
         pre = (np.exp(-1j*np.pi/4.) / np.sqrt(np.pi) * np.sqrt(np.pi/2)) * \

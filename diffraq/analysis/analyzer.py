@@ -222,9 +222,9 @@ class Analyzer(object):
             cal_wvs = f['waves'][()]
             is_polarized = f['is_polarized'][()]
 
-        #Apply polarizer
+        #Always take parallel polarization for calibration value
         if is_polarized:
-            cal_img = self.apply_cam_analyzer(cal_img)
+            cal_img = cal_img[:,0]
 
         #Get matching wavelengths
         if len(cal_wvs) != len(self.sim.waves):
@@ -275,8 +275,10 @@ class Analyzer(object):
         #Unpolarized
         if self.cam_analyzer is None:
             image = image.sum(1)
+        #Parallel polarization
         elif self.cam_analyzer.startswith('p'):
             image = image[:,0]
+        #Orthogonal polarization
         elif self.cam_analyzer.startswith('o'):
             image = image[:,1]
 
