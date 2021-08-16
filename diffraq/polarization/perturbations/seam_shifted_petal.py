@@ -23,6 +23,8 @@ class Seam_Shifted_Petal(Shifted_Petal):
 ############################################
 
     def build_quadrature(self, sxq, syq, swq, sdq, snq, sgw):
+        #TODO: reinstate
+        return sxq, syq, swq, sdq, snq, sgw
         #Change parent's quad points to shift petal
         sxq, syq = self.shift_petal_points(sxq, syq)
 

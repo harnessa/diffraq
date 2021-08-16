@@ -55,6 +55,11 @@ class Seam(object):
         for pert in self.pert_list:
             xq, yq, wq, dq, nq, gw = pert.build_quadrature(xq, yq, wq, dq, nq, gw)
 
+        #Add base valley seam
+        if self.shape.kind[:5] == 'petal':
+            xq, yq, wq, dq, nq, gw = \
+                self.get_valley_quad(xq, yq, wq, dq, nq, gw, seam_width)
+
         #Rotate with parent shape
         if self.shape.rot_mat is not None:
             xq, yq = np.stack((xq,yq),1).dot(self.shape.rot_mat).T
@@ -252,6 +257,38 @@ class Seam(object):
     def get_normal_angles_cartesian(self, indt_values):
         #Just pass to polar
         return self.get_normal_angles_polar(indt_values)
+
+############################################
+############################################
+
+############################################
+#####  Valleys #####
+############################################
+
+    def get_valley_quad(self, xq, yq, wq, dq, nq, gw, seam_width):
+
+        #Make 1D for normal petal
+        rmins = np.atleast_1d(self.shape.min_radius)
+        funcs = np.atleast_1d(self.shape.outline.func)
+
+        #Get edge_keys
+        if hasattr(self.shape, 'edge_keys'):
+            edge_keys = self.shape.edge_keys
+        else:
+            edge_keys = np.zeros(self.shape.num_petal*2)
+
+        #Get quad for valleys
+        xv, yv, wv, dv, nv = polar.seam_valley_quad(rmins, funcs, self.theta_nodes, \
+            seam_width, self.shape.num_petals, edge_keys)
+
+        #Add to parents quad
+        xq = np.concatenate((xq, xv))
+        yq = np.concatenate((yq, yv))
+        wq = np.concatenate((wq, wv))
+        dq = np.concatenate((dq, dv))
+        nq = np.concatenate((nq, nv))
+
+        return xq, yq, wq, dq, nq, gw
 
 ############################################
 ############################################

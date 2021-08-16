@@ -83,7 +83,6 @@ def seam_unique_petal_quad(Afunc, edge_keys, num_pet, r0, r1, m, n, seam_width):
         #rdr * dtheta
         wgt = np.tile(wi * ww * seam_width_angle, (1, len(kinds)))
 
-        # breakpoint()
         #Add Petal weights (rdr * dtheta)
         wq = np.concatenate(( wq, wgt.ravel() ))
 
