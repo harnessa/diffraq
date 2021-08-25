@@ -169,7 +169,7 @@ class Analyzer(object):
 
         plt.ion()
         if hasattr(self, 'image'):
-            plt.imshow(self.image)
+            plt.imshow(self.image, vmin=self.image_vmin, vmax=self.image_vmax)
             print(self.image.max())
         else:
             pupil = np.abs(self.pupil[self.wave_ind])**2

@@ -55,10 +55,10 @@ class Seam(object):
         for pert in self.pert_list:
             xq, yq, wq, dq, nq, gw = pert.build_quadrature(xq, yq, wq, dq, nq, gw)
 
-        #Add base valley seam
-        if self.shape.kind[:5] == 'petal':
-            xq, yq, wq, dq, nq, gw = \
-                self.get_valley_quad(xq, yq, wq, dq, nq, gw, seam_width)
+        # #Add base valley seam     #TODO: is slow, doesnt add much
+        # if self.shape.kind[:5] == 'petal':
+        #     xq, yq, wq, dq, nq, gw = \
+        #         self.get_valley_quad(xq, yq, wq, dq, nq, gw, seam_width)
 
         #Rotate with parent shape
         if self.shape.rot_mat is not None:

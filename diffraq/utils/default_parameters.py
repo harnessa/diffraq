@@ -137,6 +137,10 @@ def_alz_params = {
     'cam_analyzer':         None,       #Camera's polarized analyzer mode. Options: [None:unpolarized, 'p':primary polarization, 'o':orthogonal polarization]
     'wave_ind':             0,          #Wavelength index to show,
 
+    ### Plotting ###
+    'image_vmin':           None,       #Min value to show in image plot
+    'image_vmax':           None,       #Max value to show in image plot
+
     ### Contrast ###
     'is_contrast':          False,      #Should we normalize as a contrast measurement?
     'calibration_file':     None,       #File pointing to calibration image for which to normalize image to contrast
