@@ -90,8 +90,26 @@ class Seam(object):
         #Need to adjust where seams overlap (only used in petals)
         if gw is not None:
 
-            #Build full gap widths
-            bigw = (gw[:,None] * np.ones_like(dept_nodes)).ravel()
+            #Handle unique petals differently
+            if 'unique' in self.shape.kind:
+
+                #Build gap widths to match k-inds
+                bigw = np.array([])
+                for ic in range(len(self.shape.outline.func)):
+
+                    #Get edge keys that match
+                    kinds = np.where(self.shape.edge_keys == ic)[0]
+
+                    #Build gap widths
+                    curw = gw[:,None] * np.ones(2*self.theta_nodes*len(kinds))
+
+                    #Concatenate
+                    bigw = np.concatenate((bigw, curw.ravel()))
+
+            else:
+
+                #Build full gap widths
+                bigw = (gw[:,None] * np.ones_like(dept_nodes)).ravel()
 
             #Find overlap
             ovr_inds = dq >= bigw/2
@@ -157,9 +175,11 @@ class Seam(object):
         func = Aval*pet_mul + pet_add
         diff = self.shape.outline.diff(indt_values)*pet_mul
 
-        #Get gaps widths
+        #Invert for gap width calc if opaque
         if self.shape.is_opaque:
             Aval = 1 - Aval
+
+        #Get gap widths    
         gw = (2*Aval*np.pi/self.shape.num_petals*indt_values).ravel()
 
         #Get cartesian function and derivative values at the parameter values
@@ -202,10 +222,14 @@ class Seam(object):
             func = Aval*pet_mul + pet_add
             diff = self.shape.outline.diff[ic](indt_values[ic])*pet_mul
 
-            #Get gaps widths
+            #Invert for gap width calc if opaque
             if self.shape.is_opaque:
                 Aval = 1 - Aval
-            gw = (2*Aval*np.pi/self.shape.num_petals*indt_values[ic]).ravel()
+
+            #Get gaps widths (force one half to be nominal petal)
+            if ic == 0:
+                oldA = self.shape.outline.func[0](indt_values[ic])
+            gw = ((oldA + Aval)*np.pi/self.shape.num_petals*indt_values[ic]).ravel()
 
             #Get cartesian function and derivative values at the parameter values
             cart_func, cart_diff = self.shape.cart_func_diffs( \
@@ -228,7 +252,7 @@ class Seam(object):
 
         #Cleanup
         del kinds, pet_mul, pet_add, Aval, func, diff, cart_func, \
-            cart_diff, cur_pos_angle, cur_nq, indt_values
+            cart_diff, cur_pos_angle, cur_nq, indt_values, oldA
 
         return pos_angle, nq, gw
 

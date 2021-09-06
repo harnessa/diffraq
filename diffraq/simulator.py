@@ -282,7 +282,7 @@ class Simulator(object):
             yq = self.vector.yq
             xoff = 0
 
-        #Get edge normal components
+        #Get edge normal components (relative to horizontal -- differs from Harness OE 2020)
         cosa = np.cos(self.vector.nq)
         sina = np.sin(self.vector.nq)
         del self.vector.nq
@@ -309,7 +309,7 @@ class Simulator(object):
             #Loop over horizontal and vertical polarizations
             for ip in range(2):
 
-                #Build quadrature weights * incident field
+                #Build quadrature weights * incident field #TODO: correct sign on sfld-pfld ?
                 if ip == 0:
                     wu0 = self.vector.wq * \
                         (self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \

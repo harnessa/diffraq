@@ -5,9 +5,9 @@ import dial2
 
 apod = ['M12P2', 'M12P6', 'M12P7', 'M12P8','DW9'][1]
 
-rn, tn = 400, 20
-seam = 10e-6
-sr, st = 20, 20
+rn, tn = 200, 20
+seam = 25e-6
+sr, st = 80, 20
 
 params = {
     'radial_nodes':     rn,
@@ -35,7 +35,7 @@ edge = sim.occulter.edge.copy()
 sim.occulter.clean_up()
 
 #Plot
-plt.colorbar(plt.scatter(xq, yq, c=dq, s=1))
+plt.colorbar(plt.scatter(xq, yq, c=nq, s=1, cmap=plt.cm.jet))
 
 for pt in sim.vector.seams[0].pert_list:
     plt.plot(*pt.xy0, 'd')

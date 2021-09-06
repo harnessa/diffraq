@@ -23,7 +23,7 @@ class Test_Unique_Petal(object):
     reg_edge = f'{diffraq.int_data_dir}/Test_Data/inv_apod_file.h5'
 
     def run_all(self):
-        for tt in ['unique', 'test_etch_error', 'notch', 'all', 'vector']:
+        for tt in ['unique', 'etch_error', 'notch', 'all', 'vector']:
             getattr(self, f'test_{tt}')()
 
     def get_params(self, w_vector):
