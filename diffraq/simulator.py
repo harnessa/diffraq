@@ -309,15 +309,15 @@ class Simulator(object):
             #Loop over horizontal and vertical polarizations
             for ip in range(2):
 
-                #Build quadrature weights * incident field #TODO: correct sign on sfld-pfld ?
+                #Build quadrature weights * incident field
                 if ip == 0:
                     wu0 = self.vector.wq * \
                         (self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \
-                         self.vector.Ey_comp * (sina*cosa * (sfld - pfld)))
+                         self.vector.Ey_comp * (sina*cosa * (pfld - sfld)))
                 else:
                     wu0 = self.vector.wq * \
                         (self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
-                         self.vector.Ex_comp * (sina*cosa * (sfld - pfld)))
+                         self.vector.Ex_comp * (sina*cosa * (pfld - sfld)))
 
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \

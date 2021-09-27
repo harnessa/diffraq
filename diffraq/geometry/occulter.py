@@ -22,6 +22,9 @@ class Occulter(object):
     def __init__(self, sim, shapes):
         self.sim = sim
 
+        #Save shape params
+        self.shape_params = shapes
+
         #Load shapes
         self.load_shapes(shapes)
 

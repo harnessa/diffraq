@@ -179,7 +179,7 @@ class Seam(object):
         if self.shape.is_opaque:
             Aval = 1 - Aval
 
-        #Get gap widths    
+        #Get gap widths
         gw = (2*Aval*np.pi/self.shape.num_petals*indt_values).ravel()
 
         #Get cartesian function and derivative values at the parameter values
