@@ -105,13 +105,12 @@ class VectorSim(object):
         #Initialize
         self.xq, self.yq, self.wq = np.empty(0), np.empty(0), np.empty(0)
         self.dq, self.nq, self.gw = np.empty(0), np.empty(0), np.empty(0)
-        self.n_nodes = 0
 
         #Loop through seams list and build quadratures
         for seam in self.seams:
 
             #Build quadrature (and edge distance and normal angles)
-            xs, ys, ws, ds, ns, gs, nn = seam.build_seam_quadrature(self.sim.seam_width)
+            xs, ys, ws, ds, ns, gs = seam.build_seam_quadrature(self.sim.seam_width)
 
             #If multiple shapes, check if we need to flip weights
             if self.sim.occulter.is_multi:
@@ -129,7 +128,6 @@ class VectorSim(object):
             self.nq = np.concatenate((self.nq, ns))
             if gs is not None:
                 self.gw = np.concatenate((self.gw, gs))
-            self.n_nodes += nn
 
         #Cleanup
         del xs, ys, ws, ds, ns, gs

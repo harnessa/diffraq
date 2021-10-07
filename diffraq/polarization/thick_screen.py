@@ -27,7 +27,7 @@ class ThickScreen(object):
 #####  Main Script #####
 ############################################
 
-    def get_edge_field(self, dd, gw, wave, n_nodes=-1):
+    def get_edge_field(self, dd, gw, wave):
         if self.is_sommerfeld:
             #Solve Sommerfeld solution
             return self.sommerfeld_solution(dd, wave)
@@ -38,7 +38,7 @@ class ThickScreen(object):
 
         else:
             #Interpolate data from file
-            return self.interpolate_file(dd, gw, wave, n_nodes)
+            return self.interpolate_file(dd, gw, wave)
 
 ############################################
 ############################################
@@ -90,12 +90,12 @@ class ThickScreen(object):
 #####  Load from file #####
 ############################################
 
-    def interpolate_file(self, dd, gw, wave, n_nodes):
+    def interpolate_file(self, dd, gw, wave):
         #Split into gaps if applicable
         if len(gw) == 0:
             return self.interpolate_file_edge(dd, wave)
         else:
-            return self.interpolate_file_gap(dd, gw, wave, n_nodes)
+            return self.interpolate_file_gap(dd, gw, wave)
 
     def interpolate_file_edge(self, dd, wave):
         #Load data from file and build interpolation function for current wavelength
@@ -111,10 +111,7 @@ class ThickScreen(object):
 
         return sfld, pfld
 
-    def interpolate_file_gap(self, dd, gw, wave, n_nodes):
-
-        #Get size of other axis
-        ny = n_nodes//gw.size
+    def interpolate_file_gap(self, dd, gw, wave):
 
         #Load data from file and build interpolation function for current wavelength
         with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
@@ -143,15 +140,12 @@ class ThickScreen(object):
                 if len(gind) == 0:
                     continue
 
-                #Expand gind into all points
-                bigind = (gind*ny + np.arange(ny)[:,None]).ravel()
-
                 #Interpolate this region
-                sfld[bigind] = np.interp(dd[bigind], xx, sf, left=0j, right=0j)
-                pfld[bigind] = np.interp(dd[bigind], xx, pf, left=0j, right=0j)
+                sfld[gind] = np.interp(dd[gind], xx, sf, left=0j, right=0j)
+                pfld[gind] = np.interp(dd[gind], xx, pf, left=0j, right=0j)
 
         #Cleanup
-        del xx, sf, pf, gind, bigind, widths
+        del xx, sf, pf, gind, widths
 
         return sfld, pfld
 

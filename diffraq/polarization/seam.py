@@ -48,9 +48,6 @@ class Seam(object):
         #Get main shape quadrature
         xq, yq, wq, dq, nq, gw = self.build_shape_quadrature(seam_width)
 
-        #Store number of pre-perturbation points
-        n_nodes = len(xq)
-
         #Add perturbations
         for pert in self.pert_list:
             xq, yq, wq, dq, nq, gw = pert.build_quadrature(xq, yq, wq, dq, nq, gw)
@@ -70,7 +67,7 @@ class Seam(object):
             dq *= -1
             nq += np.pi
 
-        return xq, yq, wq, dq, nq, gw, n_nodes
+        return xq, yq, wq, dq, nq, gw
 
     ############################################
 
@@ -87,47 +84,16 @@ class Seam(object):
         #Build edge distances
         dq = seam_width * (dept_nodes * pos_angle).ravel()
 
-        #Need to adjust where seams overlap (only used in petals)
+        #Need to adjust where seams overlap (only used in petals) and get all gap widths
         if gw is not None:
-
-            #Handle unique petals differently
-            if 'unique' in self.shape.kind:
-
-                #Build gap widths to match k-inds
-                bigw = np.array([])
-                for ic in range(len(self.shape.outline.func)):
-
-                    #Get edge keys that match
-                    kinds = np.where(self.shape.edge_keys == ic)[0]
-
-                    #Build gap widths
-                    curw = gw[:,None] * np.ones(2*self.theta_nodes*len(kinds))
-
-                    #Concatenate
-                    bigw = np.concatenate((bigw, curw.ravel()))
-
-            else:
-
-                #Build full gap widths
-                bigw = (gw[:,None] * np.ones_like(dept_nodes)).ravel()
-
-            #Find overlap
-            ovr_inds = dq >= bigw/2
-
-            #Zero out weights on overlap
-            wq[ovr_inds] = 0
-
-            #Clear gap widths if not running gaps
-            if not self.shape.parent.sim.with_vector_gaps:
-                gw = None
-
-            #Cleanup
-            del bigw, ovr_inds
+            wq, bigw = self.get_gap_widths(gw, wq, dq, dept_nodes)
+        else:
+            bigw = None
 
         #Cleanup
         del dept_nodes, pos_angle
 
-        return xq, yq, wq, dq, nq, gw
+        return xq, yq, wq, dq, nq, bigw
 
 ############################################
 ############################################
@@ -207,7 +173,7 @@ class Seam(object):
     def get_normal_angles_petal_unique(self, indt_values):
 
         #Get function and derivative values at the parameter values
-        pos_angle, nq = np.empty(0), np.empty(0)
+        pos_angle, nq, gw = np.empty(0), np.empty(0), []
         for ic in range(len(indt_values)):
 
             #Get edge keys that match
@@ -228,8 +194,8 @@ class Seam(object):
 
             #Get gaps widths (force one half to be nominal petal)
             if ic == 0:
-                oldA = self.shape.outline.func[0](indt_values[ic])
-            gw = ((oldA + Aval)*np.pi/self.shape.num_petals*indt_values[ic]).ravel()
+                oldA = self.shape.outline.func[0](indt_values[0])
+            gw.append(((oldA + Aval)*np.pi/self.shape.num_petals*indt_values[ic]))
 
             #Get cartesian function and derivative values at the parameter values
             cart_func, cart_diff = self.shape.cart_func_diffs( \
@@ -281,6 +247,74 @@ class Seam(object):
     def get_normal_angles_cartesian(self, indt_values):
         #Just pass to polar
         return self.get_normal_angles_polar(indt_values)
+
+############################################
+############################################
+
+############################################
+#####  Gaps #####
+############################################
+
+    def get_gap_widths(self, gw, wq, dq, dept_nodes):
+
+        #Handle unique petals differently
+        if 'unique' in self.shape.kind:
+
+            #Build gap widths to match k-inds (must be done in same way as x,y to preserve order)
+            bigw = np.array([])
+            for ic in range(len(self.shape.outline.func)):
+
+                #Get edge keys that match
+                kinds = np.where(self.shape.edge_keys == ic)[0]
+
+                #Build gap widths
+                curw = gw[ic][:,None] * np.ones(2*self.theta_nodes*len(kinds))
+
+                #If nominal, fix those whose neighbor is different
+                if ic == 0 and len(self.shape.outline.func) > 1:
+                    #Get kinds of nominal
+                    allk = np.repeat(kinds, 2*self.theta_nodes)
+                    # Loop through the rest of the shapes
+                    for ic2 in range(len(self.shape.outline.func))[1:]:
+                        # forward roll if leading, backward if trailing
+                        fwd_dif = (np.roll(self.shape.edge_keys,  1) == ic2) & \
+                            (np.arange(2*self.shape.num_petals) % 2 == 1)
+                        bwd_dif = (np.roll(self.shape.edge_keys, -1) == ic2) & \
+                            (np.arange(2*self.shape.num_petals) % 2 == 0)
+                        #Get which keys need to be fixed
+                        fix = np.where((self.shape.edge_keys == 0) & (fwd_dif | bwd_dif))[0]
+                        for ix in fix:
+                            curw[..., allk == ix] = gw[ic2][:,None] * \
+                                np.ones(len(np.where(allk == ix)[0]))
+
+                    #Cleanup
+                    del fwd_dif, bwd_dif, fix
+
+                #Concatenate
+                bigw = np.concatenate((bigw, curw.ravel()))
+
+            #Cleanup
+            del curw
+
+        else:
+
+            #Build full gap widths
+            bigw = (gw[:,None] * np.ones_like(dept_nodes)).ravel()
+
+        #Find overlap
+        ovr_inds = dq >= bigw/2
+
+        #Zero out weights on overlap
+        wq[ovr_inds] = 0
+
+        #Clear gap widths if not running gaps
+        if not self.shape.parent.sim.with_vector_gaps:
+            bigw = None
+
+        #Cleanup
+        del ovr_inds, gw
+
+        return wq, bigw
 
 ############################################
 ############################################

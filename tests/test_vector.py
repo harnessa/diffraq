@@ -57,7 +57,7 @@ class Test_Vector(object):
             sim = diffraq.Simulator(params, shapes)
 
             #Build polar seam
-            xs, ys, ws, ds, ns, gw, nn = \
+            xs, ys, ws, ds, ns, gw = \
                 sim.vector.seams[0].build_seam_quadrature(self.seam_width)
 
             #Get area of open seam (in aperture)
@@ -226,7 +226,7 @@ class Test_Vector(object):
         vec_area = vec_sim.occulter.wq.sum()
 
         #Build polar seam
-        xs, ys, ws, ds, ns, gw, nn = \
+        xs, ys, ws, ds, ns, gw = \
             vec_sim.vector.seams[0].build_seam_quadrature(seam_width)
 
         #Build function that simulates overetch by truncating at certain distance normal to edge

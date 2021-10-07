@@ -85,7 +85,7 @@ class Test_Seam_Perturbations(object):
                 assert(abs(1 - open_area/tru_open_area) < tol*50)
 
                 #Get full seam quadrature
-                xq, yq, wq, nq, dq, gw, nn = \
+                xq, yq, wq, nq, dq, gw = \
                     sim.vector.seams[0].build_seam_quadrature(seam_width)
 
                 #Full seam area (full area - original seam  + new seam)
@@ -142,7 +142,7 @@ class Test_Seam_Perturbations(object):
             sim0 = diffraq.Simulator(params, inn_shape)
 
             #Get full seam quadrature
-            xq0, yq0, wq0, nq, dq, gw, nn = \
+            xq0, yq0, wq0, nq, dq, gw = \
                 sim0.vector.seams[0].build_seam_quadrature(seam_width)
             sim0.clean_up()
 
@@ -153,7 +153,7 @@ class Test_Seam_Perturbations(object):
             sim = diffraq.Simulator(params, inn_shape)
 
             #Get full seam quadrature
-            xq, yq, wq, nq, dq, gw, nn = \
+            xq, yq, wq, nq, dq, gw = \
                 sim.vector.seams[0].build_seam_quadrature(seam_width)
 
             #Check area is the same (not much to do here)

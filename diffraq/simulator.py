@@ -296,7 +296,7 @@ class Simulator(object):
 
             #Get incident field
             sfld, pfld = self.vector.screen.get_edge_field(self.vector.dq, \
-                self.vector.gw, self.waves[iw], n_nodes=self.vector.n_nodes)
+                self.vector.gw, self.waves[iw])
 
             #Apply input beam function
             if self.beam_function is not None:
