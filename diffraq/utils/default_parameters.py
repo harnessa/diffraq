@@ -93,9 +93,9 @@ def_shape_params = {
     'kind':                 'polar',    #Functional type of outline
     'edge_func':            None,       #lambda function describing the shape's edge; f(theta) [polar, cart] or f(r) [petal]
     'edge_diff':            None,       #lambda function describing the derivative of the shapes edge; f'(theta) [polar, cart] or f'(r) [petal]
-    'edge_data':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
-    'edge_file':            None,       #Data that holds numerical apodization function as a function of radius. Supercedes edge_func and edge_file
-    'loci_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes edge_func
+    'edge_data':            None,       #Data that holds numerical apodization function as a function of radius. Supercedes edge_func and edge_file
+    'edge_file':            None,       #Filename that holds numerical apodization function as a function of radius. Supercedes edge_func
+    'loci_file':            None,       #Filename that holds the (x,y) coordinates describing the occulter edge
 
     ### Shape Details ###
     'is_opaque':            False,      #Shape is opaque?
@@ -108,6 +108,7 @@ def_shape_params = {
     'perturbations':        [],         #List of dictionaries describing perturbations to be added to the shape
     'unique_edges':         None,       #Separate edge files for unique petals. {edge file: [edge_numbers]}
     'etch_error':           None,       #Uniform edge etching error [m]. < 0: removal of material, > 0: extra material.
+    'unique_edge_data':     None,       #Separate edge data for unique petals. {edge data name: edge data} (data name pointed to by edge_file in unique edges)
 
     ### Numerics ###
     'radial_nodes':         None,       #Number of radial quadrature nodes OR (if < 1) fraction of parent's nodes to use

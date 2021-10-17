@@ -17,13 +17,15 @@ params = {
     'seam_theta_nodes':     st,
     'seam_width':           seam,
     'do_run_vector':        True,
+    'spin_angle':  0,
 }
 
 #Load simulator + build edge
 sim = diffraq.Simulator(params)
 
 #Get seam quad
-xq, yq, wq, dq, nq, gw = sim.vector.seams[0].build_seam_quadrature(seam)
+sim.vector.build_quadrature()
+xq, yq, wq, dq, nq = sim.vector.xq, sim.vector.yq, sim.vector.wq, sim.vector.dq, sim.vector.nq
 
 # #Get regular quad
 # sim.occulter.build_quadrature()
@@ -37,26 +39,26 @@ sim.occulter.clean_up()
 def get_bdw_edge(apod):
     loci_dir = '/home/aharness/repos/Milestone_2/diffraq_analysis/modeling/BDW_Compare/bdw_loci'
     deci = '4x'
-    data = np.empty((0,2))
+    data = []
     with h5py.File(f'{loci_dir}/{apod}_{deci}.h5', 'r') as f:
         num_pet = f['num_petals'][()]
         for i in range(num_pet):
-            data = np.concatenate((data, f[f'loci_{i}'][::5]))
+            data.append(sim.occulter.add_occulter_attitude(f[f'loci_{i}'][()]))
 
     return data
 edge = get_bdw_edge(apod)
 
-# bb = np.heaviside(dq, 1)
-
 #Plot
-plt.colorbar(plt.scatter(xq, yq, c=dq, s=2, cmap=plt.cm.jet))
+# plt.colorbar(plt.scatter(xq, yq, c=np.degrees(nq), s=2, cmap=plt.cm.jet))
+plt.colorbar(plt.scatter(xq, yq, c=wq, s=2, cmap=plt.cm.jet))
 
 # for pt in sim.vector.seams[0].pert_list:
 #     plt.plot(*pt.xy0, 'd')
 
 # plt.plot(oxq, oyq, 'x')
-plt.plot(*edge2.T, '+')
-plt.plot(*edge.T)
+# plt.plot(*edge2.T, '+')
+for i in range(len(edge)):
+    plt.plot(*edge[i].T)
 
 plt.axis('equal')
 print(wq.sum())

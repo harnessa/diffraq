@@ -195,7 +195,7 @@ class Seam(object):
             #Get gaps widths (force one half to be nominal petal)
             if ic == 0:
                 oldA = self.shape.outline.func[0](indt_values[0])
-            gw.append(((oldA + Aval)*np.pi/self.shape.num_petals*indt_values[ic]))
+            gw.append((oldA + Aval)*np.pi/self.shape.num_petals*indt_values[ic])
 
             #Get cartesian function and derivative values at the parameter values
             cart_func, cart_diff = self.shape.cart_func_diffs( \

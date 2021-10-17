@@ -126,6 +126,8 @@ class ThickScreen(object):
             #Get widths
             widths = f['ww'][()]
 
+            # widths = widths[widths < 26e-6] #FIXME
+
             #Loop through widths and interpolate over gaps
             for i in range(len(widths)-1):
                 #Get gap data

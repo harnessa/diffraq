@@ -37,8 +37,12 @@ class UniquePetalShape(PetalShape):
         #Load unique edges from file
         if self.unique_edges is not None:
             for ef, ks in self.unique_edges.items():
-                #Load data from file
-                edge_data.append(self.load_edge_file(ef))
+                #Edge filename is pointing to data included in dictionary
+                if ef.startswith('included'):
+                    edge_data.append(self.unique_edge_data[ef])
+                else:
+                    #Load data from file
+                    edge_data.append(self.load_edge_file(ef))
                 #Redirect edge keys
                 for k in ks:
                     edge_data_keys[k] = len(edge_data) - 1
@@ -54,6 +58,7 @@ class UniquePetalShape(PetalShape):
 
         #Give eatch edge an etch error (assume lab starshade and that each transmission region shares an error)
         etch_error = np.repeat(etch_error, 2)
+        # etch_error = np.arange(2*self.num_petals) #FIXME
 
         #Combos
         all_combos = np.stack((edge_data_keys, etch_error), 1)

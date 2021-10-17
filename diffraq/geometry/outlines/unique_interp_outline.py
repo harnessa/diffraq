@@ -87,6 +87,10 @@ class Unique_InterpOutline(object):
 
     def get_etch_func(self, cart_func, normal, etch):
 
+        # etch = 40e-9
+        # etch = np.random.normal(40e-9, 70e-9, size=len(cart_func))[:,None]
+        # etch = np.random.uniform(-100e-9, 100e-9, size=len(cart_func))[:,None] + 40e-9
+
         #Build new data (negative etch adds more material)
         new_cart_func = cart_func + etch*normal*np.array([1,-1])*self.parent.opq_sign
 
