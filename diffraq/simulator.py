@@ -261,7 +261,7 @@ class Simulator(object):
     ############################################
     ############################################
 
-    def vector_diffraction_calculation(self, grid_pts):
+    def vector_diffraction_calculation(self, grid_pts, is_babinet=False):
         """Calculate the scalar diffraction of the vector seam's quadrature x+y,
             quadrature weights, and additive vector field, over the supplied grid. """
 
@@ -321,7 +321,7 @@ class Simulator(object):
 
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
-                    grid_pts, self.fft_tol, is_babinet=False, lamz0=lamz0)
+                    grid_pts, self.fft_tol, is_babinet=is_babinet, lamz0=lamz0)
 
                 #Account for extra phase added by off_axis
                 uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)

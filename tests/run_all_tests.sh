@@ -18,3 +18,4 @@ pytest test_perturbations.py
 pytest test_etching_error.py
 pytest test_unique_petal.py
 pytest test_vector.py
+pytest test_seam_diffraction.py
