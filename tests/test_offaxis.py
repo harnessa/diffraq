@@ -21,49 +21,58 @@ class Test_Offaxis(object):
 
         ngrid = 15
         grid_width = 3
-        fresnums = [10]
+        FNs = [10]
         tol = 1e-9              #tolerance
+        zz = 2
 
-        #Simulator params
-        params = {
-            'zz':               1,
-            'waves':            1/np.array(fresnums),
-            'radial_nodes':     250,
-            'theta_nodes':      350,
-            'tel_diameter':     grid_width,
-            'num_pts':          ngrid,
-            'skip_image':       True,
-        }
+        #Loop through diverging and plane wave
+        for z0 in [zz, 1e19]:
 
-        shape = {'kind':'circle', 'max_radius':1}
+            #Simulator params
+            params = {
+                'zz':               zz,
+                'z0':               z0,
+                'waves':            (z0+zz)/(np.array(FNs)*zz*z0),
+                'radial_nodes':     250,
+                'theta_nodes':      350,
+                'tel_diameter':     grid_width,
+                'num_pts':          ngrid,
+                'skip_image':       True,
+            }
 
-        for x0 in [-1, 0.25]:
-            for y0 in [-0.5, 0.17]:
+            shape = {'kind':'circle', 'max_radius':1}
 
-                #Add target center
-                params['target_center'] = [x0, y0]
+            for x0 in [-1, 0.25]:
+                for y0 in [-0.5, 0.17]:
 
-                #Build simulator
-                sim = diffraq.Simulator(params, shape)
+                    #Add target center
+                    params['target_center'] = [x0, y0]
 
-                #Get pupil field
-                pupil, grid_pts = sim.calc_pupil_field()
+                    #Build simulator
+                    sim = diffraq.Simulator(params, shape)
 
-                #Get 2D grid for theoretical calculation
-                gx_2D = grid_pts[0].reshape((ngrid,ngrid))
-                gy_2D = grid_pts[1].reshape((ngrid,ngrid))
+                    #Get pupil field
+                    pupil, grid_pts = sim.calc_pupil_field()
 
-                #Compare to theoretical value for each Fresnel number
-                for i in range(len(fresnums)):
+                    #Get 2D grid for theoretical calculation
+                    gx_2D = grid_pts[0].reshape((ngrid,ngrid))
+                    gy_2D = grid_pts[1].reshape((ngrid,ngrid))
 
-                    #Theoretical value
-                    utru = diffraq.utils.solution_util.direct_integration( \
-                        fresnums[i], pupil[i].shape, sim.occulter.xq, \
-                        sim.occulter.yq, sim.occulter.wq, gx_2D, gy_2D=gy_2D)
+                    #Compare to theoretical value for each Fresnel number
+                    for i in range(len(FNs)):
 
-                    #Assert max difference is close to specified tolerance
-                    max_diff = tol * fresnums[i]
-                    assert(np.abs(utru - pupil[i]).max() < max_diff)
+                        #Split up Fresnel numbers
+                        f0 = 1/(params['waves'][i]*z0)
+                        fn = FNs[i] - f0
+
+                        #Theoretical value
+                        utru = diffraq.utils.solution_util.direct_integration( \
+                            fn, pupil[i].shape, sim.occulter.xq, \
+                            sim.occulter.yq, sim.occulter.wq, gx_2D, gy_2D=gy_2D, F0=f0)
+
+                        #Assert max difference is close to specified tolerance
+                        max_diff = tol * FNs[i]
+                        assert(np.abs(utru - pupil[i]).max() < max_diff)
 
         #Cleanup
         sim.clean_up()

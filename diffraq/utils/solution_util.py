@@ -115,7 +115,7 @@ def lommels_U(u,v,nt=10):
 ####	Direct Integration  ####
 ############################################
 
-def direct_integration(fresnum, u_shp, xq, yq, wq, gx_2D, gy_2D=None):
+def direct_integration(fresnum, u_shp, xq, yq, wq, gx_2D, gy_2D=None, F0=0):
     if gy_2D is None:
         gy_2D = gx_2D.T
     lambdaz = 1./fresnum
@@ -123,7 +123,9 @@ def direct_integration(fresnum, u_shp, xq, yq, wq, gx_2D, gy_2D=None):
     for j in range(u_shp[0]):
         for k in range(u_shp[1]):
             utru[j,k] = np.sum(np.exp((1j*np.pi/lambdaz)* \
-                ((xq - gx_2D[j,k])**2 + (yq - gy_2D[j,k])**2))*wq)
+                ((xq - gx_2D[j,k])**2 + (yq - gy_2D[j,k])**2))*\
+                np.exp(1j*np.pi*F0*(xq**2 + yq**2))*wq)
+
     utru *= 1/(1j*lambdaz)
     return utru
 
