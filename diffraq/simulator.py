@@ -321,7 +321,7 @@ class Simulator(object):
 
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
-                    grid_pts, self.fft_tol, is_babinet=is_babinet, lamz0=lamz0)
+                    grid_pts, self.fft_tol, lamz0=lamz0, is_babinet=is_babinet)
 
                 #Account for extra phase added by off_axis
                 uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)

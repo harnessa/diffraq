@@ -20,15 +20,15 @@ class Test_Seam_Diffraction(object):
 
     num_pts = 256
     radial_nodes = 400
-    theta_nodes = 400   
+    theta_nodes = 400
     zz = 15e6
     z0 = 1e19
     rad_inn = 10
     rad_out = 12
 
     def run_all_tests(self):
-        for oa in ['occulter', 'aperture'][1:]:
-            for op in ['plane', 'spherical'][:]:
+        for oa in ['occulter', 'aperture']:
+            for op in ['plane', 'spherical']:
                 getattr(self, f'test_{oa}_{op}')()
 
     def run_calculation(self, is_aperture, z0):

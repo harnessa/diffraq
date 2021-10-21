@@ -7,7 +7,7 @@ apod = ['M12P2', 'M12P6', 'M12P7', 'M12P8', 'M12P9', 'DW9'][1]
 
 rn, tn = 200, 20
 seam = 25e-6
-sr, st = 80, 20
+sr, st = 80*3, 5
 
 params = {
     'radial_nodes':     rn,
@@ -50,7 +50,7 @@ edge = get_bdw_edge(apod)
 
 #Plot
 # plt.colorbar(plt.scatter(xq, yq, c=np.degrees(nq), s=2, cmap=plt.cm.jet))
-plt.colorbar(plt.scatter(xq, yq, c=wq, s=2, cmap=plt.cm.jet))
+plt.colorbar(plt.scatter(xq, yq, c=dq, s=2, cmap=plt.cm.jet))
 
 # for pt in sim.vector.seams[0].pert_list:
 #     plt.plot(*pt.xy0, 'd')

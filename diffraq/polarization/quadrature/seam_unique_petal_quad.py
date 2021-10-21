@@ -38,7 +38,7 @@ def seam_unique_petal_quad(Afunc, edge_keys, num_pet, r0, r1, m, n, seam_width):
     #Petals width nodes and weights over [0,1]
     pw, ww = lgwt(n, 0, 1)
 
-    #Combine nodes for positive and negative sides of edge
+    #Combine nodes for positive and negative sides of edge (negative pw is positive side)
     pw = np.concatenate((pw, -pw[::-1]))
     ww = np.concatenate((ww,  ww[::-1]))
 

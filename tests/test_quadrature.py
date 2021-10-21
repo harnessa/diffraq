@@ -14,12 +14,14 @@ Description: Test of building areal quadrature.
 import diffraq
 import numpy as np
 import h5py
+from scipy.special import fresnel
 
 class Test_Quadrature(object):
 
     def run_all_tests(self):
-        tsts = ['lgwt_A', 'lgwt_B', 'polar', 'cartesian', 'starshade', 'loci', 'triangle']
-        for t in tsts:
+        tsts = ['lgwt_A', 'lgwt_B', 'polar', 'cartesian', 'starshade',
+            'loci', 'triangle', 'integration'][-1:]
+        for t in tsts[-1:]:
             getattr(self, f'test_{t}')()
 
 ############################################
@@ -191,6 +193,29 @@ class Test_Quadrature(object):
 
             #yq should be odd
             assert(np.isclose((wq*yq**3).sum(), 0))
+
+############################################
+
+    def test_integration(self):
+
+        zz = 10
+        npts = 100
+        pw, ww = diffraq.quadrature.lgwt(npts, 0, zz)
+
+        #Integrate cosine/sine
+        Sa = np.sum(np.sin(np.pi*pw**2/2)*ww)
+        Ca = np.sum(np.cos(np.pi*pw**2/2)*ww)
+        ans = Ca + 1j*Sa
+
+        #Integrate exponential
+        exp = np.sum(np.exp(1j*np.pi*pw**2/2)*ww)
+
+        #Truth
+        St, Ct = fresnel(zz)
+        tru = Ct + 1j*St
+
+        #Assert true
+        assert(np.isclose(tru, exp) and np.isclose(tru,ans))
 
 ############################################
 

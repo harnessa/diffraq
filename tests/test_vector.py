@@ -257,7 +257,7 @@ class Test_Vector(object):
             'radial_nodes':         500,
             'theta_nodes':          50,
             'seam_radial_nodes':    500,
-            'seam_theta_nodes':     250,
+            'seam_theta_nodes':     500,
         }
 
         #Load regular sim
@@ -277,7 +277,7 @@ class Test_Vector(object):
         #Vector
         shape['etch_error'] = None
         params['do_run_vector'] = True
-        params['seam_width'] = abs(etch) * 2
+        params['seam_width'] = abs(etch) * 4
         params['maxwell_func'] = lambda dd, wv: [np.heaviside(dd,0)*np.heaviside(-dd+abs(etch),0)+0j]*2
         sim = diffraq.Simulator(params, shape)
         vect_uu, grid_pts = sim.calc_pupil_field()
@@ -292,8 +292,8 @@ class Test_Vector(object):
         #Get percent difference
         per_diff = abs(vect_ee - etch_uu).max()/abs(etch_uu).max()*100
 
-        #Assert true < 2%
-        assert(per_diff < 2)
+        #Assert true < 1%
+        assert(per_diff < 1)
 
 ############################################
 ############################################

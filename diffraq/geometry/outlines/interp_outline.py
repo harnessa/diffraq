@@ -23,10 +23,11 @@ class InterpOutline(object):
         self._data = data       #polar parent - (theta, apod), petal parent - (radius, apod)
 
         #Use second order interpolant
-        self.k = 2
+        self.k = 4
+        self.ext = 3
 
         #Interpolate data and store
-        self.func = InterpolatedUnivariateSpline(data[:,0], data[:,1], k=self.k, ext=3)
+        self.func = InterpolatedUnivariateSpline(data[:,0], data[:,1], k=self.k, ext=self.ext)
 
         #Derivatives are easy
         self.diff = self.func.derivative(1)
@@ -84,7 +85,7 @@ class InterpOutline(object):
         new_para = new_para[np.argsort(new_para)]
 
         #Reinterpolate new function
-        cur_func = InterpolatedUnivariateSpline(new_para, new_func, k=self.k, ext=3)
+        cur_func = InterpolatedUnivariateSpline(new_para, new_func, k=self.k, ext=self.ext)
 
         #Derivatives are easy
         cur_diff = cur_func.derivative(1)

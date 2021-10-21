@@ -24,7 +24,8 @@ class Unique_InterpOutline(object):
         self._combos = combos
 
         #Use second order interpolant
-        self.k = 2
+        self.k = 4
+        self.ext = 3
 
         #Loop through each combination and build functions and derivatives
         self.func, self.diff, self.diff_2nd = [], [], []
@@ -35,7 +36,7 @@ class Unique_InterpOutline(object):
 
             #Interpolate data
             func = InterpolatedUnivariateSpline(cur_data[:,0], \
-                cur_data[:,1], k=self.k, ext=3)
+                cur_data[:,1], k=self.k, ext=self.ext)
 
             #Derivatives are easy
             diff = func.derivative(1)
@@ -87,10 +88,6 @@ class Unique_InterpOutline(object):
 
     def get_etch_func(self, cart_func, normal, etch):
 
-        # etch = 40e-9
-        # etch = np.random.normal(40e-9, 70e-9, size=len(cart_func))[:,None]
-        # etch = np.random.uniform(-100e-9, 100e-9, size=len(cart_func))[:,None] + 40e-9
-
         #Build new data (negative etch adds more material)
         new_cart_func = cart_func + etch*normal*np.array([1,-1])*self.parent.opq_sign
 
@@ -102,7 +99,7 @@ class Unique_InterpOutline(object):
         new_para = new_para[np.argsort(new_para)]
 
         #Reinterpolate new function
-        cur_func = InterpolatedUnivariateSpline(new_para, new_func, k=self.k, ext=3)
+        cur_func = InterpolatedUnivariateSpline(new_para, new_func, k=self.k, ext=self.ext)
 
         #Derivatives are easy
         cur_diff = cur_func.derivative(1)

@@ -58,7 +58,6 @@ class UniquePetalShape(PetalShape):
 
         #Give eatch edge an etch error (assume lab starshade and that each transmission region shares an error)
         etch_error = np.repeat(etch_error, 2)
-        # etch_error = np.arange(2*self.num_petals) #FIXME
 
         #Combos
         all_combos = np.stack((edge_data_keys, etch_error), 1)
