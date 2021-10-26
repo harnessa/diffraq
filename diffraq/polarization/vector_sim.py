@@ -183,7 +183,7 @@ class VectorSim(object):
 
     def build_polarized_field(self, scl_pupil, vec_pupil, vec_comps, analyzer_angle):
         #Add scalar field to vector field to create total field in horiz./vert. direction
-        pupil = vec_pupil.copy()# * np.exp(1j*np.pi/4)   #FIXME
+        pupil = vec_pupil.copy() #* np.exp(1j*np.pi/4)   #FIXME
         for i in range(len(vec_comps)):
             pupil[:,i] += scl_pupil * vec_comps[i]
 

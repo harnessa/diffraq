@@ -122,9 +122,14 @@ def direct_integration(fresnum, u_shp, xq, yq, wq, gx_2D, gy_2D=None, F0=0):
     utru = np.zeros(u_shp) + 0j
     for j in range(u_shp[0]):
         for k in range(u_shp[1]):
-            utru[j,k] = np.sum(np.exp((1j*np.pi/lambdaz)* \
-                ((xq - gx_2D[j,k])**2 + (yq - gy_2D[j,k])**2))*\
-                np.exp(1j*np.pi*F0*(xq**2 + yq**2))*wq)
+            #Get integrand
+            integrand = np.exp((1j*np.pi/lambdaz)* \
+                ((xq - gx_2D[j,k])**2 + (yq - gy_2D[j,k])**2))
+            #Add diverging beam
+            if not np.isclose(F0,0):
+                integrand *= np.exp(1j*np.pi*F0*(xq**2 + yq**2))
+            #Do integration
+            utru[j,k] = np.sum(integrand * wq)
 
     utru *= 1/(1j*lambdaz)
     return utru

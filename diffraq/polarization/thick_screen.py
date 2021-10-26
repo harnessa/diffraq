@@ -47,9 +47,10 @@ class ThickScreen(object):
 #####  Sommerfeld Solution #####
 ############################################
 
-    def F_func(self, s):
+    def G_func(self, s):
         S,C = fresnel(np.sqrt(2./np.pi)*s)
         ans = (1. + 1j)/2 - (C + 1j*S)
+        ans *= np.exp(-1j*s**2.)
         del S, C
         return ans
 
@@ -58,21 +59,32 @@ class ThickScreen(object):
         #Wavelength
         kk = 2.*np.pi/wave
 
+        #normal incidence
+        phi0 = np.pi/2
+
+        zz = 0./30 * 1e-6
+        rho = np.sqrt(zz**2 + dd**2.)
+
         #Polar angle from Incident field (heaviside)
-        phi = (2 - np.heaviside(dd, 1))*np.pi
+        if np.isclose(zz, 0):
+            phi = (2 - np.heaviside(dd, 1))*np.pi
+        else:
+            phi = 2.*np.pi + np.arctan2(-zz, -dd)
 
         #Build arguments of calculation (assumes z=0)
-        uu = -np.sqrt(2.*kk*abs(dd))*np.cos(0.5*(phi - np.pi/2.))
-        vv = -np.sqrt(2.*kk*abs(dd))*np.cos(0.5*(phi + np.pi/2.))
+        uu = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi - phi0))
+        vv = -np.sqrt(2.*kk*rho)*np.cos(0.5*(phi + phi0))
         pre = (np.exp(-1j*np.pi/4.) / np.sqrt(np.pi) * np.sqrt(np.pi/2)) * \
-            np.exp(1j*kk*abs(dd)) * np.exp(-1j*uu**2.)
+            np.exp(1j*kk*rho)
+
+        pre /= np.exp(-1j*kk*rho*np.cos(phi - phi0))
 
         #Intermediate calculations (minus incident field)
-        Umid = pre*self.F_func(uu) - (2 - phi/np.pi)
-        Gv = pre*self.F_func(vv)
+        Umid = pre*self.G_func(uu) - np.heaviside(dd, 1)
+        Gv = pre*self.G_func(vv)
 
         #Cleanup
-        del phi, uu, vv, pre
+        del phi, uu, vv, pre, rho
 
         #Get field solution (minus incident field) for s,p polarization
         Us = Umid - Gv
@@ -125,8 +137,6 @@ class ThickScreen(object):
 
             #Get widths
             widths = f['ww'][()]
-
-            # widths = widths[widths < 26e-6] #FIXME
 
             #Loop through widths and interpolate over gaps
             for i in range(len(widths)-1):

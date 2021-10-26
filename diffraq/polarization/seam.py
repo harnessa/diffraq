@@ -78,20 +78,31 @@ class Seam(object):
             f'get_quad_{self.shape.kind}')(seam_width)
 
         #Get normal and position angles and gap widths depending on shape
-        pos_angle, nq, gw = getattr(self, \
+        pos_angle, nq, gw, xedge, yedge = getattr(self, \
             f'get_normal_angles_{self.shape.kind}')(indt_values)
 
         #Build edge distances
         dq = seam_width * (dept_nodes * pos_angle).ravel()
 
+        #Rotate quad points onto normal axis (from theta, or angular, axis) (doesn't apply to polar)
+        if xedge is not None:
+            pos_angle = pos_angle.ravel()
+            xq -= xedge
+            yq -= yedge
+            newx =  xq*np.cos(pos_angle) + yq*np.sin(pos_angle) + xedge
+            newy = -xq*np.sin(pos_angle) + yq*np.cos(pos_angle) + yedge
+            xq = newx.copy()
+            yq = newy.copy()
+            del newx, newy, xedge, yedge
+
         #Need to adjust where seams overlap (only used in petals) and get all gap widths
         if gw is not None:
-            wq, bigw = self.get_gap_widths(gw, wq, dq, dept_nodes)
+            wq, bigw = self.get_gap_widths(gw, wq, dq, dept_nodes, indt_values)
         else:
             bigw = None
 
         #Cleanup
-        del dept_nodes, pos_angle
+        del dept_nodes, pos_angle,
 
         return xq, yq, wq, dq, nq, bigw
 
@@ -163,10 +174,14 @@ class Seam(object):
         #Build normal angle
         nq = np.arctan2(pet_mul*cart_diff[...,0], -pet_mul*cart_diff[...,1]).ravel()
 
+        #Edge cartesian points
+        xedge = cart_func[:,:,0].ravel()
+        yedge = cart_func[:,:,1].ravel()
+
         #Cleanup
         del indt_values, cart_func, cart_diff, pet_mul
 
-        return pos_angle, nq, gw
+        return pos_angle, nq, gw, xedge, yedge
 
     ############################################
 
@@ -174,6 +189,7 @@ class Seam(object):
 
         #Get function and derivative values at the parameter values
         pos_angle, nq, gw = np.empty(0), np.empty(0), []
+        xedge, yedge = np.empty(0), np.empty(0)
         for ic in range(len(indt_values)):
 
             #Get edge keys that match
@@ -212,6 +228,8 @@ class Seam(object):
             #Concatenate
             pos_angle = np.concatenate((pos_angle, cur_pos_angle.ravel()))
             nq = np.concatenate((nq, cur_nq))
+            xedge = np.concatenate((xedge, cart_func[:,:,0].ravel()))
+            yedge = np.concatenate((yedge, cart_func[:,:,1].ravel()))
 
         #Reshape pos_angle
         pos_angle = pos_angle.reshape(func.shape[0],-1)
@@ -220,7 +238,7 @@ class Seam(object):
         del kinds, pet_mul, pet_add, Aval, func, diff, cart_func, \
             cart_diff, cur_pos_angle, cur_nq, indt_values, oldA
 
-        return pos_angle, nq, gw
+        return pos_angle, nq, gw, xedge, yedge
 
     ############################################
 
@@ -239,10 +257,13 @@ class Seam(object):
         #Pass dummy gap widths
         gw = None
 
+        #Pass dummy cartesian edge points
+        xedge, yedge = None, None
+
         #Cleanup
         del func, diff
 
-        return pos_angle, nq, gw
+        return pos_angle, nq, gw, xedge, yedge
 
     def get_normal_angles_cartesian(self, indt_values):
         #Just pass to polar
@@ -255,7 +276,7 @@ class Seam(object):
 #####  Gaps #####
 ############################################
 
-    def get_gap_widths(self, gw, wq, dq, dept_nodes):
+    def get_gap_widths(self, gw, wq, dq, dept_nodes, indt_values):
 
         #Handle unique petals differently
         if 'unique' in self.shape.kind:
@@ -284,7 +305,14 @@ class Seam(object):
                         #Get which keys need to be fixed
                         fix = np.where((self.shape.edge_keys == 0) & (fwd_dif | bwd_dif))[0]
                         for ix in fix:
+                            #Set to new gap widths
                             curw[..., allk == ix] = gw[ic2][:,None] * \
+                                np.ones(len(np.where(allk == ix)[0]))
+                            #Kluge for innermost gap
+                            klg_val = np.ones_like(gw[ic2])
+                            #Divide this gap by two
+                            klg_val[indt_values[0] <= self.shape.min_radius[ic2]] /= 2
+                            curw[..., allk == ix] *= klg_val[:,None] * \
                                 np.ones(len(np.where(allk == ix)[0]))
 
                     #Cleanup
