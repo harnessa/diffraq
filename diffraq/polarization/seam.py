@@ -78,22 +78,11 @@ class Seam(object):
             f'get_quad_{self.shape.kind}')(seam_width)
 
         #Get normal and position angles and gap widths depending on shape
-        pos_angle, nq, gw, xedge, yedge = getattr(self, \
+        pos_angle, nq, gw = getattr(self, \
             f'get_normal_angles_{self.shape.kind}')(indt_values)
 
         #Build edge distances
         dq = seam_width * (dept_nodes * pos_angle).ravel()
-
-        #Rotate quad points onto normal axis (from theta, or angular, axis) (doesn't apply to polar)
-        if xedge is not None:
-            pos_angle = pos_angle.ravel()
-            xq -= xedge
-            yq -= yedge
-            newx =  xq*np.cos(pos_angle) + yq*np.sin(pos_angle) + xedge
-            newy = -xq*np.sin(pos_angle) + yq*np.cos(pos_angle) + yedge
-            xq = newx.copy()
-            yq = newy.copy()
-            del newx, newy, xedge, yedge
 
         #Need to adjust where seams overlap (only used in petals) and get all gap widths
         if gw is not None:
@@ -102,7 +91,7 @@ class Seam(object):
             bigw = None
 
         #Cleanup
-        del dept_nodes, pos_angle,
+        del dept_nodes, pos_angle
 
         return xq, yq, wq, dq, nq, bigw
 
@@ -166,7 +155,7 @@ class Seam(object):
         #Cleanup
         del func, diff, pet_add, ones, Aval
 
-        #Calculate angle between normal and theta vector (orthogonal to position vector)
+        #Calculate cos(angle) between normal and theta vector (orthogonal to position vector)
         pos_angle = -(cart_func[...,0]*cart_diff[...,0] + \
             cart_func[...,1]*cart_diff[...,1]) / (np.hypot(cart_func[...,0], \
             cart_func[...,1]) * np.hypot(cart_diff[...,0], cart_diff[...,1]))
@@ -174,14 +163,10 @@ class Seam(object):
         #Build normal angle
         nq = np.arctan2(pet_mul*cart_diff[...,0], -pet_mul*cart_diff[...,1]).ravel()
 
-        #Edge cartesian points
-        xedge = cart_func[:,:,0].ravel()
-        yedge = cart_func[:,:,1].ravel()
-
         #Cleanup
-        del indt_values, cart_func, cart_diff, pet_mul
+        del indt_values, cart_func, cart_diff
 
-        return pos_angle, nq, gw, xedge, yedge
+        return pos_angle, nq, gw
 
     ############################################
 
@@ -189,7 +174,6 @@ class Seam(object):
 
         #Get function and derivative values at the parameter values
         pos_angle, nq, gw = np.empty(0), np.empty(0), []
-        xedge, yedge = np.empty(0), np.empty(0)
         for ic in range(len(indt_values)):
 
             #Get edge keys that match
@@ -217,7 +201,7 @@ class Seam(object):
             cart_func, cart_diff = self.shape.cart_func_diffs( \
                 indt_values[ic], func=func, diff=diff)
 
-            #Calculate angle between normal and theta vector (orthogonal to position vector)
+            #Calculate cos(angle) between normal and theta vector (orthogonal to position vector)
             cur_pos_angle = -(cart_func[...,0]*cart_diff[...,0] + \
                 cart_func[...,1]*cart_diff[...,1]) / (np.hypot(cart_func[...,0], \
                 cart_func[...,1]) * np.hypot(cart_diff[...,0], cart_diff[...,1]))
@@ -228,8 +212,6 @@ class Seam(object):
             #Concatenate
             pos_angle = np.concatenate((pos_angle, cur_pos_angle.ravel()))
             nq = np.concatenate((nq, cur_nq))
-            xedge = np.concatenate((xedge, cart_func[:,:,0].ravel()))
-            yedge = np.concatenate((yedge, cart_func[:,:,1].ravel()))
 
         #Reshape pos_angle
         pos_angle = pos_angle.reshape(func.shape[0],-1)
@@ -238,7 +220,7 @@ class Seam(object):
         del kinds, pet_mul, pet_add, Aval, func, diff, cart_func, \
             cart_diff, cur_pos_angle, cur_nq, indt_values, oldA
 
-        return pos_angle, nq, gw, xedge, yedge
+        return pos_angle, nq, gw
 
     ############################################
 
@@ -257,13 +239,10 @@ class Seam(object):
         #Pass dummy gap widths
         gw = None
 
-        #Pass dummy cartesian edge points
-        xedge, yedge = None, None
-
         #Cleanup
         del func, diff
 
-        return pos_angle, nq, gw, xedge, yedge
+        return pos_angle, nq, gw
 
     def get_normal_angles_cartesian(self, indt_values):
         #Just pass to polar
