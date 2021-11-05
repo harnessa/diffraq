@@ -248,7 +248,7 @@ class Test_Vector(object):
         params = {
             'z0':               27.5,
             'zz':               50,
-            'waves':            .641e-6,
+            'waves':            0.641e-6,
             'tel_diameter':     3e-3,
             'skip_image':       True,
             'free_on_end':      False,
@@ -268,32 +268,35 @@ class Test_Vector(object):
         #Overetch
         etch = -1e-6
 
-        #Etched
-        shape['etch_error'] = etch
-        sim = diffraq.Simulator(params, shape)
-        etch_uu, grid_pts = sim.calc_pupil_field()
-        sim.clean_up()
+        for esgn in [1, -1]:
 
-        #Vector
-        shape['etch_error'] = None
-        params['do_run_vector'] = True
-        params['seam_width'] = abs(etch) * 4
-        params['maxwell_func'] = lambda dd, wv: [np.heaviside(dd,0)*np.heaviside(-dd+abs(etch),0)+0j]*2
-        sim = diffraq.Simulator(params, shape)
-        vect_uu, grid_pts = sim.calc_pupil_field()
-        vect_ee = sim.vector.build_polarized_field(vect_uu, sim.vec_pupil, sim.vec_comps, 0)
-        sim.clean_up()
+            #Etched
+            shape['etch_error'] = etch*esgn
+            sim = diffraq.Simulator(params, shape)
+            etch_uu, grid_pts = sim.calc_pupil_field()
+            sim.clean_up()
 
-        #Clear out wavelength
-        etch_uu = etch_uu[0]
-        vect_uu = vect_uu[0]
-        vect_ee = vect_ee[0,0]
+            #Vector
+            shape['etch_error'] = None
+            params['do_run_vector'] = True
+            params['seam_width'] = abs(etch) * 4
+            params['maxwell_func'] = lambda dd, wv: \
+                [esgn*np.heaviside(dd*esgn,0)*np.heaviside(-dd*esgn+abs(etch),0)+0j]*2
+            sim = diffraq.Simulator(params, shape)
+            vect_uu, grid_pts = sim.calc_pupil_field()
+            vect_ee = sim.vector.build_polarized_field(vect_uu, sim.vec_pupil, sim.vec_comps, 0)
+            sim.clean_up()
 
-        #Get percent difference
-        per_diff = abs(vect_ee - etch_uu).max()/abs(etch_uu).max()*100
+            #Clear out wavelength
+            etch_uu = etch_uu[0]
+            vect_uu = vect_uu[0]
+            vect_ee = vect_ee[0,0]
 
-        #Assert true < 1%
-        assert(per_diff < 1)
+            #Get percent difference
+            per_diff = abs(vect_ee - etch_uu).max()/abs(etch_uu).max()*100
+
+            #Assert true < 1%
+            assert(per_diff < 1)
 
 ############################################
 ############################################

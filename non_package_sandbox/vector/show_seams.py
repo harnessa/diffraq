@@ -17,6 +17,7 @@ params = {
     'seam_theta_nodes':     st,
     'seam_width':           seam,
     'do_run_vector':        True,
+    'with_vector_gaps':     True,
     'spin_angle':  0,
 }
 
@@ -26,6 +27,7 @@ sim = diffraq.Simulator(params)
 #Get seam quad
 sim.vector.build_quadrature()
 xq, yq, wq, dq, nq = sim.vector.xq, sim.vector.yq, sim.vector.wq, sim.vector.dq, sim.vector.nq
+gw = sim.vector.gw
 
 # #Get regular quad
 # sim.occulter.build_quadrature()
@@ -48,17 +50,23 @@ def get_bdw_edge(apod):
     return data
 edge = get_bdw_edge(apod)
 
+# gw[wq == 0] = 0
+
+tt = 2*np.pi/sim.waves[0]*xq*np.sin(np.radians(1/60))*np.cos(-nq)
+
 #Plot
 # plt.colorbar(plt.scatter(xq, yq, c=np.degrees(nq), s=2, cmap=plt.cm.jet))
-plt.colorbar(plt.scatter(xq, yq, c=dq, s=2, cmap=plt.cm.jet))
+# plt.colorbar(plt.scatter(xq, yq, c=gw, s=2, cmap=plt.cm.jet, vmax=22e-6))
+plt.colorbar(plt.scatter(xq, yq, c=tt, s=2, cmap=plt.cm.jet))
+plt.figure();plt.colorbar(plt.scatter(xq, yq, c=np.cos(-nq), s=2, cmap=plt.cm.jet))
 
 # for pt in sim.vector.seams[0].pert_list:
 #     plt.plot(*pt.xy0, 'd')
 
 # plt.plot(oxq, oyq, 'x')
 # plt.plot(*edge2.T, '+')
-for i in range(len(edge)):
-    plt.plot(*edge[i].T)
+# for i in range(len(edge)):
+    # plt.plot(*edge[i].T)
 
 plt.axis('equal')
 print(wq.sum())

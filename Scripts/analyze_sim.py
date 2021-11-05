@@ -17,13 +17,11 @@ import diffraq
 params = {
 
     ### Loading ###
-    'load_dir_base':    f'{diffraq.results_dir}/m2_test',
-    # 'load_dir_base':    '/home/aharness/repos/Milestone_2/diffraq_analysis/final_run',
-    # 'session':          'Diffraq_Results_final/M12P6_vector',
-    'session':          'vec_comps',
-    'load_ext':         'bb_2017',
+    'load_dir_base':    f'{diffraq.results_dir}',
+    'session':          'test',
+    'load_ext':         'circle_vec',
     'cam_analyzer':     ['p', 'o'][0],
-    'wave_ind':         2,
+    'wave_ind':         0,
 
     ### Contrast Parameters ###
     'is_contrast':      True,
