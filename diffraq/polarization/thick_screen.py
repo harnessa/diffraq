@@ -62,7 +62,7 @@ class ThickScreen(object):
         #normal incidence
         phi0 = np.pi/2
 
-        zz = 0./30 * 1e-6
+        zz = 0
         rho = np.sqrt(zz**2 + dd**2.)
 
         #Polar angle from Incident field (heaviside)

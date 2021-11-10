@@ -123,6 +123,8 @@ class Analyzer(object):
             #Get full polarized field
             field = VectorSim.build_polarized_field(self.sim, pupil, vec_pupil, \
                 vec_comps, self.sim.analyzer_angle)
+            #Store
+            self.full_pupil_field = field.copy()
             #Apply analyzer
             self.pupil = self.apply_cam_analyzer(field)
         else:
