@@ -308,8 +308,8 @@ class Seam(object):
             #Build full gap widths
             bigw = (gw[:,None] * np.ones_like(dept_nodes)).ravel()
 
-        #Find overlap
-        ovr_inds = dq >= bigw/2
+        #Find overlap (we only want to stop overlap on opposing screen, but we want data in gaps to add)
+        ovr_inds = dq >= bigw
 
         #Zero out weights on overlap
         wq[ovr_inds] = 0

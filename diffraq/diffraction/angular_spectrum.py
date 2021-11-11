@@ -38,17 +38,36 @@ def diffract_angspec(xq, yq, wq, u0, Dmax, wave, zz, grid_pts, tol, over_sample=
         uu = complex field over target grid
     """
 
+    #Maximum points to use
+    max_pts = 2**11
+
     #Get sampling requirements
     ngrid = len(grid_pts)
     dgrid = grid_pts[1] - grid_pts[0]
-    dangs = 1/(2*Dmax*over_sample)
+    dangs = 1/(2*Dmax*over_sample) * wave
     D = (Dmax/2 + grid_pts.max())       #Maximum extent
 
+    #Get max alpha
+    amax = max(D/np.hypot(zz,D)/wave, Dmax/(wave*zz)) * over_sample * wave
+
     #Get angular spectrum points
-    amax = max(D/np.hypot(zz,D)/wave, Dmax/(wave*zz)) * over_sample
     nangs = int(np.ceil(2*amax/dangs/2)) * 2
-    angs_pts = (np.arange(nangs) - nangs/2)*dangs * wave
+
+    # #Limit to propagating waves
+    # if amax > 1/np.sqrt(2):
+    #     amax = 1/np.sqrt(2)
+    #     nangs = min(nangs, max_pts)
+    #     dangs = amax/nangs
+
+    angs_pts = (np.arange(nangs) - nangs/2)*dangs
     dangs = angs_pts[1] - angs_pts[0]
+
+    print(nangs)
+
+    # #Catch large values
+    # if nangs > 2**12:
+    #     print('\nLarge Angular Spectrum Size!\n')
+    #     import sys; sys.exit()
 
     ###################################
     ### Angular Spectrum ###
@@ -73,7 +92,7 @@ def diffract_angspec(xq, yq, wq, u0, Dmax, wave, zz, grid_pts, tol, over_sample=
     cq = u0 * wq
 
     #Do FINUFFT
-    aspec = finufft.nufft2d1(dka*xq, dka*yq, cq, (nangs, nangs), isign=1, eps=tol)
+    aspec = finufft.nufft2d1(dka*xq, dka*yq, cq, (nangs, nangs), isign=-1, eps=tol)
 
     ###################################
     ### Diffraction ###
@@ -82,36 +101,47 @@ def diffract_angspec(xq, yq, wq, u0, Dmax, wave, zz, grid_pts, tol, over_sample=
     #Scaled grid spacing
     dkg = sc * dgrid
 
-    #Get angular coordinates (assume symmetric grid input)
-    abq = angs_pts.copy()
-
     #Max NU coord
-    maxNU = dkg * np.abs(abq).max()
+    maxNU = dkg * angs_pts[-1]
 
     #only if needed
     if maxNU > 3*np.pi:
         print('too coarse diff')
         #Wrap in case grid too coarse
-        abq = np.mod(abq, 2*np.pi/dkg)
+        angs_pts = np.mod(angs_pts, 2*np.pi/dkg)
 
     #Get propagation constant
-    kz2 = 1 - abq**2 - abq[:,None]**2
-    kz = 2*np.pi/wave * np.sqrt(np.abs(kz2)) + 0j
-    kz[kz2 < 0] *= 1j
+    kz = 1 - angs_pts**2 - angs_pts[:,None]**2
+    k0inds = kz < 0
+    kz = np.exp(1j * 2*np.pi/wave * np.sqrt(np.abs(kz)) * zz)
+    kz[k0inds] *= 0
+
+    # #Trim to propagating modes
+    # print(np.count_nonzero(k0inds))
+    # import matplotlib.pyplot as plt;plt.ion()
+    # plt.imshow(abs(aspec))
+    # dd = abs(aspec).copy()
+    # dd[k0inds] = 0
+    # plt.figure()
+    # plt.imshow(dd)
+    # breakpoint()
+
+
+    # kz[k0inds] *= 1j
+
 
     #Propagation kernel * aspec as strengths
-    cq = aspec * np.exp(1j*kz*zz)
-    cq = cq.flatten()
+    cq = (aspec * kz).flatten()
 
     #Cleanup
-    del kz, kz2
+    del kz, k0inds
 
     #Tile ang points
-    abq = np.tile(abq, (nangs, 1))
+    angs_pts = np.tile(angs_pts, (nangs, 1))
 
     #Do FINUFFT (inverse)
-    uu = finufft.nufft2d1(dkg*abq.flatten(), dkg*abq.T.flatten(), cq, \
-        (ngrid, ngrid), isign=-1, eps=tol)
+    uu = finufft.nufft2d1(dkg*angs_pts.flatten(), dkg*angs_pts.T.flatten(), cq, \
+        (ngrid, ngrid), isign=1, eps=tol)
 
     #Subtract from Babinet field
     if is_babinet:
@@ -124,7 +154,7 @@ def diffract_angspec(xq, yq, wq, u0, Dmax, wave, zz, grid_pts, tol, over_sample=
     uu *= dangs**2/wave**2
 
     #Cleanup
-    del cq, abq, angs_pts
+    del cq, angs_pts
 
     return uu
 

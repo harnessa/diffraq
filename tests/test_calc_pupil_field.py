@@ -20,7 +20,7 @@ class Test_calc_pupil_field(object):
 
         ngrid = 512
         grid_width = 3
-        fresnums = [10,100,1000]
+        fresnums = [1, 10]
         shapes = ['circle', 'polar']
         tol = 1e-9              #tolerance
 
@@ -33,6 +33,7 @@ class Test_calc_pupil_field(object):
             'tel_diameter':     grid_width,
             'num_pts':          ngrid,
             'skip_image':       True,
+            'fft_tol': 1e-12,
         }
 
         shapes = [{'kind':'circle', 'max_radius':1},

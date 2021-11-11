@@ -25,7 +25,6 @@ class Test_angspec(object):
     fft_tol = 1e-12
     tol = 1e-3
     num_pts = 512
-    num_pad = 6
     tel_diameter = 5e-3
 
     def run_all_tests(self):
@@ -75,6 +74,9 @@ class Test_angspec(object):
             #Calculate straight diffraction
             uans2 = diffraq.diffraction.diffract_angspec(xq, yq, wq, u0, Dmax, \
                 self.wave, self.zz, xpts, self.fft_tol)
+            import matplotlib.pyplot as plt;plt.ion()
+            plt.imshow(abs(uans2))
+            breakpoint()
             uans2 = uans2[len(uans2)//2]
 
             #Calculate analytic solution
@@ -84,7 +86,7 @@ class Test_angspec(object):
             #Assert close to theoretical
             assert(abs(utru - uans1).max() < self.tol)
             assert(abs(utru - uans2).max() < self.tol)
-            
+
             # print(abs(utru - uans1).max())
             # print(abs(utru - uans2).max())
             #
