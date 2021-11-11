@@ -18,7 +18,7 @@ class Test_calc_pupil_field(object):
 
     def test_pupil_field(self):
 
-        ngrid = 20
+        ngrid = 512
         grid_width = 3
         fresnums = [10,100,1000]
         shapes = ['circle', 'polar']
@@ -53,13 +53,19 @@ class Test_calc_pupil_field(object):
             for i in range(len(fresnums)):
 
                 #Theoretical value
-                utru = diffraq.utils.solution_util.direct_integration( \
-                    fresnums[i], pupil[i].shape, sim.occulter.xq, sim.occulter.yq, \
-                    sim.occulter.wq, grid_2D)
+                # utru = diffraq.utils.solution_util.direct_integration( \
+                    # fresnums[i], pupil[i].shape, sim.occulter.xq, sim.occulter.yq, \
+                    # sim.occulter.wq, grid_2D)
 
                 #Assert max difference is close to specified tolerance
                 max_diff = tol * fresnums[i]
-                assert(np.abs(utru - pupil[i]).max() < max_diff)
+                # assert(np.abs(utru - pupil[i]).max() < max_diff)
+                import matplotlib.pyplot as plt;plt.ion()
+                # plt.figure()
+                # plt.imshow(abs(utru))
+                plt.figure()
+                plt.imshow(abs(pupil[i]))
+                breakpoint()
 
         #Cleanup
         sim.clean_up()

@@ -20,7 +20,7 @@ class Test_Quadrature(object):
 
     def run_all_tests(self):
         tsts = ['lgwt_A', 'lgwt_B', 'polar', 'cartesian', 'starshade',
-            'loci', 'triangle', 'integration'][-1:]
+            'loci', 'triangle', 'integration'][1:2]
         for t in tsts[-1:]:
             getattr(self, f'test_{t}')()
 
@@ -55,8 +55,8 @@ class Test_Quadrature(object):
     def test_lgwt_B(self):
 
         #Test points
-        limits = [[-1,1], [5,10]]
-        nums = [3000]
+        limits = [[-1,1], [0,1]]
+        nums = [500, 5000]
 
         for (a,b) in limits:
             for N in nums:
