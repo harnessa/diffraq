@@ -11,7 +11,8 @@ Description: __init__ package for the DIFFRACTION module.
 
 """
 
-from diffraq.diffraction.angular_spectrum import calculate_angspec, diffract_angspec, diffract_from_angspec
+from diffraq.diffraction.diffract_nu_angspec import diffract_nu_angspec
+from diffraq.diffraction.diffract_angspec import calculate_angspec, diffract_angspec, diffract_from_angspec
 from diffraq.diffraction.diffract_grid import diffract_grid
 from diffraq.diffraction.diffract_points import diffract_points
 from diffraq.diffraction.focuser import Focuser

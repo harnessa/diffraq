@@ -233,7 +233,11 @@ class Simulator(object):
         for iw in range(len(self.waves)):
 
             #Calculate Input field
-            u0 = np.exp(1j*2.*np.pi/self.waves[iw] * (xq**2 + yq**2))
+            u0 = np.exp(1j*2.*np.pi/self.waves[iw] * (xq**2 + yq**2)/(2*self.z0))
+
+            #Get angular spectrum quad
+            xf, yf, wf = diffraq.quadrature.frequency_quad(self.waves[iw], self.zz, \
+                self.freq_radial_nodes, self.freq_theta_nodes, Dmax, grid_pts, over_sample=self.freq_over_sample)
 
             #Apply input beam function
             if self.beam_function is not None:
@@ -243,8 +247,8 @@ class Simulator(object):
                 wq = self.occulter.wq
 
             #Calculate diffraction
-            uu = diffraq.diffraction.diffract_angspec(xq, yq, wq, u0, Dmax, \
-                self.waves[iw], self.zz, grid_pts, self.fft_tol, is_babinet=self.occulter.is_babinet)
+            uu = diffraq.diffraction.diffract_nu_angspec(xq, yq, wq, u0, \
+                xf, yf, wf, self.waves[iw], self.zz, grid_pts, self.fft_tol, is_babinet=self.occulter.is_babinet)
 
             #Account for extra phase added by off_axis
             uu *= np.exp(1j*np.pi/(self.waves[iw]*self.z0)*self.z_scl * xoff)
@@ -256,7 +260,7 @@ class Simulator(object):
             pupil[iw] = uu
 
         #Cleanup
-        del uu, xq, yq, wq
+        del uu, xq, yq, wq, xf, yf, wf
 
         return pupil
 

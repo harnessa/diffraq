@@ -39,6 +39,10 @@ class LociShape(Shape):
     def build_local_shape_edge(self):
         return self.get_loci()
 
+    def get_min_max_radius(self):
+        #TODO
+        breakpoint()
+
 ############################################
 ############################################
 
@@ -52,7 +56,7 @@ class LociShape(Shape):
     def load_loci_data(self, loci_file):
         with h5py.File(loci_file, 'r') as f:
             loci = f['loci'][()]
-        return loci    
+        return loci
 
 ############################################
 ############################################

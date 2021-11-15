@@ -19,53 +19,60 @@ class Test_calc_pupil_field(object):
     def test_pupil_field(self):
 
         ngrid = 512
-        grid_width = 3
+        radius = 7e-3
         fresnums = [1, 10]
         shapes = ['circle', 'polar']
         tol = 1e-9              #tolerance
 
         #Simulator params
         params = {
-            'zz':               1,
-            'waves':            1/np.array(fresnums),
-            'radial_nodes':     120,
-            'theta_nodes':      350,
-            'tel_diameter':     grid_width,
+            'waves':            0.5e-6,
+            'radial_nodes':     200,
+            'theta_nodes':      200,
+            'tel_diameter':     3e-3,
             'num_pts':          ngrid,
             'skip_image':       True,
-            'fft_tol': 1e-12,
+            'fft_tol':1e-12,
         }
 
-        shapes = [{'kind':'circle', 'max_radius':1},
-            {'kind':'polar', 'edge_func':lambda t: 1 + 0.3*np.cos(3*t)}]
+        shapes = [{'kind':'circle', 'max_radius':radius},
+            {'kind':'polar', 'edge_func':lambda t: radius*(1 + 0.3*np.cos(3*t))}]
 
-        for shape in shapes:
-
-            #Build simulator
-            sim = diffraq.Simulator(params, shape)
-
-            #Get pupil field
-            pupil, grid_pts = sim.calc_pupil_field()
-
-            #Get 2D grid for theoretical calculation
-            grid_2D = np.tile(grid_pts, (ngrid,1))
+        for shape in shapes[1:]:
 
             #Compare to theoretical value for each Fresnel number
-            for i in range(len(fresnums)):
+            for i in range(len(fresnums))[1:]:
+
+                params['zz'] = radius**2/(params['waves'] * fresnums[i])
+
+                #Build simulator
+                sim = diffraq.Simulator(params, shape)
+                print(sim.zz)
+
+                #Get pupil field
+                pupil, grid_pts = sim.calc_pupil_field()
+
+                #Get 2D grid for theoretical calculation
+                grid_2D = np.tile(grid_pts, (ngrid,1))
 
                 #Theoretical value
                 # utru = diffraq.utils.solution_util.direct_integration( \
-                    # fresnums[i], pupil[i].shape, sim.occulter.xq, sim.occulter.yq, \
-                    # sim.occulter.wq, grid_2D)
+                #     fresnums[i], pupil[0].shape, sim.occulter.xq, sim.occulter.yq, \
+                #     sim.occulter.wq, grid_2D)
 
                 #Assert max difference is close to specified tolerance
                 max_diff = tol * fresnums[i]
-                # assert(np.abs(utru - pupil[i]).max() < max_diff)
+                # assert(np.abs(utru - pupil[0]).max() < max_diff)
+
                 import matplotlib.pyplot as plt;plt.ion()
+
+                # plt.figure()
+                # plt.plot(abs(utru[len(utru)//2]))
+                # plt.plot(abs(pupil[0][len(pupil[0])//2]),'--')
                 # plt.figure()
                 # plt.imshow(abs(utru))
                 plt.figure()
-                plt.imshow(abs(pupil[i]))
+                plt.imshow(abs(pupil[0]))
                 breakpoint()
 
         #Cleanup
