@@ -230,7 +230,7 @@ class Occulter(object):
 
     def clean_up(self):
         #Delete trash
-        trash_list = ['xq', 'yq', 'wq', 'edge', 'shapes']
+        trash_list = ['xq', 'yq', 'wq', 'edge']
 
         for att in trash_list:
             if hasattr(self, att):

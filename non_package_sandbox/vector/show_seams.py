@@ -52,13 +52,9 @@ edge = get_bdw_edge(apod)
 
 # gw[wq == 0] = 0
 
-tt = 2*np.pi/sim.waves[0]*xq*np.sin(np.radians(1/60))*np.cos(-nq)
-
 #Plot
-# plt.colorbar(plt.scatter(xq, yq, c=np.degrees(nq), s=2, cmap=plt.cm.jet))
+plt.colorbar(plt.scatter(xq, yq, c=np.degrees(nq), s=2, cmap=plt.cm.jet))
 # plt.colorbar(plt.scatter(xq, yq, c=gw, s=2, cmap=plt.cm.jet, vmax=22e-6))
-plt.colorbar(plt.scatter(xq, yq, c=tt, s=2, cmap=plt.cm.jet))
-plt.figure();plt.colorbar(plt.scatter(xq, yq, c=np.cos(-nq), s=2, cmap=plt.cm.jet))
 
 # for pt in sim.vector.seams[0].pert_list:
 #     plt.plot(*pt.xy0, 'd')
