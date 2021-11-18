@@ -18,7 +18,7 @@ class Test_Vector(object):
 
     tol = 5e-4
 
-    num_pts = 256
+    num_pts = 20
     radial_nodes = 400
     theta_nodes = 300
     zz = 1e5
@@ -141,7 +141,7 @@ class Test_Vector(object):
                 if utru is None:
                     crad = self.circle_rad + self.seam_width*[1, -1][int(is_opaque)]
                     utru = diffraq.utils.solution_util.calculate_circle_solution(grid_pts, \
-                        sim.waves[0], sim.zz, sim.z0, crad, is_opaque)
+                        sim.waves[0], sim.zz, sim.z0, crad, is_opaque) * np.exp(1j*2*np.pi/sim.waves[0]*sim.z0)
 
                     #turn into intensity
                     utru = np.abs(utru)**2

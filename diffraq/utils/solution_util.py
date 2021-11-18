@@ -12,6 +12,9 @@ Description: Functions to compute the analytic solution for a circular occulter.
 
 import numpy as np
 from scipy.special import jn
+from mpi4py import MPI
+rank = MPI.COMM_WORLD.rank
+size = MPI.COMM_WORLD.size
 
 #FIXED parameters
 vu_brk = 0.99
@@ -122,6 +125,10 @@ def direct_integration(fresnum, u_shp, xq, yq, wq, gx_2D, gy_2D=None, F0=0):
     utru = np.zeros(u_shp) + 0j
     for j in range(u_shp[0]):
         for k in range(u_shp[1]):
+
+            if (j*u_shp[0] + k) % size != rank:
+                continue
+
             #Get integrand
             integrand = np.exp((1j*np.pi/lambdaz)* \
                 ((xq - gx_2D[j,k])**2 + (yq - gy_2D[j,k])**2))
@@ -131,8 +138,13 @@ def direct_integration(fresnum, u_shp, xq, yq, wq, gx_2D, gy_2D=None, F0=0):
             #Do integration
             utru[j,k] = np.sum(integrand * wq)
 
-    utru *= 1/(1j*lambdaz)
-    return utru
+    #Collect processors
+    MPI.COMM_WORLD.Barrier()
+    uu = np.zeros_like(utru)
+    nothing = MPI.COMM_WORLD.Allreduce(utru, uu)
+
+    uu *= 1/(1j*lambdaz)
+    return uu
 
 ############################################
 ############################################

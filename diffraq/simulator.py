@@ -14,6 +14,9 @@ Description: Main class to control simulations for the DIFFRAQ python package.
 
 import diffraq
 import numpy as np
+import multiprocessing
+import itertools
+
 
 class Simulator(object):
 
@@ -226,12 +229,11 @@ class Simulator(object):
             yq = self.occulter.yq
             xoff = 0
 
+        #Build grid of target points
+        grid_2D = np.tile(grid_pts, (len(grid_pts),1))
+
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
-
-            #lambda * z
-            lamzz = self.waves[iw] * self.zz
-            lamz0 = self.waves[iw] * self.z0
 
             #Apply input beam function
             if self.beam_function is not None:
@@ -241,20 +243,25 @@ class Simulator(object):
                 wq = self.occulter.wq
 
             #Calculate diffraction
-            uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
-                self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
+            uu = diffraq.diffraction.diffract_RS2(xq, yq, wq, self.waves[iw], \
+                self.zz, grid_2D, z0=self.z0, is_babinet=self.occulter.is_babinet)
+
+            # lamzz = self.waves[iw] * self.zz
+            # lamz0 = self.waves[iw] * self.z0
+            # uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
+            #     self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
+            # uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+            # uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.z0)
+
 
             #Account for extra phase added by off_axis
-            uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
-
-            #Multiply by plane wave
-            uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+            uu *= np.exp(1j*np.pi/(self.waves[iw]*self.z0)*self.z_scl * xoff)
 
             #Store
             pupil[iw] = uu
 
         #Cleanup
-        del uu, xq, yq, wq
+        del uu, xq, yq, wq, grid_2D
 
         return pupil
 
@@ -286,6 +293,9 @@ class Simulator(object):
         cosa = np.cos(self.vector.nq)
         sina = np.sin(self.vector.nq)
         del self.vector.nq
+
+        #Build grid of target points
+        grid_2D = np.tile(grid_pts, (len(grid_pts),1))
 
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
@@ -320,14 +330,20 @@ class Simulator(object):
                          self.vector.Ex_comp * (sina*cosa * (pfld - sfld)))
 
                 #Calculate diffraction
-                uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
-                    grid_pts, self.fft_tol, lamz0=lamz0, is_babinet=is_babinet)
+                uu = diffraq.diffraction.diffract_RS2(xq, yq, wu0, self.waves[iw], \
+                    self.zz, grid_2D, z0=self.z0, is_babinet=is_babinet)
+
+
+                # lamzz = self.waves[iw] * self.zz
+                # lamz0 = self.waves[iw] * self.z0
+                # uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, grid_pts, \
+                #     self.fft_tol, lamz0=lamz0, is_babinet=is_babinet)
+                # uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+                # uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.z0)
+
 
                 #Account for extra phase added by off_axis
                 uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
-
-                #Multiply by plane wave
-                uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
 
                 #Store
                 pupil[iw,ip] = uu
