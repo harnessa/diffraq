@@ -18,6 +18,9 @@ import h5py
 import time
 import sys
 import os
+from mpi4py import MPI
+rank = MPI.COMM_WORLD.rank
+size = MPI.COMM_WORLD.size
 
 class Logger(object):
 
@@ -39,7 +42,7 @@ class Logger(object):
 
     def start_up(self):
         #Create save directory
-        if self.do_save:
+        if self.do_save and rank == 0:
             misc_util.create_directory(self.save_dir)
 
         #Start
@@ -141,7 +144,7 @@ class Logger(object):
 
     def save_parameters(self):
         #Return immediately if not saving
-        if not self.do_save:
+        if not self.do_save or rank != 0:
             return
         #Dump parameters into a json file
         misc_util.json_dump(self.sim.params, self.filename('parameters','json'))
@@ -152,7 +155,7 @@ class Logger(object):
 
     def save_pupil_field(self, pupil, grid_pts, vec_pupil, vec_comps):
         #Return immediately if not saving
-        if not self.do_save:
+        if not self.do_save or rank != 0:
             return
 
         #TODO: save wavelengths, basically save all parameters for easy access (dont have to run analyzer)
@@ -175,7 +178,7 @@ class Logger(object):
 
     def save_image_field(self, image, grid_pts):
         #Return immediately if not saving
-        if not self.do_save:
+        if not self.do_save or rank != 0:
             return
         #TODO: save wavelengths, basically save all parameters for easy access (dont have to run analyzer)
 

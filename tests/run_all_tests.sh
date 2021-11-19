@@ -2,8 +2,7 @@
 
 #Test in order
 pytest test_quadrature.py
-pytest test_diffraction_grid.py
-pytest test_diffraction_points.py
+pytest test_diffraction_RS.py
 pytest test_outline.py
 pytest test_cartesian_transforms.py
 pytest test_occulter.py
