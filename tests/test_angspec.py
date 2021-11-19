@@ -19,20 +19,20 @@ class Test_Angspec(object):
 
     tol = 1e-2
 
-    num_pts = 2**8
-    num_pad = 2**3
+    num_pts = 2**10
+    num_pad = 2
     wave = 0.6e-6
 
     def run_all_tests(self):
-        for tt in ['diffraction', 'focusing'][1:]:
+        for tt in ['diffraction', 'focusing'][:1]:
             getattr(self, f'test_{tt}')()
 
 ############################################
 
     def test_diffraction(self):
 
-        dz = 50
-        radius = 12e-3
+        dz = 10e-3
+        radius = 2.5e-3
 
         #Setup and get initial field
         U0, kz, xx = self.setup(radius)
@@ -41,22 +41,30 @@ class Test_Angspec(object):
         fn = np.fft.fftshift(np.fft.fft2(U0))
         Ue = np.fft.ifft2(np.fft.ifftshift(fn * np.exp(1j*kz*dz)))
 
+        import matplotlib.pyplot as plt;plt.ion()
+        # plt.figure()
+        # plt.imshow(abs(Ue))
+
+        NN = self.num_pts * self.num_pad
+        xx = (np.arange(NN) - NN/2)*(xx[1]-xx[0])
+
         #Crop
-        Ue = image_util.crop_image(Ue, None, self.num_pts//2)
+        # Ue = image_util.crop_image(Ue, None, self.num_pts//2)
         Ue = Ue[len(Ue)//2]
 
         #Calculate analytic solution
-        utru = diffraq.utils.solution_util.calculate_circle_solution(xx, \
-            self.wave, dz, 1e19, radius, False)
+        # utru = diffraq.utils.solution_util.calculate_circle_solution(xx, \
+            # self.wave, dz, 1e19, radius, False)
 
         import matplotlib.pyplot as plt;plt.ion()
-        plt.plot(xx, abs(Ue))
-        plt.plot(xx, abs(utru), '--')
         plt.figure()
-        plt.plot(xx, np.angle(Ue))
-        plt.plot(xx, np.angle(utru), '--')
+        plt.plot(xx, abs(Ue))
+        # plt.plot(xx, abs(utru), '--')
+        # plt.figure()
+        # plt.plot(xx, np.angle(Ue))
+        # plt.plot(xx, np.angle(utru), '--')
 
-        print(abs(Ue - utru).mean())
+        # print(abs(Ue - utru).mean())
         breakpoint()
 
         #Assert true

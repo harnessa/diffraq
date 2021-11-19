@@ -57,11 +57,8 @@ class Test_AngSpec(object):
         #Return if dz is zero
         if dz == 0.: return E_in
 
-        # xx = (np.arange(self.NN) - self.NN/2)*self.dx
-        # E_in*= np.exp(1j*self.kk*(xx**2 + xx[:,None]**2)/(2*-self.fl))
 
         #FFT initial electric field + ifftshift
-        # fn = np.fft.ifftshift(np.fft.fft2(np.fft.fftshift(E_in)))
         fn = np.fft.fftshift(np.fft.fft2(E_in))
 
         #Multiply by transfer function + fftshift
