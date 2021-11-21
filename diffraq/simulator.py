@@ -146,10 +146,11 @@ class Simulator(object):
             return
 
         #Calculate pupil field
-        self.pupil, grid_pts = self.calc_pupil_field()
+        self.pupil, self.grid_pts = self.calc_pupil_field()
 
         #Save pupil field
-        self.logger.save_pupil_field(self.pupil, grid_pts, self.vec_pupil, self.vec_comps)
+        self.logger.save_pupil_field(self.pupil, self.grid_pts, \
+            self.vec_pupil, self.vec_comps)
 
     ###########################
 
@@ -163,7 +164,7 @@ class Simulator(object):
             return False
 
         #Load pupil
-        self.pupil, grid_pts, self.vec_pupil, self.vec_comps, is_polarized = \
+        self.pupil, self.grid_pts, self.vec_pupil, self.vec_comps, is_polarized = \
             self.logger.load_pupil_field()
 
         #Return True
@@ -376,11 +377,12 @@ class Simulator(object):
             self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
             for i in range(2):
                 self.image[:,i], self.image_pts = \
-                    self.focuser.calculate_image(pupil[:,i])
+                    self.focuser.calculate_image(pupil[:,i], self.grid_pts)
 
         else:
             #Calculate scalar image
-            self.image, self.image_pts = self.focuser.calculate_image(self.pupil)
+            self.image, self.image_pts = \
+                self.focuser.calculate_image(self.pupil, self.grid_pts)
 
         #Save image
         self.logger.save_image_field(self.image, self.image_pts)

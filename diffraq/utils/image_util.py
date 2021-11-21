@@ -34,10 +34,14 @@ def pad_array(inarr, NN):
     #Assumes even number
     return np.pad(inarr, (NN - inarr.shape[-1])//2)
 
-def round_aperture(img):
-    #Build radius values
-    rhoi = get_image_radii(img.shape[-2:])
-    rtest = rhoi >= (min(img.shape[-2:]) - 1.)/2.
+def round_aperture(img, grid_pts=None, tel_diameter=None):
+    #Get radii and zero points
+    if grid_pts is not None and tel_diameter is not None:
+        rr = get_grid_radii(grid_pts)
+        rtest = rr >= tel_diameter/2
+    else:
+        rr = get_image_radii(img.shape[-2:])
+        rtest = rr >= (min(img.shape[-2:]) - 1.)/2.
 
     #Get zero value depending if complex
     zero_val = 0.
@@ -50,8 +54,7 @@ def round_aperture(img):
     #Get number of unmasked points
     NN_full = np.count_nonzero(~rtest)
 
-    #cleanup
-    del rhoi, rtest
+    del rr, rtest
 
     return img, NN_full
 
@@ -60,6 +63,15 @@ def get_image_radii(img_shp, cen=None):
     if cen is None:
         cen = [img_shp[-2]/2, img_shp[-1]/2]
     return np.hypot(xind - cen[0], yind - cen[1])
+
+def get_grid_radii(grid_pts):
+    if grid_pts.ndim == 2:
+        xcen, ycen = grid_pts[:,grid_pts.shape[1]//2]
+        rr = np.hypot(grid_pts[0] - xcen, grid_pts[1] - ycen)
+    else:
+        rr = np.hypot(grid_pts, grid_pts[:,None])
+
+    return rr
 
 ##############################################
 ##############################################

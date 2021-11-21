@@ -13,14 +13,8 @@ Description: Class to propagate the diffracted field to the focal plane of the
 
 import numpy as np
 from diffraq.utils import image_util
-import scipy.fft as fft
-#If CV2 available, use that for the affine transform. Otherwise use scipy
-try:
-    import cv2
-    has_cv2 = True
-except ImportError:
-    from scipy.ndimage import affine_transform
-    has_cv2 = False
+from diffraq.quadrature import polar_quad
+import finufft
 
 class Focuser(object):
 
@@ -41,48 +35,14 @@ class Focuser(object):
         #Add defocus to image distance
         self.image_distance += self.sim.defocus
 
-        #Effective lens propagation distance (inverse)
-        self.lens_prop_inv_zz = 1./self.image_distance - 1/self.sim.focal_length
-
         #Resolution
         self.image_res = self.sim.pixel_size / self.image_distance
 
         #Input Spacing
         self.dx0 = self.sim.tel_diameter / self.sim.num_pts
 
-        #Set padding
-        self.get_padding()
-
-    def get_padding(self):
-        #Target number of FFT array (with padding) required to properly sample
-        self.targ_NN = self.sim.num_pts * self.sim.waves / \
-            (self.sim.tel_diameter * self.image_res)
-
-        #Find next fastest size for FFT (not necessarily 2**n)
-        self.true_NN = np.array([]).astype(int)
-        for tn in self.targ_NN:
-            #Make sure we have minimum padding
-            tar = int(max(np.ceil(tn), self.sim.num_pts * self.sim.min_padding))
-            #Get next fasest (even)
-            tru, dn = 1, 0
-            while (tru % 2) != 0:
-                tru = fft.next_fast_len(tar+dn)
-                dn += 1
-            self.true_NN = np.concatenate((self.true_NN, [tru]))
-
-        #Make sure not too large
-        if np.any(self.true_NN > 2**14):
-            bad = self.true_NN[self.true_NN > 2**14]
-            self.sim.logger.error(f'Large Image size: {bad}', is_warning=True)
-
-        #Make sure we are always oversampling
-        if np.any(self.true_NN < self.targ_NN):
-            bad = self.true_NN[self.true_NN < self.targ_NN]
-            self.sim.logger.error(f'Undersampling: {bad}')
-
-        #Get unique padding groups
-        self.unq_true_NN = np.unique(self.true_NN)
-        self.true_NN_group = [np.where(tn == self.unq_true_NN)[0][0] for tn in self.true_NN]
+        #Gaussian quad number
+        self.rad_nodes, self.the_nodes = self.sim.angspec_radial_nodes, self.sim.angspec_theta_nodes
 
 ############################################
 ############################################
@@ -91,138 +51,145 @@ class Focuser(object):
 ####	Main Function ####
 ############################################
 
-    def calculate_image(self, in_pupil):
+    def calculate_image(self, in_pupil, grid_pts):
+
+        #Run single lens or lens system?
+        if self.sim.lens_system is None:
+            return self.calc_single_lens(in_pupil, grid_pts)
+        else:
+            return self.calc_lens_system(in_pupil, grid_pts)
+
+############################################
+############################################
+
+############################################
+####	Single Lens ####
+############################################
+
+    def calc_single_lens(self, in_pupil, grid_pts):
+
         #Get image size
-        num_img = min(self.true_NN.max(), self.sim.image_size)
+        num_img = self.sim.image_size
 
         #Create image container
         image = np.empty((len(self.sim.waves), num_img, num_img))
-        sampling = np.empty(len(self.sim.waves))
 
         #Create copy
         pupil = in_pupil.copy()
         del in_pupil
 
         #Round aperture and get number of points
-        NN0 = pupil.shape[-1]
-        pupil, NN_full = image_util.round_aperture(pupil)
+        pupil, NN_full = image_util.round_aperture(pupil, grid_pts, self.sim.tel_diameter)
 
-        #Create input plane indices
-        et = (np.arange(NN0)/NN0 - 0.5) * NN0
+        #Get paraxial lens OPD
+        rr = image_util.get_grid_radii(grid_pts)
+        opd = -rr**2/(2*self.sim.focal_length)
+        del rr
 
-        #Loop through pad groups and calculate images that are the same size
-        for NN in self.unq_true_NN:
+        #Setup angular spectrum
+        fx, fy, wq = self.setup_angspec()
 
-            #Find wavelengths in this pad group
-            cur_inds = np.where(self.true_NN == NN)[0]
+        #Target coordinates
+        ox_1D = (np.arange(num_img) - num_img/2) * self.sim.pixel_size
+        ox = np.tile(ox_1D, (num_img, 1))
+        oy = ox.T.flatten()
+        ox = ox.flatten()
 
-            #Create focal plane indices
-            xx = (np.arange(NN)/NN - 0.5) * NN
+        #Loop through wavelengths and calculate image
+        for iw in range(len(self.sim.waves)):
 
-            #Loop through wavelengths in this pad group and calculate image
-            for iw in cur_inds:
+            #Start initial field with current lens phase added
+            u0 = pupil[iw] * np.exp(1j * 2*np.pi/self.sim.waves[iw] * opd)
 
-                #Propagate to image plane
-                img, dx = self.propagate_lens_diffraction(pupil[iw], \
-                    self.sim.waves[iw], et, xx, NN, NN_full)
+            #Propagate
+            img = self.propagate(u0, self.image_distance, \
+                self.sim.waves[iw], fx, fy, wq, ox, oy)
 
-                #Turn into intensity
-                img = np.real(img.conj()*img)
+            #Turn into intensity
+            img = np.real(img.conj()*img)
 
-                #Finalize image
-                img, dx = self.finalize_image(img, num_img, self.targ_NN[iw], NN, dx)
+            #Reshape into 2D and store
+            image[iw] = img.reshape((num_img, num_img))
 
-                #Store
-                image[iw] = img
-                sampling[iw] = dx
-
-        #Use mean sampling to calculate grid pts (this grid matches fft.fftshift(fft.fftfreq(NN, d=1/NN)))
-        grid_pts = image_util.get_grid_points(image.shape[-1], dx=sampling.mean())
-
-        #Convert to angular resolution
-        grid_pts /= self.image_distance
+        #Convert output points to angle
+        image_pts = ox_1D / self.image_distance
 
         #Cleanup
-        del et, pupil, img, xx
+        del pupil, img, fx, fy, wq, ox, oy, u0
 
-        return image, grid_pts
-
-############################################
-############################################
-
-############################################
-####	Image Propagation ####
-############################################
-
-    def propagate_lens_diffraction(self, pupil, wave, et, xx, NN, NN_full):
-
-        #Get output plane sampling
-        dx = wave*self.image_distance/(self.dx0*NN)
-
-        #Multiply by propagation kernels (lens and Fresnel; don't run if image_distance = focal length since they cancel)
-        if self.lens_prop_inv_zz != 0:
-            pupil *= self.propagation_kernel(et, self.dx0, wave, 1/self.lens_prop_inv_zz)
-
-        #Pad pupil
-        pupil = image_util.pad_array(pupil, NN)
-
-        #Run FFT
-        FF = self.do_FFT(pupil)
-
-        #Multiply by Fresnel diffraction phase postfactor
-        FF *= self.propagation_kernel(xx, dx, wave, self.image_distance)
-
-        #Multiply by constant phase term
-        FF *= np.exp(1j * 2.*np.pi/wave * self.image_distance)
-
-        #(not used) Normalize by FFT + normalizations to match Fresnel diffraction
-        # FF *= self.dx0**2./(wave*self.image_distance) / NN_full
-
-        #Normalize such that peak is 1. Needs to scale for wavelength relative to other images
-        FF /= NN_full
-
-        return FF, dx
+        return image, image_pts
 
 ############################################
 ############################################
 
 ############################################
-####	Misc Functions ####
+####	Lens System ####
 ############################################
 
-    def propagation_kernel(self, et, dx0, wave, distance):
-        return np.exp(1j * 2.*np.pi/wave * dx0**2. * (et[:,None]**2 + et**2) / (2.*distance))
+    def calc_lens_system(self, in_pupil, grid_pts):
+        #TODO: add
 
-    def do_FFT(self, MM):
-        return fft.ifftshift(fft.fft2(fft.fftshift(MM), workers=-1))
+        import matplotlib.pyplot as plt;plt.ion()
+        breakpoint()
+        
+############################################
+############################################
 
-    def finalize_image(self, img, num_img, targ_NN, true_NN, dx):
-        #Resample onto theoretical resolution through affine transform
-        scaling = true_NN / targ_NN
+############################################
+#####  Angular Spectrum Propagation #####
+############################################
 
-        #Make sure scaling leads to even number (will lead to small difference in sampling)
-        NN = len(img)
-        N2 = NN / scaling
-        scaling = NN / (N2 - (N2%2))
+    def propagate(self, u0, zz, wave, fx, fy, wq, ox, oy):
 
-        #Scale sampling
-        dx *= scaling
+        #Get transfer function
+        fz2 = 1. - (wave*fx)**2 - (wave*fy)**2
+        evind = fz2 < 0
+        Hn = np.exp(1j* 2*np.pi/wave * zz * np.sqrt(np.abs(fz2)))
+        Hn[evind] = 0
 
-        #Affine matrix
-        affmat = np.array([[scaling, 0, 0], [0, scaling, 0]])
-        out_shape = (int(np.round(NN/scaling)),) * 2
+        #scale factor
+        scl = 2*np.pi
 
-        #Do affine transform (with different packages)
-        if has_cv2:
-            img = cv2.warpAffine(img, affmat, out_shape, \
-                flags=cv2.WARP_INVERSE_MAP + cv2.INTER_LANCZOS4)
+        #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
+        angspec = finufft.nufft2d2(fx*scl*self.dx0, fy*scl*self.dx0, u0, \
+            isign=-1, eps=self.sim.fft_tol)
+
+        #Get solution with inverse NUFFT (nonuniform -> nonuniform)
+        uu = finufft.nufft2d3(fx*scl, fy*scl, angspec*Hn*wq, ox, oy, \
+            isign=1, eps=self.sim.fft_tol)
+
+        #Normalize
+        uu *= self.dx0**2
+
+        return uu
+
+############################################
+############################################
+
+############################################
+#####  Angular Spectrum Setup #####
+############################################
+
+    def setup_angspec(self):
+
+        #Use minimum wavelength to set bandwidth
+        wave = self.sim.waves.min()
+
+        #Critical distance
+        zcrit = 2*self.sim.num_pts*self.dx0**2/wave
+
+        #Calculate bandwidth
+        if self.image_distance < zcrit:
+            bf = 1/self.dx0
+        elif zz >= 3*zcrit:
+            bf = np.sqrt(2*self.sim.num_pts/(wave*self.image_distance))
         else:
-            img = affine_transform(img, affmat, output_shape=out_shape, order=3)
+            bf = 2*self.sim.num_pts*self.dx0/(wave*self.image_distance)
 
-        #Crop to match image size
-        img = image_util.crop_image(img, None, num_img//2)
+        #Get gaussian quad
+        fx, fy, wq = polar_quad(lambda t: np.ones_like(t)*bf/2, self.rad_nodes, self.the_nodes)
 
-        return img, dx
+        return fx, fy, wq
 
 ############################################
 ############################################

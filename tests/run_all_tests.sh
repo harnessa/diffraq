@@ -11,6 +11,7 @@ pytest test_occulter_configuration.py
 pytest test_calc_pupil_field.py
 pytest test_circles.py
 pytest test_offaxis.py
+pytest test_angspec.py
 pytest test_focuser.py
 pytest test_starshades.py
 pytest test_annulus.py

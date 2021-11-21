@@ -13,121 +13,184 @@ Description: Test basics of angular spectrum method
 
 import diffraq
 import numpy as np
+import finufft
 import diffraq.utils.image_util as image_util
+from diffraq.quadrature import polar_quad
+from scipy.special import j1
 
 class Test_Angspec(object):
 
     tol = 1e-2
-
-    num_pts = 2**10
-    num_pad = 2
-    wave = 0.6e-6
+    fft_tol = 1e-9
 
     def run_all_tests(self):
-        for tt in ['diffraction', 'focusing'][:1]:
+        for tt in ['diffraction', 'focusing']:
             getattr(self, f'test_{tt}')()
 
 ############################################
 
     def test_diffraction(self):
+        #Input
+        num_pts = 1024
+        wave = 0.6e-6
+        width = 12.5e-3
+        zz = 50
 
-        dz = 10e-3
-        radius = 2.5e-3
+        #Derived
+        dx = width/num_pts
+        zcrit = 2*num_pts*dx**2/wave
+        kk = 2*np.pi/wave
 
-        #Setup and get initial field
-        U0, kz, xx = self.setup(radius)
+        #Input field
+        u0 = np.ones((num_pts, num_pts))
+        u0, _ = image_util.round_aperture(u0)
 
-        #Propagate
-        fn = np.fft.fftshift(np.fft.fft2(U0))
-        Ue = np.fft.ifft2(np.fft.ifftshift(fn * np.exp(1j*kz*dz)))
+        #Source coordinates
+        xx = (np.arange(num_pts) - num_pts/2) * dx
+        xx = np.tile(xx, (num_pts, 1))
+        yy = xx.T.flatten()
+        xx = xx.flatten()
 
-        import matplotlib.pyplot as plt;plt.ion()
-        # plt.figure()
-        # plt.imshow(abs(Ue))
+        #Calculate bandwidth
+        if zz < zcrit:
+            bf = 1/dx
+        elif zz >= 3*zcrit:
+            bf = np.sqrt(2*num_pts/(wave*zz))
+        else:
+            bf = 2*num_pts*dx/(wave*zz)
 
-        NN = self.num_pts * self.num_pad
-        xx = (np.arange(NN) - NN/2)*(xx[1]-xx[0])
+        #Get gaussian quad
+        fx, fy, wq = polar_quad(lambda t: np.ones_like(t)*bf/2, num_pts, num_pts)
 
-        #Crop
-        # Ue = image_util.crop_image(Ue, None, self.num_pts//2)
-        Ue = Ue[len(Ue)//2]
+        #Get transfer function
+        fz2 = 1. - (wave*fx)**2 - (wave*fy)**2
+        evind = fz2 < 0
+        Hn = np.exp(1j* kk * zz * np.sqrt(np.abs(fz2)))
+        Hn[evind] = 0
 
-        #Calculate analytic solution
-        # utru = diffraq.utils.solution_util.calculate_circle_solution(xx, \
-            # self.wave, dz, 1e19, radius, False)
+        #scale factor
+        scl = 2*np.pi
 
-        import matplotlib.pyplot as plt;plt.ion()
-        plt.figure()
-        plt.plot(xx, abs(Ue))
-        # plt.plot(xx, abs(utru), '--')
-        # plt.figure()
-        # plt.plot(xx, np.angle(Ue))
-        # plt.plot(xx, np.angle(utru), '--')
+        for nutype in ['12', '33']:
 
-        # print(abs(Ue - utru).mean())
-        breakpoint()
+            if nutype == '12':
 
-        #Assert true
-        assert(abs(Ue - utru).mean() < self.tol)
+                #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
+                angspec = finufft.nufft2d2(fx*scl*dx, fy*scl*dx, u0, isign=-1, eps=self.fft_tol)
 
+                #Get solution with inverse NUFFT (nonuniform -> uniform)
+                uu = finufft.nufft2d1(fx*scl*dx,  fy*scl*dx, angspec*Hn*wq, \
+                    n_modes=(num_pts, num_pts), isign=1, eps=self.fft_tol)
+
+            else:
+
+                #Calculate angspectrum of input with NUFFT (nonuniform -> nonuniform)
+                angspec = finufft.nufft2d3(xx, yy, u0.flatten(), fx*scl, fy*scl, \
+                    isign=-1, eps=self.fft_tol)
+
+                #Get solution with inverse NUFFT (nonuniform -> nonuniform)
+                uu = finufft.nufft2d3(fx*scl, fy*scl, angspec*Hn*wq, xx, yy, \
+                    isign=1, eps=self.fft_tol)
+                uu = uu.reshape(u0.shape)
+
+            #Normalize
+            uu *= dx**2
+
+            #Trim
+            uu = uu[len(uu)//2]
+
+            #Calculate analytic solution
+            xpts = (np.arange(num_pts) - num_pts/2) * dx
+            utru = diffraq.utils.solution_util.calculate_circle_solution(xpts, \
+                wave, zz, 1e19, width/2, False)
+
+            #Assert true
+            assert(abs(uu - utru).max() < self.tol)
+
+        #Cleanup
+        del fx, fy, wq, xx, yy, u0, uu, utru, xpts, Hn, angspec, fz2, evind
 
 ############################################
 
     def test_focusing(self):
 
-        dz = 0.5
-        radius = 2.5e-3
-        focal_length = dz
+        #Input
+        num_pts = 512
+        wave = 0.6e-6
+        width = 5e-3
+        focal_length = 400e-3
 
-        #Setup and get initial field
-        U0, kz, xx = self.setup(radius)
+        zz = focal_length
 
-        #Add lens
-        xxp = (np.arange(U0.shape[0]) - U0.shape[0]/2)*(xx[1]-xx[0])
-        U0 *= np.exp(-1j*self.kk*(xxp[:,None]**2 + xxp**2)/(2*focal_length))
+        #Derived
+        dx = width/num_pts
+        zcrit = 2*num_pts*dx**2/wave
+        kk = 2*np.pi/wave
 
-        #Propagate
-        fn = np.fft.fftshift(np.fft.fft2(U0))
-        Ue = np.fft.ifft2(np.fft.ifftshift(fn * np.exp(1j*kz*dz)))
+        #Input field
+        u0 = np.ones((num_pts, num_pts)) + 0j
+        u0, _ = image_util.round_aperture(u0)
 
-        #Crop
-        Ue = image_util.crop_image(Ue, None, self.num_pts//2)
-        Ue = Ue[len(Ue)//2]
+        #Source coordinates
+        xx = (np.arange(num_pts) - num_pts/2) * dx
 
-        import matplotlib.pyplot as plt;plt.ion()
-        plt.plot(xx, abs(Ue))
+        #Add lens phase
+        u0 *= np.exp(-1j*kk/(2*focal_length)*(xx**2 + xx[:,None]**2))
 
-        breakpoint()
+        #Target coordinates
+        fov = wave/width * zz * 10
+        ox = (np.arange(num_pts)/num_pts - 1/2) * fov
+        dox = ox[1]-ox[0]
+        ox = np.tile(ox, (num_pts, 1))
+        oy = ox.T.flatten()
+        ox = ox.flatten()
 
-############################################
+        #Calculate bandwidth
+        if zz < zcrit:
+            bf = 1/dx
+        elif zz >= 3*zcrit:
+            bf = np.sqrt(2*num_pts/(wave*zz))
+        else:
+            bf = 2*num_pts*dx/(wave*zz)
 
-    def setup(self, radius):
+        #Get gaussian quad
+        fx, fy, wq = polar_quad(lambda t: np.ones_like(t)*bf/2, num_pts, num_pts)
 
-        #Setup numerics
-        NN = int(self.num_pts*self.num_pad)
-        dx = 2*radius / self.num_pts
-        xx = (np.arange(self.num_pts) - self.num_pts/2)*dx
+        #Get transfer function
+        fz2 = 1. - (wave*fx)**2 - (wave*fy)**2
+        evind = fz2 < 0
+        Hn = np.exp(1j* kk * zz * np.sqrt(np.abs(fz2)))
+        Hn[evind] = 0
 
-        #Calculate frequencies
-        self.kk = 2.*np.pi/self.wave
-        kx = 2*np.pi*np.fft.fftshift(np.fft.fftfreq(NN, d=dx))
-        kz2 = self.kk**2. - (kx[:,None]**2. + kx**2.)
+        #scale factor
+        scl = 2*np.pi
 
-        #Propagation wavenumber
-        kz = np.sqrt(np.abs(kz2)) + 0j
-        kz[kz2 < 0] *= 1j
+        #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
+        angspec = finufft.nufft2d2(fx*scl*dx, fy*scl*dx, u0, isign=-1, eps=self.fft_tol)
+
+        #Get solution with inverse NUFFT (nonuniform -> nonuniform)
+        uu = finufft.nufft2d3(fx*scl, fy*scl, angspec*Hn*wq, ox, oy, isign=1, eps=self.fft_tol)
+        uu = uu.reshape(u0.shape)
+
+        #Normalize
+        uu *= dx**2
+
+        #Turn into intensity
+        uu = np.real(uu.conj()*uu)
+
+        #Theoretical Airy Disk
+        xa = kk*width/2*np.hypot(ox, oy)/zz
+        xa[np.isclose(xa,0)] = 1e-16
+        area = np.pi*width**2/4
+        I0 = area**2/wave**2/zz**2
+        airy = I0*(2*j1(xa)/xa)**2
+        airy = airy.reshape(u0.shape)
+
+        #Assert true
+        assert(abs(uu - airy).max()/I0 < self.tol)
 
         #Cleanup
-        del kz2
-
-        #Build init field
-        U0 = np.ones((self.num_pts, self.num_pts)) + 0j
-        nn = (np.arange(self.num_pts) - self.num_pts/2)
-        rho = np.hypot(nn, nn[:,None])
-        U0[rho >= self.num_pts/2] = 0
-        U0 = image_util.pad_array(U0, NN)
-
-        return U0, kz, xx
+        del fx, fy, wq, ox, oy, u0, uu, airy, xa, Hn, angspec, fz2, evind
 
 ############################################
 

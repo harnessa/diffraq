@@ -1,4 +1,5 @@
 import numpy as np
+import diffraq
 import matplotlib.pyplot as plt;plt.ion()
 import finufft
 import time
@@ -6,17 +7,17 @@ import diffraq.utils.image_util as image_util
 from diffraq.quadrature import polar_quad
 from scipy.special import j1
 
-#Input
-num_pts = 512
-wave = 0.6e-6
-width = 5e-3
-tol = 1e-9
-focal_length = 400e-3
-defocus = 0
+name = ['AC508-150-A-ML', 'AC127-019-A-ML', 'AC064-015-A-ML'][0]
 
-#TODO: why doesn't it work for large apertures?
-# width = 2.4
-# focal_length = width*80
+lens = diffraq.diffraction.Lens({'name':name})
+
+#Input
+num_pts = 512 * 2
+wave = 0.68e-6
+width = lens.diameter /10#/10
+tol = 1e-9
+focal_length = lens.efl
+defocus = 0#-2.5e-3
 
 zz = focal_length + defocus
 
@@ -24,9 +25,6 @@ zz = focal_length + defocus
 dx = width/num_pts
 zcrit = 2*num_pts*dx**2/wave
 kk = 2*np.pi/wave
-
-# zz = zcrit
-# focal_length = zz
 
 #Input field
 u0 = np.ones((num_pts, num_pts)) + 0j
@@ -36,7 +34,16 @@ u0, _ = image_util.round_aperture(u0)
 xx = (np.arange(num_pts) - num_pts/2) * dx
 
 #Add lens phase
-u0 *= np.exp(-1j*kk/(2*focal_length)*(xx**2 + xx[:,None]**2))
+rads = np.hypot(xx, xx[:,None])
+lens_phs = np.exp(1j*kk*lens.opd_func(rads))
+u0 *= lens_phs
+phs2 = np.exp(-1j*kk/(2*focal_length)*(xx**2 + xx[:,None]**2))
+# u0 *= phs2
+
+
+# plt.plot(np.angle(lens_phs[len(lens_phs)//2]))
+# plt.plot(np.angle(phs2[len(phs2)//2]), '--')
+# breakpoint()
 
 #Target coordinates
 fov = wave/width * zz * 10
@@ -85,8 +92,7 @@ I0 = area**2/wave**2/zz**2
 airy = I0*(2*j1(xa)/xa)**2
 airy = airy.reshape(u0.shape)
 
-print(abs(uu - airy).max())
-
+print(abs(airy -uu).max()/I0)
 
 # plt.imshow(abs(uu)**2)
 plt.figure()
