@@ -91,7 +91,7 @@ class Focuser(object):
 ####	Main Function ####
 ############################################
 
-    def calculate_image(self, in_pupil):
+    def calculate_image(self, in_pupil, grid_pts):
         #Get image size
         num_img = min(self.true_NN.max(), self.sim.image_size)
 
@@ -105,7 +105,8 @@ class Focuser(object):
 
         #Round aperture and get number of points
         NN0 = pupil.shape[-1]
-        pupil, NN_full = image_util.round_aperture(pupil)
+        pupil, NN_full = image_util.round_aperture_physical(pupil, grid_pts,
+            self.sim.tel_diameter)
 
         #Create input plane indices
         et = (np.arange(NN0)/NN0 - 0.5) * NN0

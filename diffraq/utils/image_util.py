@@ -55,6 +55,31 @@ def round_aperture(img):
 
     return img, NN_full
 
+def round_aperture_physical(pupil, grid_pts, tel_diameter):
+    if grid_pts.ndim == 2:
+        xcen, ycen = grid_pts[:,grid_pts.shape[1]//2]
+        rr = np.hypot(grid_pts[0] - xcen, grid_pts[1] - ycen)
+    else:
+        rr = np.hypot(grid_pts, grid_pts[:,None])
+
+    #Get zero points
+    rtest = rr >= tel_diameter/2
+
+    #Get zero value depending if complex
+    zero_val = 0.
+    if np.iscomplexobj(pupil):
+        zero_val += 0j
+
+    #Set electric field outside of aperture to zero (make aperture circular through rtest)
+    pupil[...,rtest] = zero_val
+
+    #Get number of unmasked points
+    NN_full = np.count_nonzero(~rtest)
+
+    del rr, rtest
+
+    return pupil, NN_full
+
 def get_image_radii(img_shp, cen=None):
     yind, xind = np.indices(img_shp)
     if cen is None:

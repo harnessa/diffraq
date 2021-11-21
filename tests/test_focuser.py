@@ -50,9 +50,10 @@ class Test_Focuser(object):
 
         #Build uniform pupil image
         pupil = np.ones((len(waves), sim.num_pts, sim.num_pts)) + 0j
+        grid_pts = diffraq.utils.image_util.get_grid_points(sim.num_pts, sim.tel_diameter)
 
         #Get images
-        image, grid_pts = sim.focuser.calculate_image(pupil)
+        image, grid_pts = sim.focuser.calculate_image(pupil, grid_pts)
 
         #Get Airy disk
         et = np.tile(grid_pts, (image.shape[-1],1))
