@@ -47,7 +47,7 @@ class Focuser(object):
         self.rad_nodes, self.the_nodes = self.sim.angspec_radial_nodes, self.sim.angspec_theta_nodes
 
         #Build lens system
-        self.lenses = diffraq.diffraction.Lens_System(self.sim.lens_system, self.sim)
+        self.lenses = diffraq.diffraction.Lens_System(self.sim.lens_system, self)
 
 ############################################
 ############################################
@@ -96,11 +96,6 @@ class Focuser(object):
         #Cleanup
         del fx, fy, wq, self.r1, self.x2, self.y2, pupil
 
-
-        # import matplotlib.pyplot as plt;plt.ion()
-        # plt.semilogy(abs(image[0][image.shape[-1]//2])**2)
-        # breakpoint()
-
         return image, image_pts
 
 ############################################
@@ -112,7 +107,7 @@ class Focuser(object):
 
     def propagate_element(self, u0_waves, ie, fx, fy, wq):
 
-        #Round aperture
+        #Round aperture (always)
         u0_waves = image_util.round_aperture(u0_waves)
 
         #Create image container
@@ -121,10 +116,17 @@ class Focuser(object):
         #Get current element
         elem = getattr(self.lenses, f'element_{ie}')
 
+        #Get propagation distance
+        zz = elem.distance
+
+        #Add defocus to last element
+        if elem.is_last:
+            zz += self.sim.defocus
+
         #Get spacings
         dx1 = elem.dx
         #if last plane, use image pixel sampling
-        if ie == self.lenses.n_elements - 1:
+        if elem.is_last:
             dx2 = self.sim.pixel_size
         else:
             dx2 = getattr(self.lenses, f'element_{ie+1}').dx
@@ -139,7 +141,7 @@ class Focuser(object):
             wave = self.sim.waves[iw]
 
             #Get half-bandwidth
-            hbf = self.get_bandwidth(wave, dx1, elem.distance)
+            hbf = self.get_bandwidth(wave, dx1, zz)
 
             #Apply phase function
             u0 = u0_waves[iw] * np.exp(1j*2*np.pi/wave * opd)
@@ -147,7 +149,7 @@ class Focuser(object):
             #Get transfer function
             fz2 = 1. - (wave*hbf*fx)**2 - (wave*hbf*fy)**2
             evind = fz2 < 0
-            Hn = np.exp(1j* 2*np.pi/wave * elem.distance * np.sqrt(np.abs(fz2)))
+            Hn = np.exp(1j* 2*np.pi/wave * zz * np.sqrt(np.abs(fz2)))
             Hn[evind] = 0
             del fz2, evind
 

@@ -7,17 +7,19 @@ import diffraq.utils.image_util as image_util
 from diffraq.quadrature import polar_quad
 from scipy.special import j1
 
-name = ['AC508-150-A-ML', 'AC127-019-A-ML', 'AC064-015-A-ML'][0]
+name = ['AC508-150-A-ML', 'AC127-019-A-ML', 'AC064-015-A-ML', \
+    'EO_35996-150', 'EO_84328-015'][-1]
 
-lens = diffraq.diffraction.Lens({'name':name})
+lens = diffraq.diffraction.Lens(name)
 
 #Input
-num_pts = 512 * 2
+num_pts = 512
 wave = 0.68e-6
-width = lens.diameter /10#/10
+width = lens.diameter /10
 tol = 1e-9
 focal_length = lens.efl
-defocus = 0#-2.5e-3
+defocus = 0
+# defocus = -0.5e-3
 
 zz = focal_length + defocus
 
@@ -28,7 +30,7 @@ kk = 2*np.pi/wave
 
 #Input field
 u0 = np.ones((num_pts, num_pts)) + 0j
-u0, _ = image_util.round_aperture(u0)
+u0 = image_util.round_aperture(u0)
 
 #Source coordinates
 xx = (np.arange(num_pts) - num_pts/2) * dx
@@ -46,10 +48,11 @@ phs2 = np.exp(-1j*kk/(2*focal_length)*(xx**2 + xx[:,None]**2))
 # breakpoint()
 
 #Target coordinates
-fov = wave/width * zz * 10
-ox = (np.arange(num_pts)/num_pts - 1/2) * fov
-dox = ox[1]-ox[0]
-ox = np.tile(ox, (num_pts, 1))
+# fov = wave/width * zz * 100
+# ox1d = (np.arange(num_pts)/num_pts - 1/2) * fov
+ox1d = (np.arange(num_pts)- num_pts/2) * 13e-6
+dox = ox1d[1]-ox1d[0]
+ox = np.tile(ox1d, (num_pts, 1))
 oy = ox.T.flatten()
 ox = ox.flatten()
 
@@ -96,8 +99,8 @@ print(abs(airy -uu).max()/I0)
 
 # plt.imshow(abs(uu)**2)
 plt.figure()
-plt.semilogy(uu[len(uu)//2])
-plt.semilogy(airy[len(airy)//2], '--')
+plt.semilogy(ox1d, uu[len(uu)//2])
+plt.semilogy(ox1d, airy[len(airy)//2], '--')
 
 
 breakpoint()

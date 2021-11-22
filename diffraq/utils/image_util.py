@@ -41,7 +41,7 @@ def round_aperture(img, grid_pts=None, tel_diameter=None):
         rtest = rr >= tel_diameter/2
     else:
         rr = get_image_radii(img.shape[-2:])
-        rtest = rr >= (min(img.shape[-2:]) - 1.)/2.
+        rtest = rr >= min(img.shape[-2:])/2.
 
     #Get zero value depending if complex
     zero_val = 0.
@@ -51,12 +51,9 @@ def round_aperture(img, grid_pts=None, tel_diameter=None):
     #Set electric field outside of aperture to zero (make aperture circular through rtest)
     img[...,rtest] = zero_val
 
-    #Get number of unmasked points
-    NN_full = np.count_nonzero(~rtest)
-
     del rr, rtest
 
-    return img, NN_full
+    return img
 
 def get_image_radii(img_shp, cen=None):
     yind, xind = np.indices(img_shp)

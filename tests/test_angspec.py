@@ -43,7 +43,7 @@ class Test_Angspec(object):
 
         #Input field
         u0 = np.ones((num_pts, num_pts))
-        u0, _ = image_util.round_aperture(u0)
+        u0 = image_util.round_aperture(u0)
 
         #Source coordinates
         xx = (np.arange(num_pts) - num_pts/2) * dx
@@ -129,7 +129,7 @@ class Test_Angspec(object):
 
         #Input field
         u0 = np.ones((num_pts, num_pts)) + 0j
-        u0, _ = image_util.round_aperture(u0)
+        u0 = image_util.round_aperture(u0)
 
         #Source coordinates
         xx = (np.arange(num_pts) - num_pts/2) * dx

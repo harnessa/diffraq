@@ -12,25 +12,28 @@ Description: Class to hold full lens system angular spectrum
 
 """
 
-import diffraq
+from diffraq.diffraction import Lens_Element
 import numpy as np
 
 class Lens_System(object):
 
-    def __init__(self, elements, sim):
-        self.mm2m = 1e-3
-        self.m2mm = 1e3
-        self.sim = sim
+    def __init__(self, elements, parent):
+        self.parent = parent
         self.build_system(elements)
 
     def build_system(self, elements):
 
         #If elements not specified, build dummy system
         if elements is None:
+
+            #Build parameters from sim
+            pms = {'kind':'lens', 'lens_name':'simple',
+                'focal_length':self.parent.sim.focal_length,\
+                'diameter':self.parent.sim.tel_diameter, \
+                'distance':self.parent.image_distance - self.parent.sim.defocus} #defocus will get added
+
             self.n_elements = 1
-            pms = {'lens_name':'simple', 'diameter':self.sim.tel_diameter, \
-                'distance':self.sim.focal_length}
-            self.element_0 = diffraq.diffraction.Lens(pms, self.sim.num_pts)
+            self.element_0 = Lens_Element(pms, self.parent.num_pts, is_last=True)
 
         else:
 
@@ -39,54 +42,9 @@ class Lens_System(object):
 
             #Build element classes
             for i in range(self.n_elements):
-                elem = Lens_Element(elements[f'element_{i}'], self.sim.num_pts)
+                #Get parameters from dictionary
+                pms = elements[f'element_{i}']
+
+                #Build and store element
+                elem = Lens_Element(pms, self.parent.num_pts, is_last=(i==self.n_elements-1))
                 setattr(self, f'element_{i}', elem)
-
-############################################
-############################################
-
-class Lens_Element(object):
-
-    def __init__(self, params, num_pts):
-        self.num_pts = num_pts
-        self.set_parameters(params)
-        self.build_element()
-
-    def set_parameters(self, params):
-        def_pms = {
-            'kind':             '',
-            'lens_name':        '',
-            'input_diameter':   None,
-            'input_dx':         None,
-            'distance':         1e-12,
-        }
-
-        #Parameters
-        for k, v in def_pms.items():
-            setattr(self, k, v)
-
-        for k, v in params.items():
-            setattr(self, k, v)
-
-    def build_element(self):
-
-        #Build opd function
-        if self.kind == 'lens':
-            #Load lens
-            self.lens = diffraq.diffraction.Lens(self.lens_name)
-            self.opd_func = self.lens.opd_func
-        else:
-            self.opd_func = lambda r: np.zeros_like(r)
-
-        #Get input diameter
-        if self.input_diameter is not None:
-            self.D1 = self.input_diameter
-        else:
-            #Get from lens
-            self.D1 = self.lens.diameter
-
-        #Determine scalings
-        if self.input_dx is not None:
-            self.dx = self.input_dx
-        else:
-            self.dx = self.D1 / self.num_pts

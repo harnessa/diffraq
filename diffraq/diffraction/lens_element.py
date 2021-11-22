@@ -1,5 +1,5 @@
 """
-lens.py
+lens_element.py
 
 Author: Anthony Harness
 Affiliation: Princeton University
@@ -15,39 +15,80 @@ Description: Class to hold physical properties of a lens for angular spectrum
 import diffraq
 import numpy as np
 
-class Lens(object):
+class Lens_Element(object):
 
     zemax_dir = f'{diffraq.ext_data_dir}/Lenses'
+    mm2m = 1e-3
+    m2mm = 1e3
 
-    def __init__(self, name, zemax_dir=None):
-        self.mm2m = 1e-3
-        self.m2mm = 1e3
+    def __init__(self, params, num_pts, is_last=False):
+        #Set parameters
+        self.num_pts = num_pts
+        self.set_parameters(params)
 
-        self.name = name
+        #Is last element in system
+        self.is_last = is_last
 
-        #See if lens is simple lens
-        if self.name.startswith('simple'):
+    def set_parameters(self, params):
+        def_pms = {
+            'kind':             '',
+            'lens_name':        '',
+            'diameter':         None,
+            'distance':         1e-12,
+            'focal_length':     1e-12,
+        }
+
+        #Parameters
+        for k, v in def_pms.items():
+            setattr(self, k, v)
+
+        for k, v in params.items():
+            setattr(self, k, v)
+
+        #Build depending on kind
+        if self.kind == 'aperture':
+            self.load_aperture()
+
+        elif self.lens_name == 'simple':
             self.load_simple_lens()
+
         else:
             self.load_zemax_lens()
 
-        #Build OPD
-        self.build_OPD_function()
+        #Sampling
+        self.dx = self.diameter / self.num_pts
 
 ############################################
-#####  Loading #####
+#####  Simple elements #####
+############################################
+
+    def load_aperture(self):
+        #OPD function
+        self.opd_func = lambda r: np.zeros_like(r)
+
+    ############################################
+
+    def load_simple_lens(self):
+        #OPD function
+        self.opd_func = lambda r: -r**2/(2*self.focal_length)
+
+############################################
+############################################
+
+############################################
+#####  Zemax Lens #####
 ############################################
 
     def load_zemax_lens(self):
 
         #Get EFL from name
-        self.efl = float(self.name.split('-')[1])*1e-3
+        self.focal_length = float(self.lens_name.split('-')[1])*1e-3
 
         #Loop through file and get surfaces
         surfaces = {}
         surf = Surface('dummy')
         in_surf = False
-        with open(f'{self.zemax_dir}/{self.name}.zmx', 'r') as f:
+        with open(f'{self.zemax_dir}/{self.lens_name}.zmx', 'r') as f:
             #Loop through file
             for ln in f:
                 #Start new surface
@@ -87,61 +128,24 @@ class Lens(object):
         #Store surfaces
         self.surfaces = surfaces
 
-        #Count number of true surfaces
-        self.num_surf = len(self.surfaces.keys()) - 2
+        #Take lens diameter if not given
+        if self.diameter is None:
+            self.diameter = self.surfaces['SURF 1'].diameter
 
-        #Check diameters are the same
-        if not np.isclose(0, np.std([self.surfaces[f'SURF {i+1}'].diameter for i in range(self.num_surf)])):
-            print('All diameters not the same')
+        #Build OPD function
+        R1 = abs(self.surfaces['SURF 1'].curvature)
+        R2 = abs(self.surfaces['SURF 2'].curvature)
+        R3 = abs(self.surfaces['SURF 3'].curvature)
+        t12 = self.surfaces['SURF 1'].thickness
+        t23 = self.surfaces['SURF 2'].thickness
+        n1 = self.surfaces['SURF 1'].index
+        n2 = self.surfaces['SURF 2'].index
 
-        #Get diameter + thickness
-        self.diameter = self.surfaces['SURF 1'].diameter
-        self.thickness = self.surfaces['SURF 1'].thickness + self.surfaces['SURF 2'].thickness
-
-        #Simple lens flag
-        self.is_simple = False
-
-    ############################################
-
-    def load_simple_lens(self):
-
-        #Get focal length from name
-        self.focal_length = float(self.name.split('simple_')[-1]) * 1e-3
-
-        self.diameter = 0
-        self.thickness = 0
-
-        #Simple lens flag
-        self.is_simple = True
-
-############################################
-############################################
-
-############################################
-#####  OPD #####
-############################################
-
-    def build_OPD_function(self):
-
-        if self.is_simple:
-            #Simple lens
-            self.opd_func = lambda r: -r**2/(2*self.focal_length)
-
-        else:
-            #Zemax lens
-            R1 = abs(self.surfaces['SURF 1'].curvature)
-            R2 = abs(self.surfaces['SURF 2'].curvature)
-            R3 = abs(self.surfaces['SURF 3'].curvature)
-            t12 = self.surfaces['SURF 1'].thickness
-            t23 = self.surfaces['SURF 2'].thickness
-            n1 = self.surfaces['SURF 1'].index
-            n2 = self.surfaces['SURF 2'].index
-
-            self.opd_func = lambda r: \
-                (R1 - np.sqrt(R1**2 - r**2))*(1. - n1) + \
-                (R2 - np.sqrt(R2**2 - r**2))*(n2 - n1) + \
-                (R3 - np.sqrt(R3**2 - r**2))*(1. - n2) + \
-                t12*n1 + t23*n2
+        self.opd_func = lambda r: \
+            (R1 - np.sqrt(R1**2 - r**2))*(1. - n1) + \
+            (R2 - np.sqrt(R2**2 - r**2))*(n2 - n1) + \
+            (R3 - np.sqrt(R3**2 - r**2))*(1. - n2) + \
+            t12*n1 + t23*n2
 
 ############################################
 ############################################

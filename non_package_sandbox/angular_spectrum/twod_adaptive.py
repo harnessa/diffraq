@@ -23,7 +23,7 @@ zz = zcrit
 
 #Input field
 u0 = np.ones((num_pts, num_pts))
-u0, _ = image_util.round_aperture(u0)
+u0 = image_util.round_aperture(u0)
 
 #Source coordinates
 xx = (np.arange(num_pts) - num_pts/2) * dx
