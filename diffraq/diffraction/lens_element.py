@@ -36,6 +36,8 @@ class Lens_Element(object):
             'diameter':         None,
             'distance':         1e-12,
             'focal_length':     1e-12,
+            #Wavefront Error Zernike modes. [(zernike m, zernike n, amplitude)]
+            'wfe_modes':        [],
         }
 
         #Parameters
@@ -58,19 +60,22 @@ class Lens_Element(object):
         #Sampling
         self.dx = self.diameter / self.num_pts
 
+        #OPD func
+        self.opd_func = lambda r, a: self.lens_func(r) + self.wfe_func(r, a)
+
 ############################################
 #####  Simple elements #####
 ############################################
 
     def load_aperture(self):
-        #OPD function
-        self.opd_func = lambda r: np.zeros_like(r)
+        #Lens function
+        self.lens_func = lambda r: np.zeros_like(r)
 
     ############################################
 
     def load_simple_lens(self):
-        #OPD function
-        self.opd_func = lambda r: -r**2/(2*self.focal_length)
+        #Lens function
+        self.lens_func = lambda r: -r**2/(2*self.focal_length)
 
 ############################################
 ############################################
@@ -132,7 +137,7 @@ class Lens_Element(object):
         if self.diameter is None:
             self.diameter = self.surfaces['SURF 1'].diameter
 
-        #Build OPD function
+        #Build Lens OPD function
         R1 = abs(self.surfaces['SURF 1'].curvature)
         R2 = abs(self.surfaces['SURF 2'].curvature)
         R3 = abs(self.surfaces['SURF 3'].curvature)
@@ -141,11 +146,43 @@ class Lens_Element(object):
         n1 = self.surfaces['SURF 1'].index
         n2 = self.surfaces['SURF 2'].index
 
-        self.opd_func = lambda r: \
+        self.lens_func = lambda r: \
             (R1 - np.sqrt(R1**2 - r**2))*(1. - n1) + \
             (R2 - np.sqrt(R2**2 - r**2))*(n2 - n1) + \
             (R3 - np.sqrt(R3**2 - r**2))*(1. - n2) + \
             t12*n1 + t23*n2
+
+############################################
+############################################
+
+############################################
+#####  WFE #####
+############################################
+
+    def wfe_func(self, rad, phi):
+        #Build radii, angle
+        opd = 0
+        for zm, zn, amp in self.wfe_modes:
+            opd += self.zernike_poly(rad/rad.max(), phi, zm, zn) * amp
+        return opd
+
+    def zernike_rad(self, rho, m, n):
+        coeff = 0.
+        if (n - m) % 2 == 0:
+            for k in range((n-m)//2+1):
+                coeff += (-1)**k * np.math.comb(n-k, k) * \
+                    np.math.comb(n-2*k, (n-m)//2 - k) * rho**(n-2*k)
+        coeff[rho == 1] = 1
+        return coeff
+
+    def zernike_poly(self, rho, phi, m, n):
+        if n < 0:
+            return 0.
+        if m >= 0:
+            zz = self.zernike_rad(rho, np.abs(m), n) * np.cos(np.abs(m)*phi)
+        else:
+            zz = self.zernike_rad(rho, np.abs(m), n) * np.sin(np.abs(m)*phi)
+        return zz
 
 ############################################
 ############################################

@@ -68,6 +68,7 @@ class Focuser(object):
         #Input coordinates
         x1 = np.arange(self.num_pts) - self.num_pts/2
         self.r1 = np.hypot(x1, x1[:,None])
+        self.a1 = np.arctan2(x1[:,None], x1)
 
         #Target coordinates
         x2 = np.tile(x1, (self.num_pts, 1))
@@ -132,7 +133,7 @@ class Focuser(object):
             dx2 = getattr(self.lenses, f'element_{ie+1}').dx
 
         #Get OPD
-        opd = elem.opd_func(self.r1*dx1)
+        opd = elem.opd_func(self.r1*dx1, self.a1)
 
         #Loop over wavelength
         for iw in range(len(self.sim.waves)):

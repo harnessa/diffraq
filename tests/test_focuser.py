@@ -40,7 +40,7 @@ class Test_Focuser(object):
         for lenses in [None, lens_system]:
 
             #Build simulator
-            sim = diffraq.Simulator({'waves':waves, 'tel_diameter':Dtel, \
+            sim = diffraq.Simulator({'num_pts':512, 'waves':waves, 'tel_diameter':Dtel, \
                 'focal_length':focal_length, 'image_size':74, 'lens_system':lenses})
             sim.load_focuser()
 
