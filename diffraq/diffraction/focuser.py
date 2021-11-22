@@ -14,12 +14,14 @@ Description: Class to propagate the diffracted field to the focal plane of the
 import numpy as np
 from diffraq.utils import image_util
 from diffraq.quadrature import polar_quad
+import diffraq
 import finufft
 
 class Focuser(object):
 
     def __init__(self, sim):
         self.sim = sim
+        self.num_pts = self.sim.num_pts
         self.set_derived_parameters()
 
 ############################################
@@ -39,10 +41,13 @@ class Focuser(object):
         self.image_res = self.sim.pixel_size / self.image_distance
 
         #Input Spacing
-        self.dx0 = self.sim.tel_diameter / self.sim.num_pts
+        self.dx0 = self.sim.tel_diameter / self.num_pts
 
         #Gaussian quad number
         self.rad_nodes, self.the_nodes = self.sim.angspec_radial_nodes, self.sim.angspec_theta_nodes
+
+        #Build lens system
+        self.lenses = diffraq.diffraction.Lens_System(self.sim.lens_system, self.sim)
 
 ############################################
 ############################################
@@ -53,69 +58,48 @@ class Focuser(object):
 
     def calculate_image(self, in_pupil, grid_pts):
 
-        #Run single lens or lens system?
-        if self.sim.lens_system is None:
-            return self.calc_single_lens(in_pupil, grid_pts)
-        else:
-            return self.calc_lens_system(in_pupil, grid_pts)
-
-############################################
-############################################
-
-############################################
-####	Single Lens ####
-############################################
-
-    def calc_single_lens(self, in_pupil, grid_pts):
-
-        #Get image size
-        num_img = self.sim.image_size
-
-        #Create image container
-        image = np.empty((len(self.sim.waves), num_img, num_img))
-
         #Create copy
         pupil = in_pupil.copy()
         del in_pupil
 
-        #Round aperture and get number of points
-        pupil, NN_full = image_util.round_aperture(pupil, grid_pts, self.sim.tel_diameter)
+        #Get gaussian quad
+        fx, fy, wq = polar_quad(lambda t: np.ones_like(t), self.rad_nodes, self.the_nodes)
 
-        #Get paraxial lens OPD
-        rr = image_util.get_grid_radii(grid_pts)
-        opd = -rr**2/(2*self.sim.focal_length)
-        del rr
-
-        #Setup angular spectrum
-        fx, fy, wq = self.setup_angspec()
+        #Input coordinates
+        x1 = np.arange(self.num_pts) - self.num_pts/2
+        self.r1 = np.hypot(x1, x1[:,None])
 
         #Target coordinates
-        ox_1D = (np.arange(num_img) - num_img/2) * self.sim.pixel_size
-        ox = np.tile(ox_1D, (num_img, 1))
-        oy = ox.T.flatten()
-        ox = ox.flatten()
+        x2 = np.tile(x1, (self.num_pts, 1))
+        self.y2 = x2.T.flatten()
+        self.x2 = x2.flatten()
+        del x1, x2
 
-        #Loop through wavelengths and calculate image
-        for iw in range(len(self.sim.waves)):
+        #Loop through elements and propagate
+        for ie in range(self.lenses.n_elements):
 
-            #Start initial field with current lens phase added
-            u0 = pupil[iw] * np.exp(1j * 2*np.pi/self.sim.waves[iw] * opd)
+            #Propagate element
+            pupil, dx2 = self.propagate_element(pupil, ie, fx, fy, wq)
 
-            #Propagate
-            img = self.propagate(u0, self.image_distance, \
-                self.sim.waves[iw], fx, fy, wq, ox, oy)
+        #Get image size #TODO: limit imposed by ang spec numerics
+        num_img = self.sim.image_size
 
-            #Turn into intensity
-            img = np.real(img.conj()*img)
+        #Trim to image
+        image = image_util.crop_image(pupil, None, num_img//2)
 
-            #Reshape into 2D and store
-            image[iw] = img.reshape((num_img, num_img))
+        #Turn into intensity
+        image = np.real(image.conj()*image)
 
-        #Convert output points to angle
-        image_pts = ox_1D / self.image_distance
+        #Create output points
+        image_pts = (np.arange(num_img) - num_img/2)*dx2/self.image_distance
 
         #Cleanup
-        del pupil, img, fx, fy, wq, ox, oy, u0
+        del fx, fy, wq, self.r1, self.x2, self.y2, pupil
+
+
+        # import matplotlib.pyplot as plt;plt.ion()
+        # plt.semilogy(abs(image[0][image.shape[-1]//2])**2)
+        # breakpoint()
 
         return image, image_pts
 
@@ -123,45 +107,71 @@ class Focuser(object):
 ############################################
 
 ############################################
-####	Lens System ####
-############################################
-
-    def calc_lens_system(self, in_pupil, grid_pts):
-        #TODO: add
-
-        import matplotlib.pyplot as plt;plt.ion()
-        breakpoint()
-        
-############################################
-############################################
-
-############################################
 #####  Angular Spectrum Propagation #####
 ############################################
 
-    def propagate(self, u0, zz, wave, fx, fy, wq, ox, oy):
+    def propagate_element(self, u0_waves, ie, fx, fy, wq):
 
-        #Get transfer function
-        fz2 = 1. - (wave*fx)**2 - (wave*fy)**2
-        evind = fz2 < 0
-        Hn = np.exp(1j* 2*np.pi/wave * zz * np.sqrt(np.abs(fz2)))
-        Hn[evind] = 0
+        #Round aperture
+        u0_waves = image_util.round_aperture(u0_waves)
 
-        #scale factor
-        scl = 2*np.pi
+        #Create image container
+        uu_waves = np.zeros((len(self.sim.waves), self.num_pts, self.num_pts)) + 0j
 
-        #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
-        angspec = finufft.nufft2d2(fx*scl*self.dx0, fy*scl*self.dx0, u0, \
-            isign=-1, eps=self.sim.fft_tol)
+        #Get current element
+        elem = getattr(self.lenses, f'element_{ie}')
 
-        #Get solution with inverse NUFFT (nonuniform -> nonuniform)
-        uu = finufft.nufft2d3(fx*scl, fy*scl, angspec*Hn*wq, ox, oy, \
-            isign=1, eps=self.sim.fft_tol)
+        #Get spacings
+        dx1 = elem.dx
+        #if last plane, use image pixel sampling
+        if ie == self.lenses.n_elements - 1:
+            dx2 = self.sim.pixel_size
+        else:
+            dx2 = getattr(self.lenses, f'element_{ie+1}').dx
 
-        #Normalize
-        uu *= self.dx0**2
+        #Get OPD
+        opd = elem.opd_func(self.r1*dx1)
 
-        return uu
+        #Loop over wavelength
+        for iw in range(len(self.sim.waves)):
+
+            #Current wavelength
+            wave = self.sim.waves[iw]
+
+            #Get half-bandwidth
+            hbf = self.get_bandwidth(wave, dx1, elem.distance)
+
+            #Apply phase function
+            u0 = u0_waves[iw] * np.exp(1j*2*np.pi/wave * opd)
+
+            #Get transfer function
+            fz2 = 1. - (wave*hbf*fx)**2 - (wave*hbf*fy)**2
+            evind = fz2 < 0
+            Hn = np.exp(1j* 2*np.pi/wave * elem.distance * np.sqrt(np.abs(fz2)))
+            Hn[evind] = 0
+            del fz2, evind
+
+            #scale factor
+            scl = 2*np.pi * hbf
+
+            #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
+            angspec = finufft.nufft2d2(fx*scl*dx1, fy*scl*dx1, u0, \
+                isign=-1, eps=self.sim.fft_tol)
+
+            #Get solution with inverse NUFFT (nonuniform -> nonuniform)
+            uu = finufft.nufft2d3(fx*scl, fy*scl, angspec*Hn*wq*hbf**2, \
+                self.x2*dx2, self.y2*dx2, isign=1, eps=self.sim.fft_tol)
+
+            #Normalize
+            uu *= dx1**2
+
+            #Store
+            uu_waves[iw] = uu.reshape(uu_waves.shape[-2:])
+
+        #Cleanup
+        del u0, Hn, angspec, uu
+
+        return uu_waves, dx2
 
 ############################################
 ############################################
@@ -170,26 +180,23 @@ class Focuser(object):
 #####  Angular Spectrum Setup #####
 ############################################
 
-    def setup_angspec(self):
-
-        #Use minimum wavelength to set bandwidth
-        wave = self.sim.waves.min()
+    def get_bandwidth(self, wave, dx, zz):
 
         #Critical distance
-        zcrit = 2*self.sim.num_pts*self.dx0**2/wave
+        zcrit = 2*self.num_pts*dx**2/wave
 
         #Calculate bandwidth
-        if self.image_distance < zcrit:
-            bf = 1/self.dx0
+        if zz < zcrit:
+            bf = 1/dx
         elif zz >= 3*zcrit:
-            bf = np.sqrt(2*self.sim.num_pts/(wave*self.image_distance))
+            bf = np.sqrt(2*self.num_pts/(wave*zz))
         else:
-            bf = 2*self.sim.num_pts*self.dx0/(wave*self.image_distance)
+            bf = 2*self.num_pts*dx/(wave*zz)
 
-        #Get gaussian quad
-        fx, fy, wq = polar_quad(lambda t: np.ones_like(t)*bf/2, self.rad_nodes, self.the_nodes)
+        #Divide by two because radius of ang spec quadrature
+        bf /= 2
 
-        return fx, fy, wq
+        return bf
 
 ############################################
 ############################################

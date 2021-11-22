@@ -15,3 +15,4 @@ from diffraq.diffraction.diffract_grid import diffract_grid
 from diffraq.diffraction.diffract_points import diffract_points
 from diffraq.diffraction.focuser import Focuser
 from diffraq.diffraction.lens import Lens
+from diffraq.diffraction.lens_system import Lens_System

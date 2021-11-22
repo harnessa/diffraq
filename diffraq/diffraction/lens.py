@@ -13,34 +13,32 @@ Description: Class to hold physical properties of a lens for angular spectrum
 """
 
 import diffraq
-from diffraq.utils import misc_util
 import numpy as np
 
 class Lens(object):
 
-    def __init__(self, params={}):
+    zemax_dir = f'{diffraq.ext_data_dir}/Lenses'
+
+    def __init__(self, name, zemax_dir=None):
         self.mm2m = 1e-3
         self.m2mm = 1e3
-        self.set_parameters(params)
-        self.load_zemax()
+
+        self.name = name
+
+        #See if lens is simple lens
+        if self.name.startswith('simple'):
+            self.load_simple_lens()
+        else:
+            self.load_zemax_lens()
+
+        #Build OPD
         self.build_OPD_function()
-
-    def set_parameters(self, params):
-        def_pms = {
-            'name':         '',
-            'zemax_dir':    None,
-        }
-
-        misc_util.set_default_params(self, params, def_pms)
-
-        if self.zemax_dir is None:
-            self.zemax_dir = f'{diffraq.ext_data_dir}/Lenses'
 
 ############################################
 #####  Loading #####
 ############################################
 
-    def load_zemax(self):
+    def load_zemax_lens(self):
 
         #Get EFL from name
         self.efl = float(self.name.split('-')[1])*1e-3
@@ -74,7 +72,7 @@ class Lens(object):
                             thk = np.inf
                         surf.thickness = self.mm2m*float(thk)
                     elif ln.startswith('  GLAS'):
-                        surf.glass = ln[7:].split(' ')[0]
+                        surf.glass = ln[7:].split(' ')[0].strip('\n')
                     elif ln.startswith('  DIAM'):
                         surf.diameter = self.mm2m*2*float(ln[7:].split(' ')[0])   #Files give radius
                 else:
@@ -100,27 +98,50 @@ class Lens(object):
         self.diameter = self.surfaces['SURF 1'].diameter
         self.thickness = self.surfaces['SURF 1'].thickness + self.surfaces['SURF 2'].thickness
 
+        #Simple lens flag
+        self.is_simple = False
+
+    ############################################
+
+    def load_simple_lens(self):
+
+        #Get focal length from name
+        self.focal_length = float(self.name.split('simple_')[-1]) * 1e-3
+
+        self.diameter = 0
+        self.thickness = 0
+
+        #Simple lens flag
+        self.is_simple = True
+
 ############################################
 ############################################
 
 ############################################
-#####  Phase #####
+#####  OPD #####
 ############################################
 
     def build_OPD_function(self):
-        R1 = abs(self.surfaces['SURF 1'].curvature)
-        R2 = abs(self.surfaces['SURF 2'].curvature)
-        R3 = abs(self.surfaces['SURF 3'].curvature)
-        t12 = self.surfaces['SURF 1'].thickness
-        t23 = self.surfaces['SURF 2'].thickness
-        n1 = self.surfaces['SURF 1'].index
-        n2 = self.surfaces['SURF 2'].index
 
-        self.opd_func = lambda r: \
-            (R1 - np.sqrt(R1**2 - r**2))*(1. - n1) + \
-            (R2 - np.sqrt(R2**2 - r**2))*(n2 - n1) + \
-            (R3 - np.sqrt(R3**2 - r**2))*(1. - n2) + \
-            t12*n1 + t23*n2
+        if self.is_simple:
+            #Simple lens
+            self.opd_func = lambda r: -r**2/(2*self.focal_length)
+
+        else:
+            #Zemax lens
+            R1 = abs(self.surfaces['SURF 1'].curvature)
+            R2 = abs(self.surfaces['SURF 2'].curvature)
+            R3 = abs(self.surfaces['SURF 3'].curvature)
+            t12 = self.surfaces['SURF 1'].thickness
+            t23 = self.surfaces['SURF 2'].thickness
+            n1 = self.surfaces['SURF 1'].index
+            n2 = self.surfaces['SURF 2'].index
+
+            self.opd_func = lambda r: \
+                (R1 - np.sqrt(R1**2 - r**2))*(1. - n1) + \
+                (R2 - np.sqrt(R2**2 - r**2))*(n2 - n1) + \
+                (R3 - np.sqrt(R3**2 - r**2))*(1. - n2) + \
+                t12*n1 + t23*n2
 
 ############################################
 ############################################
@@ -139,7 +160,7 @@ class Surface(object):
 
         #Assuming wave = 680 nm  #from refractiveindex.info
         self.index_dict = {'':1, 'N-BK7':1.514 , 'N-BAF10':1.665, \
-            'N-SF6HT':1.794, 'SF5':1.665, 'SF2':1.641}
+            'N-SF6HT':1.794, 'SF5':1.665, 'SF2':1.641, 'F2HT':1.614, 'N-FK5':1.485}
 
     @property
     def index(self):
