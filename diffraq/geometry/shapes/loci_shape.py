@@ -39,10 +39,6 @@ class LociShape(Shape):
     def build_local_shape_edge(self):
         return self.get_loci()
 
-    def get_min_max_radius(self):
-        #TODO
-        breakpoint()
-
 ############################################
 ############################################
 

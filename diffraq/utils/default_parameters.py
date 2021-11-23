@@ -66,8 +66,8 @@ def_sim_params = {
     'fft_tol':              1e-9,       #Tolerance to feed to NUFFT
     'seam_radial_nodes':    None,       #Number of radial quadrature nodes in seam. If None, use shape's
     'seam_theta_nodes':     None,       #Number of theta quadrature nodes in seam. If None, use shape's
-    'freq_radial_nodes':    1500,       #Number of radial quadrature nodes in angular spectrum
-    'freq_theta_nodes':     1500,       #Number of theta quadrature nodes in angular spectrum
+    'freq_radial_nodes':    512,       #Number of radial quadrature nodes in angular spectrum
+    'freq_theta_nodes':     512,       #Number of theta quadrature nodes in angular spectrum
     'freq_over_sample':     6,          #Oversampling of angular spectrum
 
     ### Polarization ###

@@ -51,9 +51,6 @@ class Shape(object):
             self.outline = geometry.LambdaOutline(self, self.edge_func, \
                 diff=self.edge_diff, etch_error=self.etch_error)
 
-            #Get min/max radius
-            self.get_min_max_radius()
-
         else:
             #Use interpolation data (specified or from file)
             if self.edge_data is not None:

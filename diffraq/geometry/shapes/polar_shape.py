@@ -40,11 +40,6 @@ class PolarShape(Shape):
 
         return edge
 
-    def get_min_max_radius(self):
-        rads = self.outline.func(np.linspace(0,2*np.pi, 1000))
-        self.min_radius = rads.min()
-        self.max_radius = rads.max()
-
 ############################################
 ############################################
 

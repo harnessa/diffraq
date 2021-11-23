@@ -226,8 +226,14 @@ class Simulator(object):
             yq = self.occulter.yq
             xoff = 0
 
-        #Occulter extent
-        Dmax = np.max([2*shp.max_radius for shp in self.occulter.shapes])
+        #Get angular spectrum quad
+        fx, fy, fw = diffraq.quadrature.polar_quad(lambda t: np.ones_like(t), \
+            self.freq_radial_nodes, self.freq_theta_nodes)
+
+        #Build target points
+        tx = np.tile(grid_pts, (len(grid_pts), 1))
+        ty = tx.T.flatten()
+        tx = tx.flatten()
 
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
@@ -235,32 +241,24 @@ class Simulator(object):
             #Calculate Input field
             u0 = np.exp(1j*2.*np.pi/self.waves[iw] * (xq**2 + yq**2)/(2*self.z0))
 
-            #Get angular spectrum quad
-            xf, yf, wf = diffraq.quadrature.frequency_quad(self.waves[iw], self.zz, \
-                self.freq_radial_nodes, self.freq_theta_nodes, Dmax, grid_pts, over_sample=self.freq_over_sample)
-
             #Apply input beam function
             if self.beam_function is not None:
-                wq = self.occulter.wq * self.beam_function(self.occulter.xq, \
+                u0 *= self.occulter.wq * self.beam_function(self.occulter.xq, \
                     self.occulter.yq, self.waves[iw])
-            else:
-                wq = self.occulter.wq
 
             #Calculate diffraction
-            uu = diffraq.diffraction.diffract_nu_angspec(xq, yq, wq, u0, \
-                xf, yf, wf, self.waves[iw], self.zz, grid_pts, self.fft_tol, is_babinet=self.occulter.is_babinet)
+            uu = diffraq.diffraction.diffract_nu_angspec(xq, yq, self.occulter.wq, \
+                u0, fx, fy, fw, self.waves[iw], self.zz, tx, ty, \
+                self.fft_tol, is_babinet=self.occulter.is_babinet, z0=self.z0)
 
             #Account for extra phase added by off_axis
             uu *= np.exp(1j*np.pi/(self.waves[iw]*self.z0)*self.z_scl * xoff)
-
-            #Multiply by plane wave
-            uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
 
             #Store
             pupil[iw] = uu
 
         #Cleanup
-        del uu, xq, yq, wq, xf, yf, wf
+        del uu, xq, yq, u0, fx, fy, fw, tx, ty
 
         return pupil
 
