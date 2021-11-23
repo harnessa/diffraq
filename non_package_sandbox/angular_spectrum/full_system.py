@@ -13,22 +13,53 @@ num_pts = 512
 wave = 0.641e-6
 width = 5e-3
 tol = 1e-9
-focal_length = 500e-3
+focal_length = 498e-3
 
 
 #Distances between lenses
-z12 = 167.1e-3
-z2f = 51.4e-3
+# z12 = 167.1e-3
+# z2f = 51.4e-3
+# z12 = 167.84e-3 + 0.5e-3
+# z2f = 59.85e-3 - 10e-3
 
+z12 = 159.430e-3
+z2f = 63.034e-3
+
+z12 += 7.e-3
+z2f += 1.5e-3
 
 #Lenses
-l1 = diffraq.diffraction.Lens_Element({'lens_name':'AC508-150-A-ML', 'diameter':width}, num_pts)
-l2 = diffraq.diffraction.Lens_Element({'lens_name':'AC064-015-A-ML'}, num_pts)
+l1 = diffraq.diffraction.Lens_Element(\
+    {'lens_name':'AC508-150-A-ML', 'diameter':width}, num_pts)
+l2 = diffraq.diffraction.Lens_Element(\
+    {'lens_name':'AC064-015-A-ML', 'diameter':width/2}, num_pts)
 
-# l1 = diffraq.diffraction.Lens({'lens_name':'EO_35996-150'})
-# l2 = diffraq.diffraction.Lens({'lens_name':'EO_84328-015'})
-# z12 = 168.95e-3
-# z2f = 56.8e-3
+# f1 = l1.focal_length
+# fb1 = 140.4e-3
+# zpp1 = f1 - fb1
+# z12 += zpp1#/2
+#
+# f2 = l2.focal_length
+# fb2 = 13e-3
+# zpp2 = f2 - fb2
+# z2f += zpp2#/2
+
+
+
+# o1 = 77.455
+# f1 = l1.focal_length
+# f2 = l2.focal_length
+# # f1b = 140.4e-3
+# # f2b = 13.6e-3
+# i1 = o1*f1/(o1 - f1)
+# o2 = z12 - i1
+# i2 = o2*f2/(o2 - f2)
+# # z2f = i2
+#
+# # l1 = diffraq.diffraction.Lens({'lens_name':'EO_35996-150'})
+# # l2 = diffraq.diffraction.Lens({'lens_name':'EO_84328-015'})
+# # z12 = 168.95e-3
+# # z2f = 56.8e-3
 
 #Derived
 kk = 2*np.pi/wave
@@ -37,11 +68,13 @@ dx2 = l2.dx
 zcrit1 = 2*num_pts*dx1**2/wave
 zcrit2 = 2*num_pts*dx2**2/wave
 
-#Input field
-u0 = np.ones((num_pts, num_pts)) + 0j
-
 #Source coordinates
 x1 = (np.arange(num_pts) - num_pts/2) * dx1
+
+#Input field
+u0 = np.ones((num_pts, num_pts)) + 0j
+# u0 = np.exp(1j*2*np.pi/wave/2/77.455*(x1**2 + x1[:,None]**2))
+
 
 #########################
 ### First Propagation ###
@@ -49,7 +82,8 @@ x1 = (np.arange(num_pts) - num_pts/2) * dx1
 
 #Apply first lens
 rr1 = np.hypot(x1, x1[:,None])
-lens_phs = np.exp(1j*kk*l1.opd_func(rr1))
+lens_phs = np.exp(1j*kk*l1.lens_func(rr1))
+# lens_phs = np.exp(-1j*kk*rr1**2/2/0.15)
 u0 *= lens_phs
 u0 = image_util.round_aperture(u0)
 
@@ -95,7 +129,8 @@ u2 *= dx1**2
 
 #Apply second lens
 rr2 = np.hypot(ox2_1D, ox2_1D[:,None])
-lens_phs = np.exp(1j*kk*l2.opd_func(rr2))
+lens_phs = np.exp(1j*kk*l2.lens_func(rr2))
+# lens_phs = np.exp(-1j*kk*rr2**2/2/0.015)
 u2 *= lens_phs
 u2 = image_util.round_aperture(u2)
 
@@ -149,9 +184,9 @@ airy = I0*(2*j1(xa)/xa)**2
 airy = airy.reshape((len(oxf_1d),)*2)
 
 #Plot
-fig, axes = plt.subplots(1, 2, figsize=(8,5))
-axes[0].imshow(abs(u2)**2)
-axes[1].imshow(uu)
+# fig, axes = plt.subplots(1, 2, figsize=(8,5))
+# axes[0].imshow(abs(u2)**2)
+# axes[1].imshow(uu)
 
 plt.figure()
 plt.semilogy(oxf_1d/13e-6, uu[len(uu)//2])

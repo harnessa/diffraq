@@ -5,13 +5,14 @@ import time
 import diffraq.utils.image_util as image_util
 from diffraq.quadrature import polar_quad
 from scipy.special import j1
+import diffraq
 
 #Input
 num_pts = 512
-wave = 0.6e-6
+wave = 0.68e-6
 width = 5e-3
 tol = 1e-9
-focal_length = 400e-3
+focal_length = 50e-3
 defocus = 0
 
 #TODO: why doesn't it work for large apertures?
@@ -19,6 +20,9 @@ defocus = 0
 # focal_length = width*80
 
 zz = focal_length + defocus
+# zz = 140.5e-3
+
+# zz = 124.217e-3
 
 #Derived
 dx = width/num_pts
@@ -30,13 +34,43 @@ kk = 2*np.pi/wave
 
 #Input field
 u0 = np.ones((num_pts, num_pts)) + 0j
-u0, _ = image_util.round_aperture(u0)
+u0 = image_util.round_aperture(u0)
 
 #Source coordinates
 xx = (np.arange(num_pts) - num_pts/2) * dx
 
 #Add lens phase
-u0 *= np.exp(-1j*kk/(2*focal_length)*(xx**2 + xx[:,None]**2))
+# u0 *= np.exp(-1j*kk/(2*focal_length)*(xx**2 + xx[:,None]**2))
+# l1 = diffraq.diffraction.Lens_Element(\
+#     {'lens_name':'AC508-150-A-ML', 'diameter':width}, num_pts)
+# u0 *= np.exp(1j*kk*l1.lens_func(np.hypot(xx, xx[:,None])))
+
+focal_length = 125e-3
+R1 = 128.21e-3
+thk = 3.260e-3
+rr = np.hypot(xx, xx[:,None])
+n1 = 1.514
+opd = (R1 - np.sqrt(R1**2 - rr**2))*(1 - n1)*2 + n1*thk
+# opd = -rr**2/(2*focal_length)
+u0 *= np.exp(1j*kk*opd)
+
+zback = 124.217e-3
+zpp = focal_length*(n1 - 1)*thk/R1/n1
+zz = zback + zpp/2
+
+# focal_length = 50e-3
+# R1 = 50.6e-3
+# thk = 5.24e-3
+# rr = np.hypot(xx, xx[:,None])
+# n1 = 1.514
+# opd = (R1 - np.sqrt(R1**2 - rr**2))*(1 - n1)*2 + n1*thk
+# # opd = -rr**2/(2*focal_length)
+# u0 *= np.exp(1j*kk*opd)
+#
+# zback = 48.373e-3
+# zpp = focal_length*(n1 - 1)*thk/R1/n1
+# zz = zback + zpp/2
+
 
 #Target coordinates
 fov = wave/width * zz * 10
