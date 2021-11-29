@@ -39,6 +39,7 @@ class Simulator(object):
 
         self.waves = np.atleast_1d(self.waves)
         self.z_scl = self.z0 / (self.z0 + self.zz)
+        self.npol = 2
 
     def load_children(self, shapes):
         #Logging + Saving
@@ -270,7 +271,7 @@ class Simulator(object):
         self.vector.build_quadrature()
 
         #Create empty pupil field array
-        pupil = np.empty((len(self.waves), 2, self.num_pts, self.num_pts)) + 0j
+        pupil = np.empty((len(self.waves), self.npol, self.num_pts, self.num_pts)) + 0j
 
         #Adjust occulter values if off_axis (shift doesn't go into beam function)
         if not np.isclose(0, np.hypot(*self.target_center)):
@@ -307,8 +308,14 @@ class Simulator(object):
             else:
                 w_beam = None       #for cleanup
 
+            # Ex = self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \
+            #     self.vector.Ey_comp * (sina*cosa * (pfld - sfld))
+            #
+            # Ey = self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
+            #     self.vector.Ex_comp * (sina*cosa * (pfld - sfld))
+
             #Loop over horizontal and vertical polarizations
-            for ip in range(2):
+            for ip in range(self.npol):
 
                 #Build quadrature weights * incident field
                 if ip == 0:
@@ -319,6 +326,13 @@ class Simulator(object):
                     wu0 = self.vector.wq * \
                         (self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
                          self.vector.Ex_comp * (sina*cosa * (pfld - sfld)))
+
+                # if ip == 0:
+                #     wu0 = self.vector.wq * Ex
+                # elif ip == 1:
+                #     wu0 = self.vector.wq * Ey
+                # else:
+                #     wu0 = (-1/self.zz) * self.vector.wq * (xq*Ex + yq*Ey)
 
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
@@ -332,6 +346,8 @@ class Simulator(object):
 
                 #Store
                 pupil[iw,ip] = uu
+
+        # del Ex, Ey
 
         #Cleanup
         del wu0, uu, sfld, pfld, cosa, sina, xq, yq, w_beam
@@ -375,7 +391,7 @@ class Simulator(object):
 
             #Calculate image for each polarization component
             self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
-            for i in range(2):
+            for i in range(self.npol):
                 self.image[:,i], self.image_pts = \
                     self.focuser.calculate_image(pupil[:,i], self.grid_pts)
 
