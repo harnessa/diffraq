@@ -61,9 +61,6 @@ class Simulator(object):
         else:
             self.vector = None
 
-        #Beam
-        self.beam = diffraq.diffraction.Beam(self.beam_screens, self)
-
         #Open flag
         self.shop_is_open = False
 
@@ -117,7 +114,6 @@ class Simulator(object):
 
         #Cleanup children
         self.occulter.clean_up()
-        self.beam.clean_up()
         if self.vector is not None:
             self.vector.clean_up()
 
@@ -239,8 +235,11 @@ class Simulator(object):
             lamz0 = self.waves[iw] * self.z0
 
             #Apply input beam function
-            wq = self.beam.apply_function(self.occulter.xq, self.occulter.yq, \
-                self.occulter.wq, self.waves[iw], fld_1=self.occulter.wq)
+            if self.beam_function is not None:
+                wq = self.occulter.wq * self.beam_function(self.occulter.xq, \
+                    self.occulter.yq, self.waves[iw])
+            else:
+                wq = self.occulter.wq
 
             #Calculate diffraction
             uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
@@ -254,9 +253,6 @@ class Simulator(object):
 
             #Store
             pupil[iw] = uu
-
-        #Clear beam map
-        self.beam.clear_screen_maps()
 
         #Cleanup
         del uu, xq, yq, wq
@@ -296,8 +292,12 @@ class Simulator(object):
                 self.vector.gw, self.waves[iw])
 
             #Apply input beam function
-            sfld, pfld = self.beam.apply_function(self.vector.xq, self.vector.yq, \
-                self.vector.wq, self.waves[iw], fld_1=sfld, fld_2=pfld)
+            if self.beam_function is not None:
+                w_beam = self.beam_function(self.vector.xq, self.vector.yq, self.waves[iw])
+                sfld *= w_beam
+                pfld *= w_beam
+            else:
+                w_beam = None       #for cleanup
 
             #Loop over horizontal and vertical polarizations
             for ip in range(self.npol):
