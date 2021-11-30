@@ -42,6 +42,13 @@ class Simulator(object):
         self.npol = 2
 
     def load_children(self, shapes):
+
+        #Set random number generator
+        if self.random_rng is None:
+            self.rng = np.random.default_rng(self.random_seed)
+        else:
+            self.rng = self.random_rng
+
         #Logging + Saving
         self.logger = diffraq.utils.Logger(self)
 
@@ -53,6 +60,9 @@ class Simulator(object):
             self.vector = diffraq.polarization.VectorSim(self, self.occulter.shapes)
         else:
             self.vector = None
+
+        #Beam
+        self.beam = diffraq.diffraction.Beam(self.beam_screens, self)
 
         #Open flag
         self.shop_is_open = False
@@ -107,6 +117,7 @@ class Simulator(object):
 
         #Cleanup children
         self.occulter.clean_up()
+        self.beam.clean_up()
         if self.vector is not None:
             self.vector.clean_up()
 
@@ -218,15 +229,7 @@ class Simulator(object):
         pupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
 
         #Adjust occulter values if off_axis (shift doesn't go into beam function)
-        if not np.isclose(0, np.hypot(*self.target_center)):
-            xq = self.occulter.xq - self.target_center[0] * self.z_scl
-            yq = self.occulter.yq - self.target_center[1] * self.z_scl
-            xoff = 2*(grid_pts*self.target_center[0] + grid_pts[:,None]*self.target_center[1])
-            xoff += np.hypot(*self.target_center)**2
-        else:
-            xq = self.occulter.xq
-            yq = self.occulter.yq
-            xoff = 0
+        xq, yq, xoff = self.get_offaxis_points(self.occulter.xq, self.occulter.yq, grid_pts)
 
         #Run diffraction calculation over wavelength
         for iw in range(len(self.waves)):
@@ -236,11 +239,8 @@ class Simulator(object):
             lamz0 = self.waves[iw] * self.z0
 
             #Apply input beam function
-            if self.beam_function is not None:
-                wq = self.occulter.wq * self.beam_function(self.occulter.xq, \
-                    self.occulter.yq, self.waves[iw])
-            else:
-                wq = self.occulter.wq
+            wq = self.beam.apply_function(self.occulter.xq, self.occulter.yq, \
+                self.occulter.wq, self.waves[iw], fld_1=self.occulter.wq)
 
             #Calculate diffraction
             uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
@@ -254,6 +254,9 @@ class Simulator(object):
 
             #Store
             pupil[iw] = uu
+
+        #Clear beam map
+        self.beam.clear_screen_maps()
 
         #Cleanup
         del uu, xq, yq, wq
@@ -274,15 +277,7 @@ class Simulator(object):
         pupil = np.empty((len(self.waves), self.npol, self.num_pts, self.num_pts)) + 0j
 
         #Adjust occulter values if off_axis (shift doesn't go into beam function)
-        if not np.isclose(0, np.hypot(*self.target_center)):
-            xq = self.vector.xq - self.target_center[0] * self.z_scl
-            yq = self.vector.yq - self.target_center[1] * self.z_scl
-            xoff = 2*(grid_pts*self.target_center[0] + grid_pts[:,None]*self.target_center[1])
-            xoff += np.hypot(*self.target_center)**2
-        else:
-            xq = self.vector.xq
-            yq = self.vector.yq
-            xoff = 0
+        xq, yq, xoff = self.get_offaxis_points(self.vector.xq, self.vector.yq, grid_pts)
 
         #Get edge normal components (relative to horizontal -- differs from Harness OE 2020)
         cosa = np.cos(self.vector.nq)
@@ -301,18 +296,8 @@ class Simulator(object):
                 self.vector.gw, self.waves[iw])
 
             #Apply input beam function
-            if self.beam_function is not None:
-                w_beam = self.beam_function(self.vector.xq, self.vector.yq, self.waves[iw])
-                sfld *= w_beam
-                pfld *= w_beam
-            else:
-                w_beam = None       #for cleanup
-
-            # Ex = self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \
-            #     self.vector.Ey_comp * (sina*cosa * (pfld - sfld))
-            #
-            # Ey = self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
-            #     self.vector.Ex_comp * (sina*cosa * (pfld - sfld))
+            sfld, pfld = self.beam.apply_function(self.vector.xq, self.vector.yq, \
+                self.vector.wq, self.waves[iw], fld_1=sfld, fld_2=pfld)
 
             #Loop over horizontal and vertical polarizations
             for ip in range(self.npol):
@@ -327,13 +312,6 @@ class Simulator(object):
                         (self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
                          self.vector.Ex_comp * (sina*cosa * (pfld - sfld)))
 
-                # if ip == 0:
-                #     wu0 = self.vector.wq * Ex
-                # elif ip == 1:
-                #     wu0 = self.vector.wq * Ey
-                # else:
-                #     wu0 = (-1/self.zz) * self.vector.wq * (xq*Ex + yq*Ey)
-
                 #Calculate diffraction
                 uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
                     grid_pts, self.fft_tol, lamz0=lamz0, is_babinet=is_babinet)
@@ -347,14 +325,30 @@ class Simulator(object):
                 #Store
                 pupil[iw,ip] = uu
 
-        # del Ex, Ey
-
         #Cleanup
-        del wu0, uu, sfld, pfld, cosa, sina, xq, yq, w_beam
+        del wu0, uu, sfld, pfld, cosa, sina, xq, yq
         if self.free_on_end:
             self.vector.clean_up()
 
         return pupil
+
+    ############################################
+    ############################################
+
+    def get_offaxis_points(self, xx, yy, grid_pts):
+        #Return early if not off-axis
+        if np.isclose(0, np.hypot(*self.target_center)):
+            return xx, yy, 0
+
+        #Adjust occulter/vector values if off_axis (shift doesn't go into beam function)
+        newx = xx - self.target_center[0] * self.z_scl
+        newy = yy - self.target_center[1] * self.z_scl
+        xoff = 2*(grid_pts*self.target_center[0] + grid_pts[:,None]*self.target_center[1])
+        xoff += np.hypot(*self.target_center)**2
+
+        return newx, newy, xoff
+
+    ############################################
 
     def get_target_points(self, grid_pts):
         #Return early if not off-axis

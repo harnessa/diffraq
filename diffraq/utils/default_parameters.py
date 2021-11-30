@@ -51,6 +51,7 @@ def_sim_params = {
 
     ### Laser Beam ###
     'beam_function':        None,       #lambda function that calculates beam's illumination pattern for each input x,y
+    'beam_screens':         None,       #list of dictionaries of phase screens to be applied to the beam
 
     ### Focuser ###
     'focal_length':         240,        #Focal length of optics
@@ -66,6 +67,10 @@ def_sim_params = {
     'fft_tol':              1e-9,       #Tolerance to feed to NUFFT
     'seam_radial_nodes':    None,       #Number of radial quadrature nodes in seam. If None, use shape's
     'seam_theta_nodes':     None,       #Number of theta quadrature nodes in seam. If None, use shape's
+    'angspec_radial_nodes': 512,        #Number of radial quadrature nodes in beam angular spectrum.
+    'angspec_theta_nodes':  512,        #Number of theta quadrature nodes in beam angular spectrum.
+    'random_seed':          None,       #Set random number seed
+    'random_rng':           None,       #Already initiated random number generator
 
     ### Polarization ###
     'seam_width':           25e-6,      #Half-width of Braunbek seam
