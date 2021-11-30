@@ -194,6 +194,10 @@ class VectorSim(object):
         U_prim =  pupil[:,0]*np.cos(ang) + pupil[:,1]*np.sin(ang)
         U_orth = -pupil[:,0]*np.sin(ang) + pupil[:,1]*np.cos(ang)
 
+        #TODO: below is Jones matrix?
+        # U_prim = pupil[:,0]*np.cos(ang)**2 + pupil[:,1]*np.sin(ang)*np.cos(ang)
+        # U_orth = pupil[:,0]*np.sin(ang)*np.cos(ang) + pupil[:,1]*np.cos(ang)**2
+
         #Copy over
         new_pupil = np.empty_like(pupil)
         new_pupil[:,0] = U_prim.copy()
