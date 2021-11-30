@@ -49,7 +49,8 @@ class Test_Focuser(object):
             grid_pts = diffraq.utils.image_util.get_grid_points(sim.num_pts, sim.tel_diameter)
 
             #Get images
-            image, image_pts = sim.focuser.calculate_image(pupil, grid_pts)
+            image, image_pts = sim.focuser.calculate_image(pupil[:,None], grid_pts)
+            image = image[:,0]
 
             #Get Airy disk
             et = np.tile(image_pts, (image.shape[-1],1))
@@ -94,7 +95,8 @@ class Test_Focuser(object):
         grid_pts = diffraq.utils.image_util.get_grid_points(sim.num_pts, sim.tel_diameter)
 
         #Get images
-        image, image_pts = sim.focuser.calculate_image(pupil, grid_pts)
+        image, image_pts = sim.focuser.calculate_image(pupil[:,None], grid_pts)
+        image = image[:,0]
 
         #Not airy disk, so compare peaks only
         area = np.pi*sim.tel_diameter**2/4

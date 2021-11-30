@@ -56,11 +56,7 @@ class Focuser(object):
 ####	Main Function ####
 ############################################
 
-    def calculate_image(self, in_pupil, grid_pts):
-
-        #Create copy
-        pupil = in_pupil.copy()
-        del in_pupil
+    def calculate_image(self, pupil, grid_pts):
 
         #Get gaussian quad
         fx, fy, wq = polar_quad(lambda t: np.ones_like(t), self.rad_nodes, self.the_nodes)
@@ -112,7 +108,7 @@ class Focuser(object):
         u0_waves = image_util.round_aperture(u0_waves)
 
         #Create image container
-        uu_waves = np.zeros((len(self.sim.waves), self.num_pts, self.num_pts)) + 0j
+        uu_waves = np.zeros_like(u0_waves)
 
         #Get current element
         elem = getattr(self.lenses, f'element_{ie}')
@@ -135,6 +131,9 @@ class Focuser(object):
         #Get OPD
         opd = elem.opd_func(self.r1*dx1, self.a1)
 
+        #Get component strengths via 'ray-tracing'
+        rays = self.get_component_strengths(elem, self.r1*dx1, self.a1)
+
         #Loop over wavelength
         for iw in range(len(self.sim.waves)):
 
@@ -145,7 +144,7 @@ class Focuser(object):
             hbf = self.get_bandwidth(wave, dx1, zz)
 
             #Apply phase function
-            u0 = u0_waves[iw] * np.exp(1j*2*np.pi/wave * opd)
+            u0_iw = u0_waves[iw] * np.exp(1j*2*np.pi/wave * opd)
 
             #Get transfer function
             fz2 = 1. - (wave*hbf*fx)**2 - (wave*hbf*fy)**2
@@ -157,22 +156,28 @@ class Focuser(object):
             #scale factor
             scl = 2*np.pi * hbf
 
-            #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
-            angspec = finufft.nufft2d2(fx*scl*dx1, fy*scl*dx1, u0, \
-                isign=-1, eps=self.sim.fft_tol)
+            #Loop over polarization
+            for ip in range(self.sim.npol):
 
-            #Get solution with inverse NUFFT (nonuniform -> nonuniform)
-            uu = finufft.nufft2d3(fx*scl, fy*scl, angspec*Hn*wq*hbf**2, \
-                self.x2*dx2, self.y2*dx2, isign=1, eps=self.sim.fft_tol)
+                #Get input field
+                u0 = np.sum(rays[ip]*u0_iw, 0)
 
-            #Normalize
-            uu *= dx1**2
+                #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
+                angspec = finufft.nufft2d2(fx*scl*dx1, fy*scl*dx1, u0, \
+                    isign=-1, eps=self.sim.fft_tol)
 
-            #Store
-            uu_waves[iw] = uu.reshape(uu_waves.shape[-2:])
+                #Get solution with inverse NUFFT (nonuniform -> nonuniform)
+                uu = finufft.nufft2d3(fx*scl, fy*scl, angspec*Hn*wq*hbf**2, \
+                    self.x2*dx2, self.y2*dx2, isign=1, eps=self.sim.fft_tol)
+
+                #Normalize
+                uu *= dx1**2
+
+                #Store
+                uu_waves[iw,ip] = uu.reshape(uu_waves.shape[-2:])
 
         #Cleanup
-        del u0, Hn, angspec, uu
+        del u0, Hn, angspec, uu, opd, rays, u0_iw
 
         return uu_waves, dx2
 
@@ -200,6 +205,51 @@ class Focuser(object):
         bf /= 2
 
         return bf
+
+############################################
+############################################
+
+############################################
+#####  Ray Tracing #####
+############################################
+
+    def get_component_strengths(self, elem, rads, angs):
+
+        #Return ones immediately if scalar
+        if self.sim.npol == 1:
+            return np.tile(np.eye(3)[:,:,None,None], (1,1) + rads.shape)
+
+        #Strength depends on element
+        if elem.kind == 'aperture':
+            #If aperture, return ones
+            return np.tile(np.eye(self.sim.npol)[:,:,None,None], (1,1) + rads.shape)
+
+        elif elem.kind == 'polarizer':
+            #If polarizer, rotate into polarizer angle
+            return self.polarizer_matrix(angs, elem.polarizer_angle)
+
+        else:
+            #Otherwise, assume lens (spherical)
+            return self.lens_matrix(np.arctan(rads/elem.focal_length))
+
+    ############################################
+
+    def lens_matrix(self, theta):
+        cosa = np.cos(theta)
+        sina = np.sin(theta)
+        return np.array([[cosa**2, -cosa*sina, sina], \
+            [sina, cosa, np.zeros_like(theta)], [-cosa*sina, sina**2, cosa]])
+
+    ############################################
+
+    def polarizer_matrix(self, angs, pol_ang):
+        #Keep both parallel and orthogonal to polarization directions
+        cp, sp = np.cos(pol_ang), np.sin(pol_ang)
+        co, so = np.cos(pol_ang + np.pi/2), np.sin(pol_ang + np.pi/2)
+        #X is parallel, Y is orthogonal
+        rot_mat = np.array([[cp**2, cp*sp, 0], [co*so, so**2, 0], [0,0,1]])
+        #Add extra dimensions
+        return rot_mat[...,None,None]
 
 ############################################
 ############################################

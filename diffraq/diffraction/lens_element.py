@@ -36,6 +36,7 @@ class Lens_Element(object):
             'diameter':         None,
             'distance':         1e-12,
             'focal_length':     1e-12,
+            'polarizer_angle':  0,
             #Wavefront Error Zernike modes. [(zernike m, zernike n, amplitude)]
             'wfe_modes':        [],
         }
@@ -48,7 +49,7 @@ class Lens_Element(object):
             setattr(self, k, v)
 
         #Build depending on kind
-        if self.kind == 'aperture':
+        if self.kind == 'aperture' or self.kind == 'polarizer':
             self.load_aperture()
 
         elif self.lens_name == 'simple':

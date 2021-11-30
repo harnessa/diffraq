@@ -125,8 +125,7 @@ class Analyzer(object):
                 vec_comps, self.sim.analyzer_angle)
             #Store
             self.full_pupil_field = field.copy()
-            #Apply analyzer
-            self.pupil = self.apply_cam_analyzer(field)
+            self.pupil = field.copy()
         else:
             self.pupil = pupil
 
@@ -140,6 +139,9 @@ class Analyzer(object):
         #Take one wavelength only
         self.pupil = self.pupil_waves[self.wave_ind]
         self.pupil_image = np.abs(self.pupil)**2
+
+        #Apply analyzer
+        self.pupil_image = self.apply_cam_analyzer(self.pupil_image)
 
     ############################################
 
@@ -273,6 +275,8 @@ class Analyzer(object):
 ############################################
 
     def apply_cam_analyzer(self, image):
+        #Store full
+        full = image.copy()
         #Unpolarized
         if self.cam_analyzer is None:
             image = image.sum(1)
@@ -282,6 +286,10 @@ class Analyzer(object):
         #Orthogonal polarization
         elif self.cam_analyzer.startswith('o'):
             image = image[:,1]
+
+        #Add Z-component if applicable
+        if full.shape[1] == 3:
+            image += full[:,2]
 
         return image
 
