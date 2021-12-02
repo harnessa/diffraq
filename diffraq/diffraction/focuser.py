@@ -226,19 +226,32 @@ class Focuser(object):
 
         elif elem.kind == 'polarizer':
             #If polarizer, rotate into polarizer angle
-            return self.polarizer_matrix(angs, elem.polarizer_angle)
+            return self.polarizer_matrix(angs, np.radians(elem.polarizer_angle))
 
         else:
             #Otherwise, assume lens (spherical)
-            return self.lens_matrix(np.arctan(rads/elem.focal_length))
+            return self.lens_matrix(rads, angs, elem.focal_length)
 
     ############################################
 
-    def lens_matrix(self, theta):
-        cosa = np.cos(theta)
-        sina = np.sin(theta)
-        return np.array([[cosa**2, -cosa*sina, sina], \
-            [sina, cosa, np.zeros_like(theta)], [-cosa*sina, sina**2, cosa]])
+    def lens_matrix(self, rads, angs, ff):
+        theta = np.arctan(rads/ff)
+        cost = np.cos(theta)
+        sint = np.sin(theta)
+        cosp = np.cos(angs)
+        sinp = np.sin(angs)
+
+        #Rotation matrix from Prajapati_2021
+        rot_mat = np.sqrt(cost) * np.array([
+            [cost + sinp**2*(1-cost), cosp*sinp*(cost-1), -sint*cosp],
+            [cosp*sinp*(cost-1), 1 - sinp**2*(1-cost), -sint*sinp],
+            [sint*cosp, sint*sinp, cost]
+        ])
+
+        #Cleanup
+        del theta, cost, sint, cosp, sinp
+
+        return rot_mat
 
     ############################################
 

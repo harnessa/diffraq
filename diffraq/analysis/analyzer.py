@@ -73,7 +73,7 @@ class Analyzer(object):
 
     def clean_up(self):
         att_list = ['sim', 'pupil', 'image', 'pupil_waves', 'image_waves',\
-            'pupil_xx', 'image_xx', 'pupil_image']
+            'pupil_xx', 'image_xx', 'pupil_image', 'image_Ez']
 
         #Cleanup sim
         if hasattr(self, 'sim'):
@@ -290,6 +290,8 @@ class Analyzer(object):
         #Add Z-component if applicable
         if full.shape[1] == 3:
             image += full[:,2]
+            #Store
+            self.image_Ez = full[:,2].copy()
 
         return image
 

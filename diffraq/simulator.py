@@ -308,15 +308,6 @@ class Simulator(object):
             for ip in range(self.npol):
 
                 #Build quadrature weights * incident field
-                # if ip == 0:
-                #     wu0 = self.vector.wq * \
-                #         (self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \
-                #          self.vector.Ey_comp * (sina*cosa * (pfld - sfld)))
-                # else:
-                #     wu0 = self.vector.wq * \
-                #         (self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
-                #          self.vector.Ex_comp * (sina*cosa * (pfld - sfld)))
-
                 if ip == 0:
                     wu0 = self.vector.wq * Ex
                 elif ip == 1:
@@ -337,10 +328,8 @@ class Simulator(object):
                 #Store
                 pupil[iw,ip] = uu
 
-        del Ex, Ey
-
         #Cleanup
-        del wu0, uu, sfld, pfld, cosa, sina, xq, yq, w_beam
+        del wu0, uu, sfld, pfld, cosa, sina, xq, yq, w_beam, Ex, Ey
         if self.free_on_end:
             self.vector.clean_up()
 
