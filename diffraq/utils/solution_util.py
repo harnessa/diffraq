@@ -11,7 +11,7 @@ Description: Functions to compute the analytic solution for a circular occulter.
 """
 
 import numpy as np
-from scipy.special import jn
+from scipy.special import jn, fresnel
 
 #FIXED parameters
 vu_brk = 0.99
@@ -133,6 +133,47 @@ def direct_integration(fresnum, u_shp, xq, yq, wq, gx_2D, gy_2D=None, F0=0):
 
     utru *= 1/(1j*lambdaz)
     return utru
+
+############################################
+############################################
+
+############################################
+##### Rectangle Analytical Function #####
+############################################
+
+def calculate_rectangle_solution(in_grid_2D, wave, zz, z0, width, height):
+
+    #Diverging beam separation scaling
+    z_scl = z0 / (zz + z0)
+    grid_2D = in_grid_2D.copy() * z_scl
+
+    #Build end points
+    aa = np.sqrt(2/(wave*zz*z_scl))
+    u2 = aa * ( width/2 - grid_2D)
+    u1 = aa * (-width/2 - grid_2D)
+    v2 = aa * ( height/2 - grid_2D.T)
+    v1 = aa * (-height/2 - grid_2D.T)
+
+    #Get fresnel solutions
+    Su2, Cu2 = fresnel(u2)
+    Su1, Cu1 = fresnel(u1)
+    Sv2, Cv2 = fresnel(v2)
+    Sv1, Cv1 = fresnel(v1)
+
+    #Wavenumber
+    kk = 2*np.pi/wave
+
+    #Build solution
+    uu = -1j/2 * np.exp(1j*kk*zz) * \
+        ((Cu2 - Cu1) + 1j*(Su2 - Su1)) * ((Cv2 - Cv1) + 1j*(Sv2 - Sv1))
+
+    #Multiply by diverging beam phase (+ amplitude)
+    uu *= z_scl * np.exp(1j*kk * (in_grid_2D**2 + in_grid_2D.T**2) / (2*(z0 + zz)))
+
+    #Cleanup
+    del u2, u1, v2, v1, Su2, Cu2, Su1, Cu1, Sv2, Cv2, Sv1, Cv1, grid_2D
+
+    return uu
 
 ############################################
 ############################################

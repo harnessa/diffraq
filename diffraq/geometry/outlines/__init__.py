@@ -15,3 +15,4 @@ from diffraq.geometry.outlines.lambda_outline import LambdaOutline
 from diffraq.geometry.outlines.interp_outline import InterpOutline
 from diffraq.geometry.outlines.cart_interp_outline import Cart_InterpOutline
 from diffraq.geometry.outlines.unique_interp_outline import Unique_InterpOutline
+from diffraq.geometry.outlines.loci_outline import LociOutline

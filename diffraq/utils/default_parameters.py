@@ -107,6 +107,8 @@ def_shape_params = {
     'num_petals':           1,          #Number of petals
     'min_radius':           0,          #Minimum radius
     'max_radius':           12,         #Maximum radius
+    'width':                None,       #Horizontal width for rectangle
+    'height':               None,       #Vertical height for rectangle
     'is_clocked':           False,      #Shape is clocked by half a petal (for petal/starshade only)
     'has_center':           True,       #Has central disk? (for petal/starshade only)
     'rotation':             0,          #Angle to rotate individual shape by [radians]
