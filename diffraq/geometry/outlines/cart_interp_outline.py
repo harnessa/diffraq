@@ -23,7 +23,7 @@ class Cart_InterpOutline(object):
         self._data = data       #(theta, x, y)
 
         #Use second order interpolant
-        self.k = 2
+        self.k = 4
 
         #Interpolate data for both dimensions and store
         self._func = [InterpolatedUnivariateSpline(data[:,0], data[:,1+i], \

@@ -15,12 +15,13 @@ import diffraq
 import numpy as np
 import h5py
 from scipy.special import fresnel
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 class Test_Quadrature(object):
 
     def run_all_tests(self):
         tsts = ['lgwt_A', 'lgwt_B', 'polar', 'cartesian', 'starshade',
-            'loci', 'triangle', 'integration'][-1:]
+            'loci', 'triangle', 'integration', 'petal'][-1:]
         for t in tsts[-1:]:
             getattr(self, f'test_{t}')()
 
@@ -151,6 +152,41 @@ class Test_Quadrature(object):
 
         #Cleanup
         del xq, yq, wq
+
+############################################
+
+    def test_petal(self):
+
+        #Load loci
+        with h5py.File(f'{diffraq.int_data_dir}/Test_Data/star_apod_file.h5', 'r') as f:
+            data = f['data'][()]
+            x0, x1, num_pet, gap = f['x0_x1_np_gap'][()]
+
+        num_pet = int(num_pet)
+        r0 = data[:,0].min()
+        r1 = data[:,0].max()
+
+        #True area
+        y0 = x0 * np.tan(np.pi/num_pet)
+        ply_area = num_pet * (2*y0)**2 / (4*np.tan(np.pi/num_pet))
+        tri_area = 2 * 0.5*y0*(x1-x0)
+        tru_area = num_pet*tri_area + ply_area
+
+        #Interpolation function
+        func = InterpolatedUnivariateSpline(data[:,0], data[:,1], k=4, ext=3)
+
+        for m in range(100,200,50):
+            for n in range(40,80,20):
+
+                #Get quad
+                xq, yq, wq = diffraq.quadrature.petal_quad(func, num_pet, \
+                    r0, r1, m, n)
+
+                #Assert with analytic area formula
+                assert(np.isclose(wq.sum(), tru_area))
+
+        #Cleanup
+        del xq, yq, wq, data
 
 ############################################
 

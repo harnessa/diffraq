@@ -16,7 +16,6 @@ apod = np.zeros_like(rads)
 
 #Load bb_2017
 rads, apod = np.genfromtxt(f'{diffraq.apod_dir}/bb_2017.txt', delimiter=',').T
-breakpoint()
 
 #Build apod
 apod[rads <= rcut] = afunc_inn(rads[rads <= rcut])

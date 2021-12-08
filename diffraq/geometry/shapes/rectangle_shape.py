@@ -18,6 +18,8 @@ import diffraq.quadrature as quad
 
 class RectangleShape(Shape):
 
+    kind = 'rectangle'
+
 ############################################
 #####  Outline #####
 ############################################
@@ -41,16 +43,18 @@ class RectangleShape(Shape):
         yline = np.linspace(-rady, rady, num_pts)
         ones = np.ones(num_pts)
 
-        #Build edge data (top, right, bottom, left)
-        xdata = np.concatenate((xline, ones*radx, xline[::-1], -ones*radx))
-        ydata = np.concatenate((ones*rady, yline[::-1], -ones*rady, yline))
-        edge_data = np.stack((xdata, ydata), 1)
+        #Build and store edge data CCW: (bottom, left, top, right)
+        self._sides = []
+        self._sides.append(np.stack((xline, -ones*rady), 1))
+        self._sides.append(np.stack((ones*radx, yline), 1))
+        self._sides.append(np.stack((xline[::-1], ones*rady), 1))
+        self._sides.append(np.stack((-ones*radx, yline[::-1]), 1))
 
-        #Flip to go CCW
-        edge_data = edge_data[::-1]
+        #Flatten to edge data
+        edge_data = np.array(self._sides).reshape((-1, 2))
 
         #Cleanup
-        del xline, yline, ones, xdata, ydata
+        del xline, yline, ones
 
         #Replace min/max radius
         self.min_radius = min(radx, rady)

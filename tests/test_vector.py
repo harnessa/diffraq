@@ -29,7 +29,7 @@ class Test_Vector(object):
     circle_rad = 1.5
 
     def run_all_tests(self):
-        funs = ['polar', 'cartesian', 'petal', 'petal_diffraction']
+        funs = ['polar', 'cartesian', 'petal', 'petal_diffraction', 'star_petal']
         for f in funs:
             getattr(self, f'test_{f}')()
 
@@ -87,7 +87,7 @@ class Test_Vector(object):
 
         #Cleanup
         sim.clean_up()
-        del xs, ys, ws, ds, ns, sim
+        del xs, ys, ws, ds, ns, sim, sfld, pfld
 
 ############################################
 
@@ -171,6 +171,68 @@ class Test_Vector(object):
 
         self.do_test_quadrature('cartesian', cart_func, cart_diff)
         self.do_test_diffraction('cartesian', cart_func, cart_diff)
+
+############################################
+############################################
+
+    def test_star_petal(self):
+
+        seam_width = 25e-6
+
+        #Maxwell functions
+        area_func = lambda d, w: [np.heaviside(-d, 1)*np.heaviside(seam_width/2+d,1)+0j]*2
+
+        #Simulation parameters
+        params = {'radial_nodes':self.radial_nodes, 'theta_nodes':self.theta_nodes, \
+            'do_run_vector':True, 'seam_width':seam_width, \
+            'maxwell_func':area_func, }
+        num_pet = 12
+
+        #Loop over opacity
+        for is_opaque in [False, True]:
+
+            #Simulated shapes
+            shape = {'kind':'starshade', 'num_petals':num_pet, 'is_opaque':is_opaque,\
+                'has_center':True,
+                'edge_file':f'{diffraq.int_data_dir}/Test_Data/star_apod_file.h5'}
+
+            #Build simulator
+            sim = diffraq.Simulator(params, shape)
+
+            #Build polar seam
+            xs, ys, ws, ds, ns, gw = \
+                sim.vector.seams[0].build_seam_quadrature(seam_width)
+
+            #Get area of open seam (in aperture)
+            area = (ws * area_func(ds,0)[0].real).sum()
+
+            #True area
+            x0 = sim.occulter.shapes[0].min_radius * np.cos(np.pi/num_pet)
+            x1 = sim.occulter.shapes[0].max_radius
+            y0 = x0 * np.tan(np.pi/num_pet)
+            tru_area = 2*num_pet * (seam_width/2) * np.hypot(x1-x0, 0-y0)
+
+            #Compare quadrature area
+            assert(np.isclose(area, tru_area))
+
+            #Build quadrature
+            sim.vector.build_quadrature()
+
+            #Get incident field
+            sfld, pfld = sim.vector.screen.get_edge_field( \
+                sim.vector.dq, sim.vector.gw, sim.waves[0])
+
+            #Get area from field
+            sarea = (ws * sfld.real).sum()
+            parea = (ws * pfld.real).sum()
+
+            #Compare areas
+            assert(np.isclose(sarea, tru_area))
+            assert(np.isclose(parea, tru_area))
+
+        #Cleanup
+        sim.clean_up()
+        del xs, ys, ws, ds, ns, sim, sfld, pfld
 
 ############################################
 ############################################

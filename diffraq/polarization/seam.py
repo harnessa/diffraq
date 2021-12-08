@@ -121,6 +121,10 @@ class Seam(object):
             self.shape.num_petals, self.shape.min_radius, self.shape.max_radius, \
             self.radial_nodes, self.theta_nodes, seam_width)
 
+    def get_quad_rectangle(self, seam_width):
+        return polar.seam_rectangle_quad(self.shape._sides, \
+            self.radial_nodes, self.theta_nodes, seam_width)
+
 ############################################
 ############################################
 
@@ -247,6 +251,13 @@ class Seam(object):
     def get_normal_angles_cartesian(self, indt_values):
         #Just pass to polar
         return self.get_normal_angles_polar(indt_values)
+
+    def get_normal_angles_rectangle(self, indt_values):
+        import matplotlib.pyplot as plt;plt.ion()
+        breakpoint()
+
+        #Pass dummy gap widths
+        gw = None
 
 ############################################
 ############################################

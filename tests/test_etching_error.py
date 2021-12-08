@@ -33,6 +33,8 @@ class Test_Etching(object):
             for oe in ['over', 'under']:
                 getattr(self, f'test_{oa}_{oe}')()
 
+        self.test_start_petal()
+
 ############################################
 
     def run_calculation(self, is_opaque, etch_sign):
@@ -131,6 +133,58 @@ class Test_Etching(object):
     def test_aperture_under(self):
         self.run_calculation(False, -1)
 
+    def test_star_petal(self):
+        for opq in [False, True]:
+            for es in [1,-1]:
+                self.run_star_petal(opq, es)
+
+############################################
+############################################
+
+    def run_star_petal(self, is_opaque, etch_sign):
+
+        #Load simulator
+        params = {
+            'radial_nodes':     self.radial_nodes,
+            'theta_nodes':      self.theta_nodes,
+            'num_pts':          self.num_pts,
+            'tel_diameter':     self.tel_diameter,
+            'zz':               self.zz,
+            'z0':               self.z0,
+            'skip_image':       True,
+        }
+        num_pet = 12
+        etch = 10e-6
+
+        shape = {'kind':'starshade', 'num_petals':num_pet, 'is_opaque':is_opaque,\
+            'has_center':True, 'etch_error':etch * etch_sign,
+            'edge_file':f'{diffraq.int_data_dir}/Test_Data/star_apod_file.h5'}
+
+        #Load simulator
+        sim = diffraq.Simulator(params, shapes=shape)
+
+        #Build quad
+        sim.occulter.build_quadrature()
+
+        #Calculate area
+        area = sim.occulter.wq.sum()
+
+        #True area
+        x0 = sim.occulter.shapes[0].min_radius * np.cos(np.pi/num_pet)
+        x1 = sim.occulter.shapes[0].max_radius
+        y0 = x0 * np.tan(np.pi/num_pet)
+        ply_area = num_pet * (2*y0)**2 / (4*np.tan(np.pi/num_pet))
+        tri_area = 2 * 0.5*y0*(x1-x0)
+        ech_area = 2*num_pet * etch * np.hypot(x1-x0, 0-y0)
+        ech_area *= -1 * etch_sign * [1,-1][int(is_opaque)]
+        tru_area = num_pet*tri_area + ply_area + ech_area
+
+        #Assert areas are close
+        assert(np.isclose(tru_area, sim.occulter.wq.sum()))
+
+        #Cleanup
+        sim.clean_up()
+
 ############################################
 ############################################
 
@@ -225,4 +279,5 @@ if __name__ == '__main__':
 
     te = Test_Etching()
     # te.run_all_tests()
-    te.run_petal_calculation()
+    # te.run_petal_calculation()
+    te.test_star_petal()

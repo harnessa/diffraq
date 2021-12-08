@@ -16,3 +16,4 @@ from diffraq.polarization.quadrature.seam_petal_quad import seam_petal_quad, sea
 from diffraq.polarization.quadrature.seam_polar_quad import seam_polar_quad, seam_polar_edge
 from diffraq.polarization.quadrature.seam_unique_petal_quad import seam_unique_petal_quad, seam_unique_petal_edge
 from diffraq.polarization.quadrature.seam_valley import seam_valley_quad, seam_valley_edge
+from diffraq.polarization.quadrature.seam_rectangle_quad import seam_rectangle_quad
