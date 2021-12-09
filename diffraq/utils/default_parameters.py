@@ -82,7 +82,7 @@ def_sim_params = {
     'stokes_parameters':    None,       #Stokes' parameters [I,Q,U,V] describing state of polarization
     'analyzer_angle':       0,          #Angle of camera polarizing analyzer relative to Lab frame horizontal [degrees]
     'with_vector_gaps':     False,      #Use different solution for small gaps between petals?
-
+    'with_normal_seam':     False,      #Build seams normal to edge rather than in polar coords
 }
 
 ############################################

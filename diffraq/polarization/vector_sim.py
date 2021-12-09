@@ -97,10 +97,41 @@ class VectorSim(object):
 ############################################
 
 ############################################
-#####  Quadrature + Vector Field #####
+#####  Quadrature #####
 ############################################
 
     def build_quadrature(self):
+        #Decide how to build quadrature
+        if self.sim.with_normal_seam and 'petal' in self.shapes[0].kind:
+            #Build quadrature normal to the edge (must be petal)
+            self.xq, self.yq, self.wq, self.dq, self.nq, self.gw = \
+                polar.build_normal_quadrature(self.seams[0].shape, \
+                self.sim.seam_width, self.seams[0].radial_nodes, self.seams[0].theta_nodes)
+
+            #Clear gap widths
+            if not self.sim.with_vector_gaps:
+                self.gw = np.empty(0)
+
+        else:
+            #Build quadrature in coordinate frame
+            self.build_frame_quadrature()
+
+        #Add occulter attitude
+        if self.sim.occulter.has_attitude:
+            #Rotate quadrature points
+            self.xq, self.yq = self.sim.occulter.add_occulter_attitude(self.xq, self.yq)
+
+            #Rotate all normal angles
+            self.nq += np.radians(self.sim.spin_angle)
+
+        #Shift occulter
+        if self.sim.occulter_shift is not None:
+            self.xq += self.sim.occulter_shift[0]
+            self.yq += self.sim.occulter_shift[1]
+
+    ############################################
+
+    def build_frame_quadrature(self):
 
         #Initialize
         self.xq, self.yq, self.wq = np.empty(0), np.empty(0), np.empty(0)
@@ -131,19 +162,6 @@ class VectorSim(object):
 
         #Cleanup
         del xs, ys, ws, ds, ns, gs
-
-        #Add occulter attitude
-        if self.sim.occulter.has_attitude:
-            #Rotate quadrature points
-            self.xq, self.yq = self.sim.occulter.add_occulter_attitude(self.xq, self.yq)
-
-            #Rotate all normal angles
-            self.nq += np.radians(self.sim.spin_angle)
-
-        #Shift occulter
-        if self.sim.occulter_shift is not None:
-            self.xq += self.sim.occulter_shift[0]
-            self.yq += self.sim.occulter_shift[1]
 
 ############################################
 ############################################
@@ -183,7 +201,7 @@ class VectorSim(object):
 
     def build_polarized_field(self, scl_pupil, vec_pupil, vec_comps, analyzer_angle):
         #Add scalar field to vector field to create total field in horiz./vert. direction
-        pupil = vec_pupil.copy() #* np.exp(1j*np.pi/4)   #FIXME
+        pupil = vec_pupil.copy()
         for i in range(len(vec_comps)):
             pupil[:,i] += scl_pupil * vec_comps[i]
 
@@ -193,10 +211,6 @@ class VectorSim(object):
         #Apply analyzer angle to get primary and orthogonal polarization fields
         U_prim =  pupil[:,0]*np.cos(ang) + pupil[:,1]*np.sin(ang)
         U_orth = -pupil[:,0]*np.sin(ang) + pupil[:,1]*np.cos(ang)
-
-        #TODO: below is Jones matrix?
-        # U_prim = pupil[:,0]*np.cos(ang)**2 + pupil[:,1]*np.sin(ang)*np.cos(ang)
-        # U_orth = pupil[:,0]*np.sin(ang)*np.cos(ang) + pupil[:,1]*np.cos(ang)**2
 
         #Copy over
         new_pupil = np.empty_like(pupil)

@@ -16,3 +16,4 @@ from diffraq.polarization.thick_screen import ThickScreen
 from diffraq.polarization.vector_sim import VectorSim
 from diffraq.polarization.quadrature import *
 from diffraq.polarization.perturbations import *
+from diffraq.polarization.normal_seam_quad import build_normal_quadrature
