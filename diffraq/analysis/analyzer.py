@@ -73,7 +73,7 @@ class Analyzer(object):
 
     def clean_up(self):
         att_list = ['sim', 'pupil', 'image', 'pupil_waves', 'image_waves',\
-            'pupil_xx', 'image_xx', 'pupil_image']
+            'pupil_xx', 'image_xx', 'pupil_image', 'vec_pupil']
 
         #Cleanup sim
         if hasattr(self, 'sim'):
@@ -128,16 +128,8 @@ class Analyzer(object):
         else:
             self.pupil = pupil
 
-        #TODO: add pupil calibration
         #Normalize with calibration data
-        # self.calibrate_pupil()
-
-        #Store all waves
-        self.pupil_waves = self.pupil.copy()
-
-        #Take one wavelength only
-        self.pupil = self.pupil_waves[self.wave_ind]
-        self.pupil_image = np.abs(self.pupil)**2
+        self.calibrate_pupil()
 
     ############################################
 
@@ -260,6 +252,78 @@ class Analyzer(object):
 
                 #Get peak value
                 cal_val = np.concatenate((cal_val, [gg_fit.amplitude.value]))
+
+        return cal_val
+
+############################################
+############################################
+
+############################################
+####	Pupil Calibration ####
+############################################
+
+    def calibrate_pupil(self):
+        #Convert to contrast?
+        if self.is_contrast:
+            self.convert_to_suppression()
+
+        #Store all waves
+        self.pupil_waves = self.pupil.copy()
+
+        #Take one wavelength only
+        self.pupil = self.pupil_waves[self.wave_ind]
+
+        #Convert to image
+        self.pupil_image = np.abs(self.pupil)**2
+
+    def convert_to_suppression(self):
+
+        #Get calibration value
+        if self.cal_file_pupil is None:
+            cal_val = (self.sim.z0/(self.sim.z0 + self.sim.zz))**2
+        else:
+            cal_val = self.get_pupil_calibration_value()
+
+        #Get freespace correction
+        if isinstance(self.freespace_corr, dict):
+            fcorr = np.array([self.freespace_corr[np.round(wv*1e9,0)] for wv in self.sim.waves])
+        else:
+            fcorr = self.freespace_corr
+
+        #Store calibration value
+        self.pupil_cal_val = fcorr * cal_val * self.max_apod**2.
+
+        #Convert to sqrt(suppression) b/c field
+        self.pupil /= np.sqrt(self.pupil_cal_val[:,None,None])
+
+    def get_pupil_calibration_value(self):
+        #Load calibration image
+        with h5py.File(self.cal_file_pupil, 'r') as f:
+            cal_pup = f['field'][()]
+            cal_wvs = f['waves'][()]
+            is_polarized = f['is_polarized'][()]
+
+        #Always take parallel polarization for calibration value
+        if is_polarized:
+            cal_pup = cal_pup[:,0]
+
+        #Convert to intensity
+        cal_pup = np.abs(cal_pup)**2
+
+        #Get matching wavelengths
+        if len(cal_wvs) != len(self.sim.waves):
+            #Get closest wavelength
+            wv_inds = [np.argmin(np.abs(cal_wvs - wv)) for wv in self.sim.waves]
+            #Throw out if too different
+            wv_inds = np.array(wv_inds)[np.abs(self.sim.waves - cal_wvs[wv_inds]) < 5e-9]
+            #keep images at those wavelengths
+            cal_pup = cal_pup[wv_inds]
+
+        #Round aperture
+        cal_pup, _ = image_util.round_aperture(cal_pup)
+
+        #Calibration value is average in aperture
+        cal_val = np.array([cp[cp != 0].mean() for cp in cal_pup])
 
         return cal_val
 

@@ -152,6 +152,7 @@ def_alz_params = {
     ### Contrast ###
     'is_contrast':          False,      #Should we normalize as a contrast measurement?
     'calibration_file':     None,       #File pointing to calibration image for which to normalize image to contrast
+    'cal_file_pupil':       None,     #File pointing to calibration pupil for which to normalize image to contrast
     'max_apod':             1.,         #Maximum Apodization value, to convert to contrast
     'freespace_corr':       1.,         #Freespace correction for contrast measurement. If wavelength dependent, supply dictionary with {wave [nm]: correction}
     'fit_airy':             False,      #Fit Airy pattern to calibration image to get peak?
