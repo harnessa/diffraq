@@ -252,6 +252,30 @@ class Simulator(object):
             #Store
             pupil[iw] = uu
 
+        # #Run z term
+        # self.zpupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
+        # wq = (-1/self.zz) * self.occulter.wq * (xq*self.vector.Ex_comp + yq*self.vector.Ey_comp)
+        # 
+        # #Run diffraction calculation over wavelength
+        # for iw in range(len(self.waves)):
+        #
+        #     #lambda * z
+        #     lamzz = self.waves[iw] * self.zz
+        #     lamz0 = self.waves[iw] * self.z0
+        #
+        #     #Calculate diffraction
+        #     uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
+        #         self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
+        #
+        #     #Account for extra phase added by off_axis
+        #     uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
+        #
+        #     #Multiply by plane wave
+        #     uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+        #
+        #     #Store
+        #     self.zpupil[iw] = uu
+
         #Cleanup
         del uu, xq, yq, wq
 
@@ -386,6 +410,9 @@ class Simulator(object):
             pupil = self.vec_pupil.copy()
             for i in range(len(self.vec_comps)):
                 pupil[:,i] += self.pupil * self.vec_comps[i]
+
+            #Add scalar z field
+            # self.vec_pupil[:,2] += self.zpupil
 
             #Cacluate image
             self.image, self.image_pts = self.focuser.calculate_image(pupil, self.grid_pts)
