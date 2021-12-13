@@ -335,6 +335,9 @@ class Analyzer(object):
 ############################################
 
     def apply_cam_analyzer(self, image):
+        #Store
+        old = image.copy()
+
         #Unpolarized
         if self.cam_analyzer is None:
             image = image.sum(1)
@@ -344,6 +347,10 @@ class Analyzer(object):
         #Orthogonal polarization
         elif self.cam_analyzer.startswith('o'):
             image = image[:,1]
+
+        #Add z field
+        if old.shape[1] == 3:
+            image += old[:,2]
 
         return image
 

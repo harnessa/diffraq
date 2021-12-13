@@ -254,6 +254,30 @@ class Simulator(object):
             #Store
             pupil[iw] = uu
 
+       # #Run z term
+       #  self.zpupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
+       #  wq = (-1/self.zz) * self.occulter.wq * (xq*self.vector.Ex_comp + yq*self.vector.Ey_comp)
+       #
+       #  #Run diffraction calculation over wavelength
+       #  for iw in range(len(self.waves)):
+       #
+       #      #lambda * z
+       #      lamzz = self.waves[iw] * self.zz
+       #      lamz0 = self.waves[iw] * self.z0
+       #
+       #      #Calculate diffraction
+       #      uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
+       #          self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
+       #
+       #      #Account for extra phase added by off_axis
+       #      uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
+       #
+       #      #Multiply by plane wave
+       #      uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+       #
+       #      #Store
+       #      self.zpupil[iw] = uu
+
         #Cleanup
         del uu, xq, yq, wq
 
@@ -270,7 +294,7 @@ class Simulator(object):
         self.vector.build_quadrature()
 
         #Create empty pupil field array
-        pupil = np.empty((len(self.waves), self.npol, self.num_pts, self.num_pts)) + 0j
+        pupil = np.empty((len(self.waves), 2, self.npol, self.num_pts, self.num_pts)) + 0j
 
         #Adjust occulter values if off_axis (shift doesn't go into beam function)
         xq, yq, xoff = self.get_offaxis_points(self.vector.xq, self.vector.yq, grid_pts)
@@ -280,53 +304,71 @@ class Simulator(object):
         sina = np.sin(self.vector.nq)
         del self.vector.nq
 
-        #Run diffraction calculation over wavelength
-        for iw in range(len(self.waves)):
+        #Loop over E/H
+        for ieh in range(2):
 
-            #lambda * z
-            lamzz = self.waves[iw] * self.zz
-            lamz0 = self.waves[iw] * self.z0
+            #Run diffraction calculation over wavelength
+            for iw in range(len(self.waves)):
 
-            #Get incident field
-            sfld, pfld = self.vector.screen.get_edge_field(self.vector.dq, \
-                self.vector.gw, self.waves[iw])
+                #lambda * z
+                lamzz = self.waves[iw] * self.zz
+                lamz0 = self.waves[iw] * self.z0
 
-            #Apply input beam function
-            if self.beam_function is not None:
-                w_beam = self.beam_function(self.vector.xq, self.vector.yq, self.waves[iw])
-                sfld *= w_beam
-                pfld *= w_beam
-            else:
-                w_beam = None       #for cleanup
+                #Get incident field
+                sfld, pfld = self.vector.screen.interpolate_file_edge(self.vector.dq, \
+                    self.waves[iw], ['e','h'][ieh])
 
-            #Loop over horizontal and vertical polarizations
-            for ip in range(self.npol):
-
-                #Build quadrature weights * incident field
-                if ip == 0:
-                    wu0 = self.vector.wq * \
-                        (self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \
-                         self.vector.Ey_comp * (sina*cosa * (pfld - sfld)))
+                #Apply input beam function
+                if self.beam_function is not None:
+                    w_beam = self.beam_function(self.vector.xq, self.vector.yq, self.waves[iw])
+                    sfld *= w_beam
+                    pfld *= w_beam
                 else:
-                    wu0 = self.vector.wq * \
-                        (self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
-                         self.vector.Ex_comp * (sina*cosa * (pfld - sfld)))
+                    w_beam = None       #for cleanup
 
-                #Calculate diffraction
-                uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
-                    grid_pts, self.fft_tol, lamz0=lamz0, is_babinet=is_babinet)
+                #Get field components
+                if ieh == 0:
+                    #Electric Field
+                    Ex = self.vector.Ex_comp * (sfld*sina**2 + pfld*cosa**2) + \
+                        self.vector.Ey_comp * (sina*cosa * (sfld - pfld))
 
-                #Account for extra phase added by off_axis
-                uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
+                    Ey = self.vector.Ey_comp * (sfld*cosa**2 + pfld*sina**2) + \
+                        self.vector.Ex_comp * (sina*cosa * (sfld - pfld))
+                else:
+                    #Magnetic Field
+                    Ex = self.vector.Ex_comp * (sfld*cosa**2 - pfld*sina**2) + \
+                        -self.vector.Ey_comp * (sina*cosa * (sfld + pfld))
 
-                #Multiply by plane wave
-                uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+                    Ey = -self.vector.Ey_comp * (pfld*cosa**2 - sfld*sina**2) + \
+                         -self.vector.Ex_comp * (sina*cosa * (sfld + pfld))
 
-                #Store
-                pupil[iw,ip] = uu
+                #Loop over horizontal and vertical polarizations
+                for ip in range(self.npol):
+
+                    #Build quadrature weights * incident field
+                    if ip == 0:
+                        wu0 = self.vector.wq * Ex
+                    elif ip == 1:
+                        wu0 = self.vector.wq * Ey
+                    else:
+                        #TODO: xq should be xq - x_tel
+                        wu0 = (-1/self.zz) * self.vector.wq * (xq*Ex + yq*Ey)
+
+                    #Calculate diffraction
+                    uu = diffraq.diffraction.diffract_grid(xq, yq, wu0, lamzz, \
+                        grid_pts, self.fft_tol, lamz0=lamz0, is_babinet=is_babinet)
+
+                    #Account for extra phase added by off_axis
+                    uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
+
+                    #Multiply by plane wave
+                    uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+
+                    #Store
+                    pupil[iw,ieh,ip] = uu
 
         #Cleanup
-        del wu0, uu, sfld, pfld, cosa, sina, xq, yq
+        del wu0, uu, sfld, pfld, cosa, sina, xq, yq, Ex, Ey
         if self.free_on_end:
             self.vector.clean_up()
 
@@ -380,14 +422,36 @@ class Simulator(object):
         if self.do_run_vector:
 
             #Build total field for each polarization component
-            pupil = self.vector.build_polarized_field(self.pupil, self.vec_pupil, \
-                self.vec_comps, self.analyzer_angle)
+            # pupil = self.vector.build_polarized_field(self.pupil, self.vec_pupil, \
+                # self.vec_comps, self.analyzer_angle)
+
+            pupil = self.vec_pupil.copy()
+            pupil[:,0,0] += self.pupil * self.vec_comps[0]
+            pupil[:,0,1] += self.pupil * self.vec_comps[1]
+            pupil[:,1,0] += self.pupil * -self.vec_comps[1]
+            pupil[:,1,1] += self.pupil * self.vec_comps[0]
 
             #Calculate image for each polarization component
-            self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
-            for i in range(self.npol):
-                self.image[:,i], self.image_pts = \
-                    self.focuser.calculate_image(pupil[:,i], self.grid_pts)
+            self.image = np.empty(pupil.shape[:-2] + (self.image_size,)*2)
+            for ieh in range(2):
+                for ip in range(self.npol):
+                    self.image[:,ieh,ip], self.image_pts = \
+                        self.focuser.calculate_image(pupil[:,ieh,ip], self.grid_pts)
+
+            #Combine E + H
+            self.image = self.image.sum(1)
+
+            # pupil = self.vec_pupil.copy()
+            # for i in range(len(self.vec_comps)):
+            #     pupil[:,i] += self.pupil * self.vec_comps[i]
+
+            # pupil[:,2] += self.zpupil
+
+            # #Calculate image for each polarization component
+            # self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
+            # for i in range(self.npol):
+            #     self.image[:,i], self.image_pts = \
+            #         self.focuser.calculate_image(pupil[:,i], self.grid_pts)
 
         else:
             #Calculate scalar image

@@ -109,12 +109,19 @@ class ThickScreen(object):
         else:
             return self.interpolate_file_gap(dd, gw, wave)
 
-    def interpolate_file_edge(self, dd, wave):
+    def interpolate_file_edge(self, dd, wave, eh):
+        #Get component names
+        if eh == 'e':
+            sc, pc, zc = 'ez', 'ey', 'ex'
+        elif eh == 'h':
+            sc, pc, zc = 'hy', 'hz', 'hx'
+
         #Load data from file and build interpolation function for current wavelength
-        with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
+        with h5py.File(f'{self.maxwell_file}_{eh.upper()}.h5', 'r') as f:
             xx = f[f'{wave*1e9:.0f}_x'][()]
-            sf = f[f'{wave*1e9:.0f}_s'][()]
-            pf = f[f'{wave*1e9:.0f}_p'][()]
+            sf = f[f'{wave*1e9:.0f}_{sc}'][()]
+            pf = f[f'{wave*1e9:.0f}_{pc}'][()]
+
             sfld = np.interp(dd, xx, sf, left=0j, right=0j)
             pfld = np.interp(dd, xx, pf, left=0j, right=0j)
 
