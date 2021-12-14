@@ -254,29 +254,29 @@ class Simulator(object):
             #Store
             pupil[iw] = uu
 
-       # #Run z term
-       #  self.zpupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
-       #  wq = (-1/self.zz) * self.occulter.wq * (xq*self.vector.Ex_comp + yq*self.vector.Ey_comp)
-       #
-       #  #Run diffraction calculation over wavelength
-       #  for iw in range(len(self.waves)):
-       #
-       #      #lambda * z
-       #      lamzz = self.waves[iw] * self.zz
-       #      lamz0 = self.waves[iw] * self.z0
-       #
-       #      #Calculate diffraction
-       #      uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
-       #          self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
-       #
-       #      #Account for extra phase added by off_axis
-       #      uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
-       #
-       #      #Multiply by plane wave
-       #      uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
-       #
-       #      #Store
-       #      self.zpupil[iw] = uu
+       #Run z term
+        self.zpupil = np.empty((len(self.waves), self.num_pts, self.num_pts)) + 0j
+        wq = (-1/self.zz) * self.occulter.wq * (xq*self.vector.Ex_comp + yq*self.vector.Ey_comp)
+
+        #Run diffraction calculation over wavelength
+        for iw in range(len(self.waves)):
+
+            #lambda * z
+            lamzz = self.waves[iw] * self.zz
+            lamz0 = self.waves[iw] * self.z0
+
+            #Calculate diffraction
+            uu = diffraq.diffraction.diffract_grid(xq, yq, wq, lamzz, grid_pts, \
+                self.fft_tol, lamz0=lamz0, is_babinet=self.occulter.is_babinet)
+
+            #Account for extra phase added by off_axis
+            uu *= np.exp(1j*np.pi/lamz0*self.z_scl * xoff)
+
+            #Multiply by plane wave
+            uu *= np.exp(1j * 2*np.pi/self.waves[iw] * self.zz)
+
+            #Store
+            self.zpupil[iw] = uu
 
         #Cleanup
         del uu, xq, yq, wq
@@ -421,37 +421,40 @@ class Simulator(object):
         #If vector calculation, calculate image for each polarization component
         if self.do_run_vector:
 
-            #Build total field for each polarization component
-            # pupil = self.vector.build_polarized_field(self.pupil, self.vec_pupil, \
-                # self.vec_comps, self.analyzer_angle)
-
-            pupil = self.vec_pupil.copy()
-            pupil[:,0,0] += self.pupil * self.vec_comps[0]
-            pupil[:,0,1] += self.pupil * self.vec_comps[1]
-            pupil[:,1,0] += self.pupil * -self.vec_comps[1]
-            pupil[:,1,1] += self.pupil * self.vec_comps[0]
+            # Build total field for each polarization component
+            pupil = self.vector.build_polarized_field(self.pupil, self.vec_pupil, \
+                self.vec_comps, self.analyzer_angle)
 
             #Calculate image for each polarization component
-            self.image = np.empty(pupil.shape[:-2] + (self.image_size,)*2)
-            for ieh in range(2):
-                for ip in range(self.npol):
-                    self.image[:,ieh,ip], self.image_pts = \
-                        self.focuser.calculate_image(pupil[:,ieh,ip], self.grid_pts)
+            self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
+            for i in range(self.npol):
+                self.image[:,i], self.image_pts = \
+                    self.focuser.calculate_image(pupil[:,i], self.grid_pts)
 
-            #Combine E + H
-            self.image = self.image.sum(1)
+            # pupil = self.vec_pupil.copy()
+            # pupil[:,0,0] += self.pupil * self.vec_comps[0]
+            # pupil[:,0,1] += self.pupil * self.vec_comps[1]
+            # pupil[:,1,0] += self.pupil * -self.vec_comps[1]
+            # pupil[:,1,1] += self.pupil * self.vec_comps[0]
+            #
+            # pupil[:,0,2] += self.zpupil
+            # pupil[:,1,2] += self.zpupil
+            #
+            # #Calculate image for each polarization component
+            # self.image = np.empty(pupil.shape[:-2] + (self.image_size,)*2)
+            # for ieh in range(2):
+            #     for ip in range(self.npol):
+            #         self.image[:,ieh,ip], self.image_pts = \
+            #             self.focuser.calculate_image(pupil[:,ieh,ip], self.grid_pts)
+            #
+            # #Combine E + H              #FIXME: wrong
+            # self.image = self.image.sum(1)
 
             # pupil = self.vec_pupil.copy()
             # for i in range(len(self.vec_comps)):
             #     pupil[:,i] += self.pupil * self.vec_comps[i]
 
             # pupil[:,2] += self.zpupil
-
-            # #Calculate image for each polarization component
-            # self.image = np.empty(pupil.shape[:2] + (self.image_size,)*2)
-            # for i in range(self.npol):
-            #     self.image[:,i], self.image_pts = \
-            #         self.focuser.calculate_image(pupil[:,i], self.grid_pts)
 
         else:
             #Calculate scalar image

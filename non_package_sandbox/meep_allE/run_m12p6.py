@@ -33,6 +33,8 @@ params = {
 
     'spin_angle':           20,
 
+    # 'do_load_pupil':True,
+    # 'skip_image':True,
 }
 
 
@@ -43,7 +45,7 @@ mod = imp.load_source('mask', f'{diffraq.occulter_dir}/{mask}.cfg')
 starshade = mod.starshade
 starshade['etch_error'] = 0
 
-params['save_ext'] = 'eh'
+params['save_ext'] = 'large_pupil'
 
 sim = diffraq.Simulator(params, starshade)
 sim.run_sim()

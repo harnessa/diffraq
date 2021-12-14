@@ -24,12 +24,9 @@ params['load_ext'] = 'nom'
 params['calibration_file'] = f'{diffraq.results_dir}/m12p6_test/{params["load_ext"]}_Mcal/image.h5'
 alz1 = diffraq.Analyzer(params)
 
-params['load_ext'] = 'eh'
+params['load_ext'] = 'eh4'
 params['calibration_file'] = f'{diffraq.results_dir}/m12p6_test/{params["load_ext"]}_Mcal/image.h5'
 alz2 = diffraq.Analyzer(params)
-
-# from scipy.ndimage import rotate
-# alz2.image = rotate(alz2.image, -45/2, reshape=False, order=5)
 
 fig, axes = plt.subplots(1, 3, figsize=(11,8), sharex=True,sharey=True)
 
