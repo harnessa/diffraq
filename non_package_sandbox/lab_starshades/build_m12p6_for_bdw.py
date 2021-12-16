@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
+import h5py
 
 num_pet = 12
 max_apod = 0.9
@@ -12,8 +13,12 @@ def rot_mat(angle):
                      [-np.sin(angle), np.cos(angle)]])
 
 #Load data
-inn_rad, inn_apd = np.genfromtxt(f'{apod_dir}/bb_2017__inner.txt', delimiter=',', unpack=True)
-out_rad, out_apd = np.genfromtxt(f'{apod_dir}/bb_2017__outer.txt', delimiter=',', unpack=True)
+# inn_rad, inn_apd = np.genfromtxt(f'{apod_dir}/bb_2017__inner.txt', delimiter=',', unpack=True)
+# out_rad, out_apd = np.genfromtxt(f'{apod_dir}/bb_2017__outer.txt', delimiter=',', unpack=True)
+with h5py.File(f'{apod_dir}/bb_2017__inner.h5', 'r') as f:
+    inn_rad, inn_apd = f['data'][()].T
+with h5py.File(f'{apod_dir}/bb_2017__outer.h5', 'r') as f:
+    out_rad, out_apd = f['data'][()].T    
 drho = np.diff(inn_rad)[0]
 
 #Invert inner
@@ -91,12 +96,12 @@ for i in range(1, num_pet+1):
     #Append
     mask.append(petal)
 
-#Write out
-with open(f'./{out_file}.dat', 'w') as f:
-    for i in range(len(mask)):
-        for j in range(len(mask[i])):
-            f.write(f'{mask[i][j][0]}, {mask[i][j][1]}\n')
-        f.write('**,**\n')
+# #Write out
+# with open(f'./{out_file}.dat', 'w') as f:
+#     for i in range(len(mask)):
+#         for j in range(len(mask[i])):
+#             f.write(f'{mask[i][j][0]}, {mask[i][j][1]}\n')
+#         f.write('**,**\n')
 
 for i in range(len(mask)):
     plt.plot(*mask[i].T)

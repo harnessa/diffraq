@@ -53,14 +53,14 @@ edge = get_bdw_edge(apod)
 # gw[wq == 0] = 0
 
 #Plot
-plt.colorbar(plt.scatter(xq, yq, c=np.degrees(nq), s=2, cmap=plt.cm.jet))
-# plt.colorbar(plt.scatter(xq, yq, c=gw, s=2, cmap=plt.cm.jet, vmax=22e-6))
+# plt.colorbar(plt.scatter(xq, yq, c=np.degrees(nq), s=2, cmap=plt.cm.jet))
+plt.colorbar(plt.scatter(xq, yq, c=dq, s=2, cmap=plt.cm.jet))
 
 # for pt in sim.vector.seams[0].pert_list:
 #     plt.plot(*pt.xy0, 'd')
 
 # plt.plot(oxq, oyq, 'x')
-# plt.plot(*edge2.T, '+')
+plt.plot(*edge2.T, '+')
 # for i in range(len(edge)):
     # plt.plot(*edge[i].T)
 

@@ -18,8 +18,8 @@ params = {
 
     ### Loading ###
     'load_dir_base':    f'{diffraq.results_dir}',
-    'session':          'test',
-    'load_ext':         'circle_vec',
+    'session':          'm2_test/vec_comps',
+    'load_ext':         'bb_2017',
     'cam_analyzer':     ['p', 'o'][0],
     'wave_ind':         0,
 
