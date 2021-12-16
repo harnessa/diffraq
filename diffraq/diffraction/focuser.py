@@ -132,7 +132,8 @@ class Focuser(object):
         opd = elem.opd_func(self.r1*dx1, self.a1)
 
         #Get component strengths via 'ray-tracing'
-        lab2ray, ray2lab = self.get_component_strengths(elem, self.r1*dx1, self.a1)
+        # lab2ray, ray2lab = self.get_component_strengths(elem, self.r1*dx1, self.a1)
+        lab2ray = self.get_component_strengths(elem, self.r1*dx1, self.a1)
 
         #Loop over wavelength
         for iw in range(len(self.sim.waves)):
@@ -146,16 +147,16 @@ class Focuser(object):
             #Apply phase function
             u0_iw = u0_waves[iw] * np.exp(1j*2*np.pi/wave * opd)
 
-            if ie == 1:
-                import matplotlib.pyplot as plt;plt.ion()
-                fig, axes = plt.subplots(3, 2, figsize=(8,11))
-                for i in range(3):
-                    axes[i,0].imshow(abs(u0_iw[i]))
-                    # axes[i,1].imshow(abs(np.sum(lab2ray[i]*u0_iw, 0)))
-                    dd = np.sum(lab2ray[i]*u0_iw, 0)
-                    dd = np.sum(ray2lab[i]*dd, 0)
-                    axes[i,1].imshow(abs(dd))
-                breakpoint()
+            # if ie == 1:
+            #     import matplotlib.pyplot as plt;plt.ion()
+            #     fig, axes = plt.subplots(3, 2, figsize=(8,11))
+            #     for i in range(3):
+            #         axes[i,0].imshow(abs(u0_iw[i]))
+            #         # axes[i,1].imshow(abs(np.sum(lab2ray[i]*u0_iw, 0)))
+            #         dd = np.sum(lab2ray[i]*u0_iw, 0)
+            #         dd = np.sum(ray2lab[i]*dd, 0)
+            #         axes[i,1].imshow(abs(dd))
+            #     breakpoint()
 
             #Get transfer function
             fz2 = 1. - (wave*hbf*fx)**2 - (wave*hbf*fy)**2
@@ -171,7 +172,6 @@ class Focuser(object):
             for ip in range(self.sim.npol):
 
                 #Get input field
-                # u0 = np.sum(rays[ip]*u0_iw, 0)
                 u0 = np.sum(lab2ray[ip]*u0_iw, 0)
 
                 #Calculate angspectrum of input with NUFFT (uniform -> nonuniform)
@@ -252,25 +252,6 @@ class Focuser(object):
 
     ############################################
 
-    # def lens_matrix(self, rads, angs, ff):
-    #     theta = np.arctan(rads/ff)
-    #     cost = np.cos(theta)
-    #     sint = np.sin(theta)
-    #     cosp = np.cos(angs)
-    #     sinp = np.sin(angs)
-    #
-    #     #Rotation matrix from Prajapati_2021
-    #     rot_mat = np.sqrt(cost) * np.array([
-    #         [cost + sinp**2*(1-cost), cosp*sinp*(cost-1), -sint*cosp],
-    #         [cosp*sinp*(cost-1), 1 - sinp**2*(1-cost), -sint*sinp],
-    #         [sint*cosp, sint*sinp, cost]
-    #     ])
-    #
-    #     #Cleanup
-    #     del theta, cost, sint, cosp, sinp
-    #
-    #     return rot_mat
-
     def lens_matrix(self, rads, angs, ff):
         theta = np.arctan(rads/ff)
         cost = np.cos(theta)
@@ -279,21 +260,40 @@ class Focuser(object):
         sinp = np.sin(angs)
 
         #Rotation matrix from Prajapati_2021
-        rot_mat = lambda ct, st, cp, sp: \
-            np.sqrt(ct) * np.array([
-                [ct + sp**2*(1-ct), cp*sp*(ct-1), -st*cp],
-                [cp*sp*(ct-1), 1 - sp**2*(1-ct), -st*sp],
-                [st*cp, st*sp, ct]
-            ])
-
-        #Forward and backward rotations
-        lab2ray = rot_mat(cost,  sint, cosp, sinp)
-        ray2lab = rot_mat(cost, -sint, cosp, sinp)
+        rot_mat = np.sqrt(cost) * np.array([
+            [cost + sinp**2*(1-cost), cosp*sinp*(cost-1), -sint*cosp],
+            [cosp*sinp*(cost-1), 1 - sinp**2*(1-cost), -sint*sinp],
+            [sint*cosp, sint*sinp, cost]
+        ])
 
         #Cleanup
         del theta, cost, sint, cosp, sinp
 
-        return lab2ray, ray2lab
+        return rot_mat
+
+    # def lens_matrix(self, rads, angs, ff):
+    #     theta = np.arctan(rads/ff)
+    #     cost = np.cos(theta)
+    #     sint = np.sin(theta)
+    #     cosp = np.cos(angs)
+    #     sinp = np.sin(angs)
+    #
+    #     #Rotation matrix from Prajapati_2021
+    #     rot_mat = lambda ct, st, cp, sp: \
+    #         np.sqrt(ct) * np.array([
+    #             [ct + sp**2*(1-ct), cp*sp*(ct-1), -st*cp],
+    #             [cp*sp*(ct-1), 1 - sp**2*(1-ct), -st*sp],
+    #             [st*cp, st*sp, ct]
+    #         ])
+    #
+    #     #Forward and backward rotations
+    #     lab2ray = rot_mat(cost,  sint, cosp, sinp)
+    #     ray2lab = rot_mat(cost, -sint, cosp, sinp)
+    #
+    #     #Cleanup
+    #     del theta, cost, sint, cosp, sinp
+    #
+    #     return lab2ray, ray2lab
 
     ############################################
 
