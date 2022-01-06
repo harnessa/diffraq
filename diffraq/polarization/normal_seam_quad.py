@@ -97,6 +97,8 @@ def build_normal_quadrature(shape, seam_width, radial_nodes, theta_nodes):
         #r*dr
         wrdr = (r1 - r0) * wr0 * pr
 
+        #FIXME: weights are wrong!! b/c no longer polar integration
+        breakpoint()
         #Weights (rdr * dtheta)
         cw = wrdr * wthe
 

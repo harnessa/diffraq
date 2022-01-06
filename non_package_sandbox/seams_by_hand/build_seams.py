@@ -16,7 +16,7 @@ seam_theta_nodes = 5
 
 num_pet = 12
 
-do_save = [False, True][0]
+do_save = [False, True][1]
 
 if do_save:
     seam_radial_nodes = 500
@@ -53,6 +53,9 @@ wr0 = wr0[:,None]
 pr0 = pr0[:,None]
 
 #############################
+
+#Rotation angle of occulter [radians]
+occ_rot = np.radians(240)
 
 #Initiate
 xq, yq, wq = np.array([]), np.array([]), np.array([])
@@ -99,7 +102,7 @@ for ip in range(2*num_pet):
     tt *= pet_sgn
 
     #Rotate to current angle
-    tt += pet_add
+    tt += pet_add + occ_rot
 
     #r*dr
     wi = (r1 - r0) * wr0 * pr
@@ -107,7 +110,6 @@ for ip in range(2*num_pet):
     #Weights (rdr * dtheta)
     cw = (wi * ww * seam_width_angle).ravel()
 
-    breakpoint()
     #Positions
     cx = (pr * np.cos(tt)).ravel()
     cy = (pr * np.sin(tt)).ravel()
@@ -123,7 +125,7 @@ for ip in range(2*num_pet):
     cg = (2*Aval*pet_mul*pr).ravel()
 
     #Get polar function and derivative at edge
-    pfunc = Aval*pet_mul*pet_sgn + pet_add
+    pfunc = Aval*pet_mul*pet_sgn + pet_add + occ_rot
     pdiff = Afunc.derivative(1)(pr) * pet_mul*pet_sgn
 
     #Get cartesian function and derivative values at the edge
@@ -156,7 +158,7 @@ for ip in range(2*num_pet):
     # breakpoint()
 
 if do_save:
-    with h5py.File('./seam_quad_m12p6.h5', 'w') as f:
+    with h5py.File(f'./seam_quad_m12p6_{np.degrees(occ_rot):.0f}.h5', 'w') as f:
         f.create_dataset('xq', data=xq)
         f.create_dataset('yq', data=yq)
         f.create_dataset('wq', data=wq)

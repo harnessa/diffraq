@@ -209,8 +209,9 @@ class VectorSim(object):
         ang = np.radians(analyzer_angle)
 
         #Apply analyzer angle to get primary and orthogonal polarization fields
-        U_prim =  pupil[:,0]*np.cos(ang) + pupil[:,1]*np.sin(ang)
-        U_orth = -pupil[:,0]*np.sin(ang) + pupil[:,1]*np.cos(ang)
+        U_prim =  pupil[:,0]*np.cos(ang)**2          + pupil[:,1]*np.sin(ang)*np.cos(ang)
+        #Orthogonal field assumes analyzer is 90 degrees above primary field
+        U_orth = -pupil[:,0]*np.cos(ang)*np.sin(ang) + pupil[:,1]*np.cos(ang)**2
 
         #Copy over
         new_pupil = np.empty_like(pupil)
