@@ -29,8 +29,11 @@ def diffract_RS2(xq, yq, wq, wave, zz, gx_2D, gy_2D=None, is_babinet=False, z0=1
     #Pre-calcs
     kk = 2*np.pi/wave
     # U0wq = np.exp(1j*kk*rr) * wq * (1j*kk - 1/rr) * (z0/rr)**2
-    U0wq = np.exp(1j*kk/(2*z0)*(xq**2 + yq**2)) * wq
-    # U0wq = np.exp(1j*kk/(2*z0)*(xq**2 + yq**2)*(1 - (xq**2 + yq**2)/(4.*z0**2) )) * wq
+    #U0wq = np.exp(1j*kk/(2*z0)*(xq**2 + yq**2)) * wq
+    #U0wq = np.exp(1j*kk/(2*z0)*(xq**2 + yq**2)*(1 - (xq**2 + yq**2)/(4.*z0**2) )) * wq
+    U0wq = np.exp(1j*kk/(2*z0)*(xq**2 + yq**2))
+    U0wq *= np.exp(-1j*kk/(8*z0**3)*(xq**2 + yq**2)**2)
+    U0wq *= wq
 
     #Build solution
     uu_tmp = np.zeros_like(gx_2D) + 0j
@@ -48,8 +51,9 @@ def diffract_RS2(xq, yq, wq, wave, zz, gx_2D, gy_2D=None, is_babinet=False, z0=1
 
             #Integrate
             # uu_tmp[i,j] = np.sum(U0wq * (np.exp(1j*kk*ss)/ss))
-            uu_tmp[i,j] = np.sum(U0wq * np.exp(1j*kk*ss))
-            # uu_tmp[i,j] = np.sum(U0wq * np.exp(1j*kk*ss*(1 - ss**2)))
+            #uu_tmp[i,j] = np.sum(U0wq * np.exp(1j*kk*ss))
+            #uu_tmp[i,j] = np.sum(U0wq * np.exp(1j*kk*ss*(1 - ss**2)))
+            uu_tmp[i,j] = np.sum(U0wq * np.exp(1j*kk*ss) * np.exp(-1j*kk*ss**2))
 
     #Collect processors
     MPI.COMM_WORLD.Barrier()
