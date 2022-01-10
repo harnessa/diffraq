@@ -71,6 +71,31 @@ class Focuser(object):
         self.y2 = x2.T.flatten()
         self.x2 = x2.flatten()
         del x1, x2
+        #
+        # import matplotlib.pyplot as plt;plt.ion()
+        # dd = 150
+        # mask = np.ones(pupil.shape[-2:])
+        #
+        # yy,xx = np.indices(mask.shape)
+        #
+        # xx = xx*0.8
+        # yy = yy*0.8
+        # mask[yy < -xx +dd] = 0
+        # mask[yy < -xx.shape[-1]+xx +dd] = 0
+        # mask[yy > xx + yy.shape[-1] - dd] = 0
+        # mask[yy > -xx+xx.shape[-1] + yy.shape[-1] - dd] = 0
+        #
+        # # mask[:dd,:] = 0
+        # # mask[-dd:,:] = 0
+        # # mask[:,-dd:] = 0
+        # # mask[:,:dd] = 0
+        # # from scipy.ndimage import rotate
+        # # mask = rotate(mask, 25, order=5, reshape=False)
+        # # mask[mask < 0.5]= 0
+        # # mask[mask >= 0.5]= 1
+        # pupil *= mask
+        # plt.imshow(mask)
+        # # breakpoint()
 
         #Loop through elements and propagate
         for ie in range(self.lenses.n_elements):
@@ -135,6 +160,11 @@ class Focuser(object):
         # lab2ray, ray2lab = self.get_component_strengths(elem, self.r1*dx1, self.a1)
         lab2ray = self.get_component_strengths(elem, self.r1*dx1, self.a1)
 
+        if elem.kind == 'polarizer':
+            ray2lab = np.tile(np.eye(self.sim.npol)[:,:,None,None], (1,1) + self.r1.shape)
+        else:
+            ray2lab = self.get_component_strengths(elem, -self.r1*dx1, self.a1)
+
         #Loop over wavelength
         for iw in range(len(self.sim.waves)):
 
@@ -148,15 +178,16 @@ class Focuser(object):
             u0_iw = u0_waves[iw] * np.exp(1j*2*np.pi/wave * opd)
 
             # if ie == 1:
-            #     import matplotlib.pyplot as plt;plt.ion()
-            #     fig, axes = plt.subplots(3, 2, figsize=(8,11))
-            #     for i in range(3):
-            #         axes[i,0].imshow(abs(u0_iw[i]))
-            #         # axes[i,1].imshow(abs(np.sum(lab2ray[i]*u0_iw, 0)))
-            #         dd = np.sum(lab2ray[i]*u0_iw, 0)
-            #         dd = np.sum(ray2lab[i]*dd, 0)
-            #         axes[i,1].imshow(abs(dd))
-            #     breakpoint()
+            if [False,True][0]:
+                import matplotlib.pyplot as plt;plt.ion()
+                fig, axes = plt.subplots(3, 2, figsize=(8,11))
+                for i in range(3):
+                    axes[i,0].imshow(abs(u0_iw[i]))
+                    axes[i,1].imshow(abs(np.sum(lab2ray[i]*u0_iw, 0)))
+                    # dd = np.sum(lab2ray[i]*u0_iw, 0)
+                    # dd = np.sum(ray2lab[i]*dd, 0)
+                    # axes[i,1].imshow(abs(dd))
+                breakpoint()
 
             #Get transfer function
             fz2 = 1. - (wave*hbf*fx)**2 - (wave*hbf*fy)**2
@@ -185,14 +216,22 @@ class Focuser(object):
                 #Normalize
                 uu *= dx1**2
 
-                #Reshape
-                uu = uu.reshape(uu_waves.shape[-2:])
+                #Reshape (also angspec needs transpose?)
+                uu = uu.reshape(uu_waves.shape[-2:]).T
 
                 #Rotate back to lab
-                # uu = np.sum(ray2lab[ip]*uu, 0)
+                uu = np.sum(ray2lab[ip]*uu, 0)
 
                 #Store
                 uu_waves[iw,ip] = uu
+
+            if [False, True][0]:
+                import matplotlib.pyplot as plt;plt.ion()
+                fig, axes = plt.subplots(3, 2, figsize=(8,11))
+                for i in range(3):
+                    axes[i,0].imshow(abs(uu_waves[iw,i]))
+                    axes[i,1].imshow(abs(np.sum(ray2lab[i]*uu_waves[iw], 0)))
+                breakpoint()
 
         #Cleanup
         # del u0, Hn, angspec, uu, opd, rays, u0_iw
