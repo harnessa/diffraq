@@ -104,7 +104,7 @@ class Shape(object):
 
         #Rotate (w/ clocking; if applicable)
         if self.rot_mat is not None:
-            sxq, syq = np.stack((sxq,syq),1).dot(self.rot_mat).T
+            sxq, syq = self.rot_mat.dot(np.stack((sxq, syq),0))
 
         return sxq, syq, swq
 
@@ -121,7 +121,7 @@ class Shape(object):
 
         #Rotate (w/ clocking; if applicable)
         if self.rot_mat is not None:
-            sedge = sedge.dot(self.rot_mat)
+            sedge = sedge.dot(self.rot_mat.T)
 
         return sedge
 

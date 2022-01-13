@@ -113,7 +113,8 @@ class Occulter(object):
 
         #Add occulter attitude
         if self.has_attitude:
-            self.xq, self.yq = self.add_occulter_attitude(self.xq, self.yq)
+            self.xq, self.yq, self.wq = \
+                self.add_occulter_attitude(self.xq, self.yq, self.wq)
 
         #Shift occulter
         if self.sim.occulter_shift is not None:
@@ -159,67 +160,79 @@ class Occulter(object):
 #####  Occulter Motion #####
 ############################################
 
-    def add_occulter_attitude(self, xx, yy=None):
+    def add_occulter_attitude(self, xx, yy=None, ww=None):
         #If only spin, return simple rotation
         if self.has_spin and not self.has_tilt:
-            return self.spin_occulter(xx, yy=yy)
+            return self.spin_occulter(xx, yy=yy, ww=ww)
         else:
             #Do full attitude rotation
-            return self.tilt_occulter(xx, yy=yy)
+            return self.tilt_occulter(xx, yy=yy, ww=ww)
 
-    def spin_occulter(self, xx, yy=None):
+    def spin_occulter(self, xx, yy=None, ww=None):
         #Rotation matrix
         rot_mat = self.build_rot_matrix(np.radians(self.sim.spin_angle))
 
         #Rotate
         if yy is not None:
             #Separate xy (i.e., quad)
-            new = np.stack((xx, yy),1).dot(rot_mat)
-            xx, yy = new[:,0], new[:,1]
-            del new
-            return xx, yy
+            return rot_mat.dot(np.stack((xx, yy),0)), ww
 
         else:
             #Edge
-            return xx.dot(rot_mat)
-
-    def build_rot_matrix(self, angle):
-        return np.array([[ np.cos(angle), np.sin(angle)],
-                         [-np.sin(angle), np.cos(angle)]])
+            return xx.dot(rot_mat.T)
 
     ############################################
 
-    def tilt_occulter(self, xx, yy=None):
+    def tilt_occulter(self, xx, yy=None, ww=None):
         #Rotation matrix
-        rot_mat = self.build_full_rot_matrix(np.radians(self.sim.spin_angle), \
-            *np.radians(self.sim.tilt_angle))
+        rot_mat = self.build_full_rot_matrix(*np.radians(self.sim.tilt_angle), \
+            np.radians(self.sim.spin_angle))
 
         #Rotate
         if yy is not None:
             #Separate xy and add 3rd dimension
-            new = np.stack((xx, yy, np.zeros_like(xx)),1).dot(rot_mat)
-            xx, yy = new[:,0], new[:,1]
-            del new
-            return xx, yy
+            xx, yy, zz = rot_mat.dot(np.stack((xx, yy, np.zeros_like(xx)),0))
+
+            #Get new weights from determinant of Jacobian (which is rotaton matrix)
+            ww *= np.linalg.det(rot_mat[:2][:,:2])
+
+            del zz
+            return xx, yy, ww
 
         else:
-            #Add 3rd dimension to edge
-            new = np.hstack((xx, np.zeros_like(xx[:,:1])))
-            edge = new[:,:2]
-            del new
-            return edge
+            #Add 3rd dimension to edge and rotate
+            return np.hstack((xx, np.zeros_like(xx[:,:1]))).dot(rot_mat.T)[:,:2]
 
-    def build_full_rot_matrix(self, yaw, pit, rol):
-        #Note that this is a clockwise rotation -euler angles
-        yaw_mat = np.array([[np.cos(yaw), np.sin(yaw), 0.], \
-            [-np.sin(yaw), np.cos(yaw), 0], [0,0,1]])
-        pit_mat = np.array([[np.cos(pit), 0.,  -np.sin(pit)], [0,1,0], \
-            [np.sin(pit), 0, np.cos(pit)]])
-        rol_mat = np.array([[1,0,0], [0, np.cos(rol), np.sin(rol)], \
-            [0, -np.sin(rol), np.cos(rol)]])
-        full_rot_mat = np.linalg.multi_dot((yaw_mat, pit_mat, rol_mat))
+    ############################################
+
+    def build_rot_matrix(self, angle):
+        """Clockwise rotation"""
+        return np.array([[np.cos(angle), -np.sin(angle)],
+                         [np.sin(angle),  np.cos(angle)]])
+
+    def build_full_rot_matrix(self, xang, yang, zang):
+        """Extrinsic (stationary coordinate frame) clockwise rotation of z-y-x"""
+        xr = self.xRot(xang)
+        yr = self.yRot(yang)
+        zr = self.zRot(zang)
+        full_rot_mat = np.linalg.multi_dot((xr, yr, zr))
 
         return full_rot_mat
+
+    def xRot(self, ang):
+        """Clockwise rotation of X axis"""
+        return np.array([[1,0,0], [0, np.cos(ang), -np.sin(ang)], \
+            [0, np.sin(ang), np.cos(ang)]])
+
+    def yRot(self, ang):
+        """Clockwise rotation of Y axis"""
+        return np.array([[np.cos(ang), 0.,  np.sin(ang)], [0,1,0], \
+            [-np.sin(ang), 0, np.cos(ang)]])
+
+    def zRot(self, ang):
+        """Clockwise rotation of Z axis"""
+        return np.array([[np.cos(ang), -np.sin(ang), 0.], \
+            [np.sin(ang), np.cos(ang), 0], [0,0,1]])
 
 ############################################
 ############################################

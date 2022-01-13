@@ -239,9 +239,9 @@ class Test_Etching(object):
             mask = np.empty((0,2))
             for i in range(num_pet):
                 ang = 2.*np.pi/num_pet * i
-                rot_mat = lambda a: np.array(([[np.cos(a), np.sin(a)], [-np.sin(a), np.cos(a)]]))
-                mask = np.concatenate((mask, (truxy * np.array([1,-1])).dot(rot_mat(ang))))
-                mask = np.concatenate((mask, truxy.dot(rot_mat(ang))[::-1]))
+                rot_mat = lambda a: np.array(([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]]))
+                mask = np.concatenate((mask, (truxy * np.array([1,-1])).dot(rot_mat(ang).T)))
+                mask = np.concatenate((mask, truxy.dot(rot_mat(ang),T)[::-1]))
 
             shape['edge_data'] = np.hstack((rr, petal_func(rr)))
 

@@ -59,7 +59,7 @@ class Seam(object):
 
         #Rotate with parent shape
         if self.shape.rot_mat is not None:
-            xq, yq = np.stack((xq,yq),1).dot(self.shape.rot_mat).T
+            xq, yq = self.shape.rot_mat.dot(np.stack((xq, yq),0))
             nq += self.shape.rot_angle
 
         #Flip sign of distance and rotate normal angle by pi if opaque

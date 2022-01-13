@@ -92,6 +92,10 @@ class Focuser(object):
 ############################################
 
     def calculate_image(self, in_pupil, grid_pts):
+
+        #Build wavefront error
+        self.build_wfe(grid_pts)
+
         #Get image size
         num_img = min(self.true_NN.max(), self.sim.image_size)
 
@@ -164,6 +168,10 @@ class Focuser(object):
         if self.lens_prop_inv_zz != 0:
             pupil *= self.propagation_kernel(et, self.dx0, wave, 1/self.lens_prop_inv_zz)
 
+        #Add wavefront error
+        if self.has_wfe:
+            pupil *= np.exp(-1j * 2.*np.pi/wave * self.wfe_opd)
+
         #Pad pupil
         pupil = image_util.pad_array(pupil, NN)
 
@@ -224,6 +232,51 @@ class Focuser(object):
         img = image_util.crop_image(img, None, num_img//2)
 
         return img, dx
+
+############################################
+############################################
+
+############################################
+#####  WFE #####
+############################################
+
+    def build_wfe(self, xx):
+        #Has wfe?
+        self.has_wfe = len(self.sim.wfe_modes) > 0
+
+        #return if no modes
+        if not self.has_wfe:
+            return
+
+        #Build radii, angle
+        rad = np.hypot(xx[:,None], xx)
+        phi = np.arctan2(xx[:,None], xx)
+
+        #Get OPD
+        self.wfe_opd = 0
+        for zm, zn, amp in self.sim.wfe_modes:
+            self.wfe_opd += self.zernike_poly(rad/xx.max(), phi, zm, zn) * amp
+
+        #Cleanup
+        del rad, phi
+
+    def zernike_rad(self, rho, m, n):
+        coeff = 0.
+        if (n - m) % 2 == 0:
+            for k in range((n-m)//2+1):
+                coeff += (-1)**k * np.math.comb(n-k, k) * \
+                    np.math.comb(n-2*k, (n-m)//2 - k) * rho**(n-2*k)
+        coeff[rho == 1] = 1
+        return coeff
+
+    def zernike_poly(self, rho, phi, m, n):
+        if n < 0:
+            return 0.
+        if m >= 0:
+            zz = self.zernike_rad(rho, np.abs(m), n) * np.cos(np.abs(m)*phi)
+        else:
+            zz = self.zernike_rad(rho, np.abs(m), n) * np.sin(np.abs(m)*phi)
+        return zz
 
 ############################################
 ############################################

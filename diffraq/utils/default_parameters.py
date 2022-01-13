@@ -39,7 +39,7 @@ def_sim_params = {
     'occulter_config':      None,       #Configuration file to point to file containing pre-specified shape dictionaries
     'occulter_shift':       None,       #Shift (x,y) of occulter position relative to telescope-source line. [m]
     'spin_angle':           0,          #Spin (in-plane) angle of the occulter. [degrees]
-    'tilt_angle':           [0,0],      #Pitch (out-of-plane vertical) and roll (out-of-plane horizontal) angles of the occulter. [degrees]
+    'tilt_angle':           [0,0],      #Tilt about the [x,y] axes (out-of-plane) of the occulter [degrees]
 
     ### Observation ###
     'z0':                   1e19,       #Source - Occulter distance
@@ -60,6 +60,7 @@ def_sim_params = {
     'defocus':              0.,         #Amount of defocus (can be + or -)
     'image_size':           128,        #Width (# pixels) of square image
     'min_padding':          4,          #Minimum padding in FFT
+    'wfe_modes':            [],         #Wavefront Error Zernike modes. [(zernike m, zernike n, amplitude)]
 
     ### Numerics ###
     'radial_nodes':         50,         #Number of radial quadrature nodes

@@ -119,7 +119,8 @@ class VectorSim(object):
         #Add occulter attitude
         if self.sim.occulter.has_attitude:
             #Rotate quadrature points
-            self.xq, self.yq = self.sim.occulter.add_occulter_attitude(self.xq, self.yq)
+            self.xq, self.yq, self.wq = \
+                self.sim.occulter.add_occulter_attitude(self.xq, self.yq, self.wq)
 
             #Rotate all normal angles
             self.nq += np.radians(self.sim.spin_angle)

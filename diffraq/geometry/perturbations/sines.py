@@ -183,8 +183,8 @@ class Sines(object):
         if p0 is not None:
             rot_ang = 2*np.pi/self.parent.num_petals*(abs(p0) - 1)
             rot_mat = self.parent.parent.build_rot_matrix(rot_ang)
-            old_edge = old_edge.dot(rot_mat)
-            new_edge = new_edge.dot(rot_mat)
+            old_edge = old_edge.dot(rot_mat.T)
+            new_edge = new_edge.dot(rot_mat.T)
 
         return old_edge, new_edge, ts, wa
 

@@ -183,7 +183,7 @@ class Notch(object):
         #Rotate by rotating normal direction
         if self.rotation != 0:
             rot_mat = self.parent.parent.build_rot_matrix(np.radians(self.rotation))
-            normal = normal.dot(rot_mat)
+            normal = normal.dot(rot_mat.T)
 
         return old_edge, etch, normal
 
