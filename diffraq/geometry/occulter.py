@@ -175,7 +175,7 @@ class Occulter(object):
         #Rotate
         if yy is not None:
             #Separate xy (i.e., quad)
-            return rot_mat.dot(np.stack((xx, yy),0)), ww
+            return *rot_mat.dot(np.stack((xx, yy),0)), ww
 
         else:
             #Edge
