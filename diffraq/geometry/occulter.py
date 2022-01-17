@@ -160,17 +160,20 @@ class Occulter(object):
 #####  Occulter Motion #####
 ############################################
 
-    def add_occulter_attitude(self, xx, yy=None, ww=None):
+    def add_occulter_attitude(self, xx, yy=None, ww=None, tilt=None, spin=None):
         #If only spin, return simple rotation
         if self.has_spin and not self.has_tilt:
-            return self.spin_occulter(xx, yy=yy, ww=ww)
+            return self.spin_occulter(xx, yy=yy, ww=ww, spin=spin)
         else:
             #Do full attitude rotation
-            return self.tilt_occulter(xx, yy=yy, ww=ww)
+            return self.tilt_occulter(xx, yy=yy, ww=ww, spin=spin, tilt=tilt)
 
-    def spin_occulter(self, xx, yy=None, ww=None):
+    def spin_occulter(self, xx, yy=None, ww=None, spin=None):
+        if spin is None:
+            spin = self.sim.spin_angle
+
         #Rotation matrix
-        rot_mat = self.build_rot_matrix(np.radians(self.sim.spin_angle))
+        rot_mat = self.build_rot_matrix(np.radians(spin))
 
         #Rotate
         if yy is not None:
@@ -183,10 +186,14 @@ class Occulter(object):
 
     ############################################
 
-    def tilt_occulter(self, xx, yy=None, ww=None):
+    def tilt_occulter(self, xx, yy=None, ww=None, tilt=None, spin=None):
+        if tilt is None:
+            tilt = self.sim.tilt_angle
+        if spin is None:
+            spin = self.sim.spin_angle
+
         #Rotation matrix
-        rot_mat = self.build_full_rot_matrix(*np.radians(self.sim.tilt_angle), \
-            np.radians(self.sim.spin_angle))
+        rot_mat = self.build_full_rot_matrix(*np.radians(tilt), np.radians(spin))
 
         #Rotate
         if yy is not None:
