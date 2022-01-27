@@ -113,7 +113,7 @@ class Occulter(object):
 
         #Add occulter attitude
         if self.has_attitude:
-            self.xq, self.yq, self.wq = \
+            self.xq, self.yq, self.wq, _, _ = \
                 self.add_occulter_attitude(self.xq, self.yq, self.wq)
 
         #Shift occulter
@@ -160,15 +160,15 @@ class Occulter(object):
 #####  Occulter Motion #####
 ############################################
 
-    def add_occulter_attitude(self, xx, yy=None, ww=None, tilt=None, spin=None):
+    def add_occulter_attitude(self, xx, yy=None, ww=None, nn=None, tt=None, tilt=None, spin=None):
         #If only spin, return simple rotation
         if self.has_spin and not self.has_tilt:
-            return self.spin_occulter(xx, yy=yy, ww=ww, spin=spin)
+            return self.spin_occulter(xx, yy=yy, ww=ww, nn=nn, spin=spin)
         else:
             #Do full attitude rotation
-            return self.tilt_occulter(xx, yy=yy, ww=ww, spin=spin, tilt=tilt)
+            return self.tilt_occulter(xx, yy=yy, ww=ww, nn=nn, tt=tt, spin=spin, tilt=tilt)
 
-    def spin_occulter(self, xx, yy=None, ww=None, spin=None):
+    def spin_occulter(self, xx, yy=None, ww=None, nn=None, spin=None):
         if spin is None:
             spin = self.sim.spin_angle
 
@@ -177,8 +177,13 @@ class Occulter(object):
 
         #Rotate
         if yy is not None:
+
+            #Add spin to normal angle
+            if nn is not None:
+                nn += np.radians(spin)
+
             #Separate xy (i.e., quad)
-            return *rot_mat.dot(np.stack((xx, yy),0)), ww
+            return *rot_mat.dot(np.stack((xx, yy),0)), ww, nn, None
 
         else:
             #Edge
@@ -186,7 +191,7 @@ class Occulter(object):
 
     ############################################
 
-    def tilt_occulter(self, xx, yy=None, ww=None, tilt=None, spin=None):
+    def tilt_occulter(self, xx, yy=None, ww=None, nn=None, tt=None, tilt=None, spin=None):
         if tilt is None:
             tilt = self.sim.tilt_angle
         if spin is None:
@@ -197,14 +202,83 @@ class Occulter(object):
 
         #Rotate
         if yy is not None:
+
+            #Source in tilted frame
+            if nn is not None:
+                ss0 = -np.stack((xx, yy, np.ones_like(xx)*self.sim.z0),0)
+                ss0 = rot_mat.dot(ss0)
+
             #Separate xy and add 3rd dimension
             xx, yy, zz = rot_mat.dot(np.stack((xx, yy, np.zeros_like(xx)),0))
 
             #Get new weights from determinant of Jacobian (which is rotaton matrix)
             ww *= np.linalg.det(rot_mat[:2][:,:2])
 
+            #Rotate normal angles
+            if nn is not None:
+
+                #Cosine/sine
+                cosn = np.cos(nn)
+                sinn = np.sin(nn)
+
+                #Rotate source into edge frame
+                sx = ss0[0]*cosn - ss0[1]*sinn
+                sy = ss0[0]*sinn + ss0[1]*cosn
+
+                #Source in spherical coordinates
+                tantheta = -np.hypot(sx, sy) / ss0[2]       #tan(pi-theta)
+                phi = np.arctan2(sy,sx)
+
+                #Cleanup
+                del ss0, sx, sy
+
+                #Offset angle
+                tt = np.stack((np.cos(phi), np.sin(phi)),1) #Omega (in-plane), psi (out-plane)
+                tt = np.arctan(tt * tantheta[:,None])
+
+                #Cleanup
+                del tantheta, phi
+
+                #Build new normal angle
+                newm = rot_mat.dot(np.stack((cosn, sinn, np.zeros_like(nn)),0))
+
+                #Rotated normal angles
+                nn = np.arctan2(newm[1], newm[0])
+
+
+                # import matplotlib.pyplot as plt;plt.ion()
+                # theta = np.pi - np.arctan(tantheta)
+                # omega = tt[:,0]
+                # psi = tt[:,1]
+                # plt.figure(); plt.colorbar(plt.scatter(xx, yy, c=np.degrees(theta), s=1.5, cmap=plt.cm.jet))
+                # plt.title('theta')
+                # plt.axis('equal')
+                # plt.figure(); plt.colorbar(plt.scatter(xx, yy, c=np.degrees(phi), s=1.5, cmap=plt.cm.jet))
+                # plt.title('phi')
+                # plt.axis('equal')
+                # xx0, yy0, zz = rot_mat.dot(np.stack((xx, yy, np.zeros_like(xx)),0))
+                # plt.figure(); plt.colorbar(plt.scatter(xx, yy, c=zz, s=1.5, cmap=plt.cm.jet))
+                # plt.title('zz')
+                #
+                #
+                # fig, axes = plt.subplots(2,2, figsize=(9,9))
+                #
+                # axes[0,0].plot(np.degrees(theta), 'x')
+                # axes[0,0].set_title('theta')
+                # axes[0,1].plot(np.degrees(phi), 'x')
+                # axes[0,1].set_title('phi')
+                # axes[1,0].plot(np.degrees(omega), 'x')
+                # axes[1,0].set_title('omega')
+                # axes[1,1].plot(np.degrees(psi), 'x')
+                # axes[1,1].set_title('psi')
+                #
+                # breakpoint()
+
+                del newm, cosn, sinn
+
             del zz
-            return xx, yy, ww
+
+            return xx, yy, ww, nn, tt
 
         else:
             #Add 3rd dimension to edge and rotate

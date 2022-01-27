@@ -27,10 +27,10 @@ class ThickScreen(object):
 #####  Main Script #####
 ############################################
 
-    def get_edge_field(self, dd, gw, wave):
+    def get_edge_field(self, dd, gw, wave, tq):
         if self.is_sommerfeld:
             #Solve Sommerfeld solution
-            return self.sommerfeld_solution(dd, wave)
+            return self.sommerfeld_solution(dd, wave, tq)
 
         elif self.maxwell_func is not None:
             #Apply user-input function
@@ -38,7 +38,7 @@ class ThickScreen(object):
 
         else:
             #Interpolate data from file
-            return self.interpolate_file(dd, gw, wave)
+            return self.interpolate_file(dd, gw, wave, tq)
 
 ############################################
 ############################################
@@ -54,7 +54,11 @@ class ThickScreen(object):
         del S, C
         return ans
 
-    def sommerfeld_solution(self, dd, wave):
+    def sommerfeld_solution(self, dd, wave, tq):
+
+        #FIXME: add tilted source
+        if tq is not None:
+            breakpoint()
 
         #Wavelength
         kk = 2.*np.pi/wave
@@ -102,12 +106,18 @@ class ThickScreen(object):
 #####  Load from file #####
 ############################################
 
-    def interpolate_file(self, dd, gw, wave):
+    def interpolate_file(self, dd, gw, wave, tq):
+        #Use tilted source if applicable
+        if tq is not None:
+            return self.interpolate_file_tilted(dd, wave, tq)
+
         #Split into gaps if applicable
         if len(gw) == 0:
             return self.interpolate_file_edge(dd, wave)
         else:
             return self.interpolate_file_gap(dd, gw, wave)
+
+    ############################################
 
     def interpolate_file_edge(self, dd, wave):
         #Load data from file and build interpolation function for current wavelength
@@ -122,6 +132,54 @@ class ThickScreen(object):
         del xx, sf, pf
 
         return sfld, pfld
+
+    ############################################
+
+    def interpolate_file_tilted(self, dd, wave, tq):
+        #Load data from file and build interpolation function for current wavelength
+        with h5py.File(f'{self.maxwell_file}.h5', 'r') as f:
+            xx = f[f'{wave*1e9:.0f}_x'][()]
+            sf = f[f'{wave*1e9:.0f}_s'][()]
+            pf = f[f'{wave*1e9:.0f}_p'][()]
+            inn_angles = np.radians(f['inn_angles'][()])
+            out_angles = np.radians(f['out_angles'][()])
+
+        #Initialize fields
+        sfld = np.zeros(len(dd)) + 0j
+        pfld = np.zeros(len(dd)) + 0j
+
+        #Tilt angles
+        omg = tq[:,0]
+        psi = abs(tq[:,1])
+
+        #Add large angles to get those bigger and smaller than sampled
+        inn_angles = np.concatenate(([-10], inn_angles, [10]))
+
+        #Loop through angles and interpolate where those angles match
+        for i in range(len(inn_angles)-1):
+            for j in range(1, len(out_angles)):
+
+                #Get values in this angle region
+                aind = np.where((omg >= inn_angles[i]) & (omg < inn_angles[i+1]) &
+                    (psi >= out_angles[j-1]) & (psi < out_angles[j]))[0]
+
+                #Skip if empty
+                if len(aind) == 0:
+                    continue
+
+                #Get index of fld limited by first and last index
+                ii = min(max(i-1, 0), len(inn_angles)-3)
+
+                #Interpolate this region
+                sfld[aind] = np.interp(dd[aind], xx, sf[ii,j], left=0j, right=0j)
+                pfld[aind] = np.interp(dd[aind], xx, pf[ii,j], left=0j, right=0j)
+
+        #Cleanup
+        del omg, psi, xx, sf, pf, aind
+
+        return sfld, pfld
+
+    ############################################
 
     def interpolate_file_gap(self, dd, gw, wave):
 

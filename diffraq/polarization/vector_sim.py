@@ -116,14 +116,15 @@ class VectorSim(object):
             #Build quadrature in coordinate frame
             self.build_frame_quadrature()
 
+        #Start with no tilt
+        self.tq = None
+
         #Add occulter attitude
         if self.sim.occulter.has_attitude:
             #Rotate quadrature points
-            self.xq, self.yq, self.wq = \
-                self.sim.occulter.add_occulter_attitude(self.xq, self.yq, self.wq)
-
-            #Rotate all normal angles
-            self.nq += np.radians(self.sim.spin_angle)
+            self.xq, self.yq, self.wq, self.nq, self.tq = \
+                self.sim.occulter.add_occulter_attitude( \
+                    self.xq, self.yq, self.wq, self.nq, self.tq)
 
         #Shift occulter
         if self.sim.occulter_shift is not None:

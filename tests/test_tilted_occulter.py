@@ -48,7 +48,7 @@ class Test_Tilted(object):
         cir_diff = lambda t: np.zeros_like(t)
 
         #Permutations of tilts
-        tilts = [[self.xtilt,0], [0, self.ytilt], [self.xtilt, self.ytilt]]
+        tilts = [[self.xtilt,0], [0, self.ytilt]]
 
         for tilt in tilts:
 
@@ -60,29 +60,13 @@ class Test_Tilted(object):
             cir_sim = diffraq.Simulator(params, shapes=circle)
 
             #Ellipse
-            if tilt[0] == 0 or tilt[1] == 0:
+            ella = self.circle_rad*np.cos(np.radians(tilt[0]))
+            ellb = self.circle_rad*np.cos(np.radians(tilt[1]))
+            ell_func = lambda t: ella*ellb / np.sqrt(ella**2*np.cos(t)**2 + ellb**2*np.sin(t)**2)
+            ell_diff = lambda t: -ella*ellb * np.cos(t)*np.sin(t)*(-ella**2 + ellb**2) / \
+                (ella**2*np.cos(t)**2 + ellb**2*np.sin(t)**2)**(3/2)
 
-                #Old way doesnt work for 2 axis tilts, but is more accurate (why?)
-                ella = self.circle_rad*np.cos(np.radians(tilt[0]))
-                ellb = self.circle_rad*np.cos(np.radians(tilt[1]))
-                ell_func = lambda t: ella*ellb / np.sqrt(ella**2*np.cos(t)**2 + ellb**2*np.sin(t)**2)
-                ell_diff = lambda t: -ella*ellb * np.cos(t)*np.sin(t)*(-ella**2 + ellb**2) / \
-                    (ella**2*np.cos(t)**2 + ellb**2*np.sin(t)**2)**(3/2)
-
-                tol = 1e-8
-
-            else:
-                rot_mat = cir_sim.occulter.build_full_rot_matrix(*np.radians(tilt), 0)
-                a11, a12, a21, a22 = rot_mat[0,0], rot_mat[0,1], rot_mat[1,0], rot_mat[1,1]
-
-                ell_func = lambda t: self.circle_rad * \
-                    np.sqrt(np.cos(t)**2*(a11**2 + a21**2) + np.sin(t)**2*(a12**2 + a22**2) + \
-                    2*np.cos(t)*np.sin(t)*(a11*a12 + a21*a22) )
-                ell_diff = lambda t: self.circle_rad**2 / ell_func(t) * \
-                    (np.cos(t)*np.sin(t)*(a12**2 + a22**2 - a11**2 - a21**2) + \
-                     (a11*a12 + a21*a22)*(np.cos(t)**2 - np.sin(t)**2))
-
-                tol = 1e-2
+            tol = 1e-8
 
             ellipse = {'kind':'polar', 'is_opaque':is_opaque, 'max_radius':self.circle_rad,
                 'edge_func':ell_func, 'edge_diff':ell_diff}
@@ -99,7 +83,7 @@ class Test_Tilted(object):
 
             #Compare
             diff = np.abs(cir_pupil - ell_pupil)
-            print(diff.max() < tol)
+            assert(diff.max() < tol)
 
 ############################################
 
