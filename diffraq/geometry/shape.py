@@ -55,6 +55,8 @@ class Shape(object):
             #Use interpolation data (specified or from file)
             if self.edge_data is not None:
                 edge_data = self.edge_data
+                #Scale
+                edge_data[:,0] *= self.apod_scaling
             else:
                 edge_data = self.load_edge_file(self.edge_file)
 
@@ -202,6 +204,9 @@ class Shape(object):
         #Load file
         with h5py.File(edge_file, 'r') as f:
             data = f['data'][()]
+
+        #Scale
+        data[:,0] *= self.apod_scaling
 
         return data
 

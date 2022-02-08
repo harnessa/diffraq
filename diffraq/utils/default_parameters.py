@@ -117,6 +117,7 @@ def_shape_params = {
     'unique_edges':         None,       #Separate edge files for unique petals. {edge file: [edge_numbers]}
     'etch_error':           None,       #Uniform edge etching error [m]. < 0: removal of material, > 0: extra material.
     'unique_edge_data':     None,       #Separate edge data for unique petals. {edge data name: edge data} (data name pointed to by edge_file in unique edges)
+    'apod_scaling':         1,          #Scale radius of apodization function loaded in edge_file or edge_data
 
     ### Numerics ###
     'radial_nodes':         None,       #Number of radial quadrature nodes OR (if < 1) fraction of parent's nodes to use

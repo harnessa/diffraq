@@ -152,27 +152,35 @@ class ThickScreen(object):
         omg = tq[:,0]
         psi = abs(tq[:,1])
 
-        #Add large angles to get those bigger and smaller than sampled
-        inn_angles = np.concatenate(([-10], inn_angles, [10]))
+        #Check we span the full range
+        if (omg.min() < inn_angles.min()) or (omg.max() > inn_angles.max()):
+            print('\nWe need to simulate larger angles!\n')
 
         #Loop through angles and interpolate where those angles match
-        for i in range(len(inn_angles)-1):
-            for j in range(1, len(out_angles)):
+        for i in range(1, len(inn_angles)-1):
+            for j in range(len(out_angles)-1):
+
+                #Current angles
+                inn_min = (inn_angles[i-1] + inn_angles[i])/2
+                inn_max = (inn_angles[i+1] + inn_angles[i])/2
+                out_min = out_angles[j]
+                out_max = out_angles[j+1]
 
                 #Get values in this angle region
-                aind = np.where((omg >= inn_angles[i]) & (omg < inn_angles[i+1]) &
-                    (psi >= out_angles[j-1]) & (psi < out_angles[j]))[0]
+                aind = np.where((omg >= inn_min) & (omg <= inn_max) &
+                    (psi >= out_min) & (psi <= out_max))[0]
 
                 #Skip if empty
                 if len(aind) == 0:
                     continue
 
-                #Get index of fld limited by first and last index
-                ii = min(max(i-1, 0), len(inn_angles)-3)
-
                 #Interpolate this region
-                sfld[aind] = np.interp(dd[aind], xx, sf[ii,j], left=0j, right=0j)
-                pfld[aind] = np.interp(dd[aind], xx, pf[ii,j], left=0j, right=0j)
+                sfld[aind] = np.interp(dd[aind], xx, sf[i,j], left=0j, right=0j)
+                pfld[aind] = np.interp(dd[aind], xx, pf[i,j], left=0j, right=0j)
+
+        #Multiply all fields by cos(tilt)
+        sfld *= np.cos(np.hypot(omg, psi))
+        pfld *= np.cos(np.hypot(omg, psi))
 
         #Cleanup
         del omg, psi, xx, sf, pf, aind
