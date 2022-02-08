@@ -27,6 +27,7 @@ def_sim_params = {
 
     ### Saving ###
     'do_save':              False,      #Save data?
+    'skip_saving_pupil':    False,      #Don't save pupil
     'save_dir_base':        None,       #Base directory to save data
     'session':              '',         #Session name (next level folder)
     'save_ext':             '',         #Save extension

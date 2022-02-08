@@ -152,7 +152,7 @@ class Logger(object):
 
     def save_pupil_field(self, pupil, grid_pts, vec_pupil, vec_comps):
         #Return immediately if not saving
-        if not self.do_save:
+        if not self.do_save or self.sim.skip_saving_pupil:
             return
 
         #TODO: save wavelengths, basically save all parameters for easy access (dont have to run analyzer)
